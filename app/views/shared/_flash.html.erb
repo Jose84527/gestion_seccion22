@@ -1,0 +1,24 @@
+<% if flash.any? %>
+  <div class="toast-stack">
+    <% flash.each do |tipo, mensaje| %>
+      <div
+        class="toast toast--<%= tipo %>"
+        data-controller="toast"
+        data-toast-delay-value="2000"
+      >
+        <div class="toast__content">
+          <span class="toast__message"><%= mensaje %></span>
+
+          <button
+            type="button"
+            class="toast__close"
+            data-action="click->toast#close"
+            aria-label="Cerrar mensaje"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

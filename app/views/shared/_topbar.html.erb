@@ -1,0 +1,26 @@
+<header class="topbar">
+  <div class="topbar__heading">
+    <p class="topbar__eyebrow">Sistema interno</p>
+    <h1 class="topbar__title">
+      <%= content_for?(:page_title) ? content_for(:page_title) : "Panel principal" %>
+    </h1>
+  </div>
+
+  <div class="topbar__actions">
+    <div class="topbar__user">
+      <div class="topbar__avatar">
+        <%= iniciales_usuario_actual %>
+      </div>
+
+      <div class="topbar__user-meta">
+        <strong><%= usuario_actual.nombre_usuario %></strong>
+        <span><%= usuario_actual.rol_sistema.humanize %></span>
+      </div>
+    </div>
+
+    <%= button_to "Cerrar sesión",
+                  logout_path,
+                  method: :delete,
+                  class: "button button--ghost" %>
+  </div>
+</header>

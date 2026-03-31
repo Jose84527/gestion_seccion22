@@ -7,6 +7,16 @@ class SesionesController < ApplicationController
     nombre_usuario = params[:nombre_usuario].to_s.strip.downcase
     password = params[:password].to_s
 
+    if nombre_usuario.blank?
+      flash.now[:alert] = "Falta el nombre de usuario"
+      return render :new, status: :unprocessable_entity
+    end
+
+    if password.blank?
+      flash.now[:alert] = "Falta la contraseña"
+      return render :new, status: :unprocessable_entity
+    end
+
     usuario = Usuario.find_by(nombre_usuario: nombre_usuario)
 
     if usuario&.activo? && usuario.authenticate(password)

@@ -3,38 +3,32 @@
   <head>
     <title><%= content_for(:title) || "Gestion Seccion22" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Gestion Seccion22">
-    <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <% if flash[:notice] %>
-      <div style="background-color: #e6fff2; color: green; padding: 10px; margin: 10px; border-radius: 8px;">
-        <%= flash[:notice] %>
-      </div>
-    <% end %>
-
-    <% if flash[:alert] %>
-      <div style="background-color: #ffe6e6; color: red; padding: 10px; margin: 10px; border-radius: 8px;">
-        <%= flash[:alert] %>
-      </div>
-    <% end %>
-    <%= yield :head %>
-
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
-
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <%= yield %>
+  <body class="<%= [sesion_iniciada? ? 'layout-auth' : 'layout-public', (content_for(:body_class) if content_for?(:body_class))].compact.join(' ') %>">
+    <% if sesion_iniciada? %>
+      <div class="app-shell">
+        <%= render "shared/sidebar" %>
+
+        <div class="app-shell__main">
+          <%= render "shared/topbar" %>
+
+          <main class="app-content">
+            <%= render "shared/flash" %>
+            <%= yield %>
+          </main>
+        </div>
+      </div>
+    <% else %>
+      <main class="public-content">
+        <%= render "shared/flash" %>
+        <%= yield %>
+      </main>
+    <% end %>
   </body>
 </html>

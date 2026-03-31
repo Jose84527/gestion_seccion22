@@ -1,9 +1,108 @@
-<h1>Menú Principal</h1>
+<% content_for :title, "Dashboard SG" %>
+<% content_for :page_title, "Dashboard Secretario General" %>
 
-<ul>
-  <li>Dashboard Secretario General</li>
-  <li>Dashboard Finanzas</li>
-  <li>Dashboard Organización</li>
-</ul>
+<section class="dashboard">
+  <div class="dashboard__hero">
+    <div>
+      <p class="dashboard__eyebrow">Vista preliminar</p>
+      <h2 class="dashboard__headline">Base visual del sistema interno</h2>
+      <p class="dashboard__description">
+        Esta pantalla ya usa el layout autenticado que se repetirá en los módulos
+        de trabajadores, usuarios, finanzas, actividades e historial.
+      </p>
+    </div>
+  </div>
 
-<%= button_to "Cerrar sesión", logout_path, method: :delete %>
+  <section class="stats-grid">
+    <article class="stat-card">
+      <span class="stat-card__label">Total trabajadores</span>
+      <strong class="stat-card__value">0</strong>
+      <small class="stat-card__note">Sin datos cargados</small>
+    </article>
+
+    <article class="stat-card">
+      <span class="stat-card__label">Recaudación de 6 meses</span>
+      <strong class="stat-card__value">$0.00</strong>
+      <small class="stat-card__note">Pendiente de integrar finanzas</small>
+    </article>
+
+    <article class="stat-card">
+      <span class="stat-card__label">Próximos eventos</span>
+      <strong class="stat-card__value">0</strong>
+      <small class="stat-card__note">Pendiente de integrar actividades</small>
+    </article>
+
+    <article class="stat-card">
+      <span class="stat-card__label">Porcentaje de participación</span>
+      <strong class="stat-card__value">0%</strong>
+      <small class="stat-card__note">Sin registros de asistencia</small>
+    </article>
+  </section>
+
+  <section class="dashboard__grid">
+    <article class="panel">
+      <div class="panel__header">
+        <h3>Participación por tipo de evento</h3>
+        <span class="panel__tag">Demo visual</span>
+      </div>
+
+      <% [
+        ["Marcha", 55],
+        ["Plantón", 75],
+        ["Asamblea", 45],
+        ["Otros", 65]
+      ].each do |nombre, valor| %>
+        <div class="metric-row">
+          <div class="metric-row__top">
+            <span><%= nombre %></span>
+            <strong><%= valor %>%</strong>
+          </div>
+
+          <div class="metric-row__track">
+            <div class="metric-row__fill" style="width: <%= valor %>%"></div>
+          </div>
+        </div>
+      <% end %>
+    </article>
+
+    <article class="panel">
+      <div class="panel__header">
+        <h3>Accesos directos</h3>
+        <span class="panel__tag">Base inicial</span>
+      </div>
+
+      <div class="quick-links">
+        <span class="quick-link quick-link--active">Dashboard</span>
+        <span class="quick-link">Trabajadores</span>
+        <span class="quick-link">Cooperaciones</span>
+        <span class="quick-link">Eventos</span>
+        <span class="quick-link">Usuarios</span>
+        <span class="quick-link">Historial</span>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel__header">
+        <h3>Últimas cooperaciones</h3>
+        <span class="panel__tag">Próximamente</span>
+      </div>
+
+      <div class="empty-state">
+        El módulo de finanzas todavía no está conectado. Aquí después mostraremos
+        los movimientos más recientes de cooperaciones.
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel__header">
+        <h3>Últimos eventos</h3>
+        <span class="panel__tag">Próximamente</span>
+      </div>
+
+      <div class="empty-state">
+        El módulo de actividades todavía no está conectado. Aquí después mostraremos
+        actividades recientes y registros de asistencia.
+      </div>
+    </article>
+  </section>
+</section>

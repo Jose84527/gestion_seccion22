@@ -1,25 +1,82 @@
-<div class="container">
-  <h1>Iniciar sesión</h1>
+<% content_for :title, "Iniciar sesión" %>
+<% content_for :body_class, "page-login" %>
 
-  <% if flash[:alert].present? %>
-    <p style="color: red;"><%= flash[:alert] %></p>
-  <% end %>
+<section class="login-page">
+  <div class="login-card">
+    <header class="login-card__header">
+      <h1>Iniciar Sesión</h1>
+      <p>Accede con tu nombre de usuario y contraseña.</p>
+    </header>
 
-  <% if flash[:notice].present? %>
-    <p style="color: green;"><%= flash[:notice] %></p>
-  <% end %>
+    <%= form_with url: login_path, method: :post, class: "login-form", data: { turbo: false } do %>
+      <div class="form-field">
+        <%= label_tag :nombre_usuario, "Nombre de usuario" %>
+        <%= text_field_tag :nombre_usuario,
+                           params[:nombre_usuario],
+                           class: "form-input",
+                           autocomplete: "username",
+                           placeholder: "Ingresa tu nombre de usuario" %>
+      </div>
 
-  <%= form_with url: login_path, method: :post, data: { turbo: false } do %>
-    <div>
-      <%= label_tag :nombre_usuario, "Nombre de usuario" %>
-      <%= text_field_tag :nombre_usuario, params[:nombre_usuario], autocomplete: "username" %>
-    </div>
+      <div class="form-field" data-controller="password-toggle">
+        <%= label_tag :password, "Contraseña" %>
 
-    <div>
-      <%= label_tag :password, "Contraseña" %>
-      <%= password_field_tag :password, nil, autocomplete: "current-password" %>
-    </div>
+        <div class="password-field">
+          <%= password_field_tag :password,
+                                 nil,
+                                 class: "form-input form-input--with-action",
+                                 autocomplete: "current-password",
+                                 placeholder: "Ingresa tu contraseña",
+                                 data: { "password-toggle-target": "input" } %>
 
-    <%= submit_tag "Entrar" %>
-  <% end %>
-</div>
+          <button
+  type="button"
+  class="password-field__toggle"
+  data-action="click->password-toggle#toggle"
+  aria-label="Mostrar contraseña"
+>
+  <svg
+    data-password-toggle-target="visibleIcon"
+    class="password-icon"
+    xmlns="http://www.w3.org/2000/svg"
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+
+  <svg
+    data-password-toggle-target="hiddenIcon"
+    class="password-icon is-hidden"
+    xmlns="http://www.w3.org/2000/svg"
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="m3 3 18 18" />
+    <path d="M10.585 10.587A2 2 0 0 0 12 14a2 2 0 0 0 1.414-.586" />
+    <path d="M9.363 5.365A10.77 10.77 0 0 1 12 5c4.29 0 8.007 2.493 9.938 6.108a1 1 0 0 1 0 .784 10.83 10.83 0 0 1-4.338 4.774" />
+    <path d="M6.228 6.233A10.83 10.83 0 0 0 2.062 11.108a1 1 0 0 0 0 .784C3.992 15.507 7.71 18 12 18c1.772 0 3.45-.425 4.938-1.178" />
+  </svg>
+
+  <span class="sr-only" data-password-toggle-target="label">Mostrar contraseña</span>
+</button>
+        </div>
+      </div>
+
+      <%= submit_tag "Iniciar sesión", class: "login-form__submit" %>
+    <% end %>
+  </div>
+</section>

@@ -1,0 +1,22 @@
+<aside class="sidebar">
+  <div class="sidebar__brand">
+    <span class="sidebar__brand-title">SINDICATO</span>
+    <span class="sidebar__brand-subtitle">Gestión Sección 22</span>
+  </div>
+
+  <nav class="sidebar__nav">
+    <% sidebar_items.each do |item| %>
+      <% if item[:ruta].present? %>
+        <%= link_to item[:ruta], class: clase_item_sidebar(item) do %>
+          <span class="sidebar__icon"><%= item[:icono] %></span>
+          <span class="sidebar__label"><%= item[:etiqueta] %></span>
+        <% end %>
+      <% else %>
+        <div class="<%= clase_item_sidebar(item) %>">
+          <span class="sidebar__icon"><%= item[:icono] %></span>
+          <span class="sidebar__label"><%= item[:etiqueta] %></span>
+        </div>
+      <% end %>
+    <% end %>
+  </nav>
+</aside>
