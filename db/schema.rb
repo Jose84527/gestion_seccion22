@@ -10,16 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_30_215831) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_31_024139) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "usuarios", force: :cascade do |t|
+    t.boolean "activo", default: true, null: false
     t.datetime "created_at", null: false
-    t.string "email"
-    t.string "nombre_completo"
+    t.string "nombre_usuario", null: false
     t.string "password_digest"
+    t.string "rol_sistema", default: "consulta", null: false
+    t.bigint "trabajador_id"
+    t.datetime "ultimo_acceso_at"
     t.datetime "updated_at", null: false
-    t.string "username"
+    t.index ["nombre_usuario"], name: "index_usuarios_on_nombre_usuario", unique: true
+    t.index ["trabajador_id"], name: "index_usuarios_on_trabajador_id", unique: true
   end
 end

@@ -1,17 +1,25 @@
-<h1>Iniciar sesión</h1>
+<div class="container">
+  <h1>Iniciar sesión</h1>
 
-<%= form_with url: login_path do |f| %>
+  <% if flash[:alert].present? %>
+    <p style="color: red;"><%= flash[:alert] %></p>
+  <% end %>
 
-  <div>
-    <%= label_tag :username %>
-    <%= text_field_tag :username %>
-  </div>
+  <% if flash[:notice].present? %>
+    <p style="color: green;"><%= flash[:notice] %></p>
+  <% end %>
 
-  <div>
-    <%= label_tag :password %>
-    <%= password_field_tag :password %>
-  </div>
+  <%= form_with url: login_path, method: :post, data: { turbo: false } do %>
+    <div>
+      <%= label_tag :nombre_usuario, "Nombre de usuario" %>
+      <%= text_field_tag :nombre_usuario, params[:nombre_usuario], autocomplete: "username" %>
+    </div>
 
-  <%= submit_tag "Entrar" %>
+    <div>
+      <%= label_tag :password, "Contraseña" %>
+      <%= password_field_tag :password, nil, autocomplete: "current-password" %>
+    </div>
 
-<% end %>
+    <%= submit_tag "Entrar" %>
+  <% end %>
+</div>
