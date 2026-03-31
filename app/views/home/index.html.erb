@@ -1,0 +1,13 @@
+<div class="container">
+  <!-- Logo -->
+  <div class="text-center">
+    <%= image_tag "logo.png", width: 120 if File.exist?(Rails.root.join("app/assets/images/logo.png")) %>
+  </div>
+
+  <h1>Bienvenid@ al Sistema de Gestión Sindical de la Sección 22</h1>
+
+  <div class="text-center">
+    <%= link_to "Iniciar Sesión", login_path, class: "btn" %>
+    <%= link_to "Crear Cuenta", new_usuario_path, class: "btn-outline" %>
+  </div>
+</div>

@@ -1,7 +1,11 @@
 class ApplicationController < ActionController::Base
-  # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
-  allow_browser versions: :modern
+  helper_method :usuario_actual
 
-  # Changes to the importmap will invalidate the etag for HTML responses
-  stale_when_importmap_changes
+  def usuario_actual
+    @usuario_actual ||= Usuario.find(session[:usuario_id]) if session[:usuario_id]
+  end
+
+  def autenticar_usuario
+    redirect_to login_path unless usuario_actual
+  end
 end

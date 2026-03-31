@@ -9,6 +9,17 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
+    <% if flash[:notice] %>
+      <div style="background-color: #e6fff2; color: green; padding: 10px; margin: 10px; border-radius: 8px;">
+        <%= flash[:notice] %>
+      </div>
+    <% end %>
+
+    <% if flash[:alert] %>
+      <div style="background-color: #ffe6e6; color: red; padding: 10px; margin: 10px; border-radius: 8px;">
+        <%= flash[:alert] %>
+      </div>
+    <% end %>
     <%= yield :head %>
 
     <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>

@@ -8,3 +8,108 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+/* Fondo general */
+body {
+  background-color: #ffffff;
+  font-family: Arial, sans-serif;
+}
+
+/* Contenedor centrado */
+.container {
+  width: 350px;
+  margin: 80px auto;
+  padding: 30px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* Título */
+h1 {
+  text-align: center;
+  color: #ff6600;
+  margin-bottom: 20px;
+}
+
+/* Inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+/* Botón */
+input[type="submit"] {
+  width: 100%;
+  background-color: #ff6600;
+  color: white;
+  border: none;
+  padding: 10px;
+  margin-top: 15px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+input[type="submit"]:hover {
+  background-color: #e65c00;
+}
+
+/* Links */
+a {
+  color: #ff6600;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Texto centrado */
+.text-center {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.btn {
+  display: inline-block;
+  background-color: #ff6600;
+  color: white;
+  padding: 10px 15px;
+  margin: 10px;
+  border-radius: 5px;
+}
+
+.btn-outline {
+  display: inline-block;
+  border: 2px solid #ff6600;
+  color: #ff6600;
+  padding: 10px 15px;
+  margin: 10px;
+  border-radius: 5px;
+}
+
+.btn:hover {
+  background-color: #e65c00;
+}
+
+.btn-outline:hover {
+  background-color: #ff6600;
+  color: white;
+}
+
+details {
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+summary {
+  font-weight: bold;
+  color: #ff6600;
+  cursor: pointer;
+}
