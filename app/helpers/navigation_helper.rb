@@ -1,18 +1,21 @@
 module NavigationHelper
   def sidebar_items
-    [
-      { clave: :dashboard, etiqueta: "Dashboard SG", icono: "⌂", ruta: menu_path },
-      { clave: :trabajadores, etiqueta: "Trabajadores", icono: "👥", ruta: nil },
-      { clave: :detalle_trabajador, etiqueta: "Detalle trabajador", icono: "🪪", ruta: nil },
-      { clave: :cooperaciones, etiqueta: "Cooperaciones", icono: "💰", ruta: nil },
-      { clave: :nueva_cooperacion, etiqueta: "Nueva cooperación", icono: "＋", ruta: nil },
-      { clave: :eventos, etiqueta: "Eventos", icono: "📅", ruta: nil },
-      { clave: :detalle_evento, etiqueta: "Detalle evento", icono: "📌", ruta: nil },
-      { clave: :registro_asistencia, etiqueta: "Registro asistencia", icono: "📝", ruta: nil },
-      { clave: :reporte_participacion, etiqueta: "Reporte participación", icono: "📊", ruta: nil },
-      { clave: :generar_constancia, etiqueta: "Generar constancia", icono: "📄", ruta: nil },
-      { clave: :usuarios, etiqueta: "Usuarios", icono: "⚙", ruta: nil }
+    items = [
+      { clave: :dashboard, modulo: :dashboard, etiqueta: "Dashboard SG", icono: "⌂", ruta: menu_path },
+      { clave: :trabajadores, modulo: :trabajadores, etiqueta: "Trabajadores", icono: "👥", ruta: nil },
+      { clave: :detalle_trabajador, modulo: :trabajadores, etiqueta: "Detalle trabajador", icono: "🪪", ruta: nil },
+      { clave: :cooperaciones, modulo: :cooperaciones, etiqueta: "Cooperaciones", icono: "💰", ruta: nil },
+      { clave: :nueva_cooperacion, modulo: :cooperaciones, etiqueta: "Nueva cooperación", icono: "＋", ruta: nil },
+      { clave: :eventos, modulo: :eventos, etiqueta: "Eventos", icono: "📅", ruta: nil },
+      { clave: :detalle_evento, modulo: :eventos, etiqueta: "Detalle evento", icono: "📌", ruta: nil },
+      { clave: :registro_asistencia, modulo: :eventos, etiqueta: "Registro asistencia", icono: "📝", ruta: nil },
+      { clave: :reporte_participacion, modulo: :eventos, etiqueta: "Reporte participación", icono: "📊", ruta: nil },
+      { clave: :generar_constancia, modulo: :eventos, etiqueta: "Generar constancia", icono: "📄", ruta: nil },
+      { clave: :usuarios, modulo: :usuarios, etiqueta: "Usuarios", icono: "⚙", ruta: nil },
+      { clave: :historial, modulo: :historial, etiqueta: "Historial", icono: "🕘", ruta: nil }
     ]
+
+    items.select { |item| puede_ver_modulo?(item[:modulo]) }
   end
 
   def clase_item_sidebar(item)

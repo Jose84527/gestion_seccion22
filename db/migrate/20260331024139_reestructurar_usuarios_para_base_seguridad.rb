@@ -24,7 +24,6 @@ class ReestructurarUsuariosParaBaseSeguridad < ActiveRecord::Migration[8.1]
     remove_index :usuarios, :trabajador_id if index_exists?(:usuarios, :trabajador_id)
     remove_index :usuarios, :nombre_usuario if index_exists?(:usuarios, :nombre_usuario)
 
-    add_column :usuarios, :email, :string unless column_exists?(:usuarios, :email)
     add_column :usuarios, :nombre_completo, :string unless column_exists?(:usuarios, :nombre_completo)
 
     remove_column :usuarios, :ultimo_acceso_at, :datetime if column_exists?(:usuarios, :ultimo_acceso_at)

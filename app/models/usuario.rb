@@ -1,16 +1,14 @@
 class Usuario < ApplicationRecord
   has_secure_password
 
-  ROLES_SISTEMA = %w[admin finanzas capturista consulta].freeze
+  ROLES_SISTEMA = %w[admin finanzas].freeze
 
   enum :rol_sistema,
        {
          admin: "admin",
-         finanzas: "finanzas",
-         capturista: "capturista",
-         consulta: "consulta"
+         finanzas: "finanzas"
        },
-       default: :consulta
+       default: :finanzas
 
   before_validation :normalizar_nombre_usuario
 

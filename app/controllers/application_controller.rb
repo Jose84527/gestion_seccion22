@@ -1,4 +1,6 @@
 class ApplicationController < ActionController::Base
+  include AutorizacionPorRol
+
   before_action :establecer_usuario_actual
 
   helper_method :usuario_actual, :sesion_iniciada?
