@@ -12,7 +12,7 @@ module NavigationHelper
       { clave: :reporte_participacion, modulo: :eventos, etiqueta: "Reporte participación", icono: "📊", ruta: nil },
       { clave: :generar_constancia, modulo: :eventos, etiqueta: "Generar constancia", icono: "📄", ruta: nil },
       { clave: :usuarios, modulo: :usuarios, etiqueta: "Usuarios", icono: "⚙", ruta: nil },
-      { clave: :historial, modulo: :historial, etiqueta: "Historial", icono: "🕘", ruta: nil }
+      { clave: :historial, modulo: :historial, etiqueta: "Historial", icono: "🕘", ruta: historiales_path }
     ]
 
     items.select { |item| puede_ver_modulo?(item[:modulo]) }

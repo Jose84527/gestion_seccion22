@@ -1,0 +1,43 @@
+<% content_for :title, "Historial" %>
+<% content_for :page_title, "Historial de cambios" %>
+
+<section class="historial-page">
+  <div class="panel">
+    <div class="panel__header">
+      <h3>Historial</h3>
+      <span class="panel__tag">Cambios registrados en la base</span>
+    </div>
+
+    <% if @historiales.any? %>
+      <div class="historial-table-wrapper">
+        <table class="historial-table">
+          <thead>
+            <tr>
+              <th>Acción</th>
+              <th>Fecha y hora</th>
+              <th>Usuario</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <% @historiales.each do |historial| %>
+              <tr>
+                <td><span class="historial-badge"><%= historial.accion.humanize %></span></td>
+                <td><%= historial.fecha_evento.strftime("%d/%m/%Y %H:%M:%S") %></td>
+                <td><%= historial.nombre_usuario %></td>
+                <td class="historial-table__actions">
+                  <%= link_to "Ver detalle", historial_path(historial), class: "button button--ghost" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        Aún no hay cambios registrados en el historial.
+      </div>
+    <% end %>
+  </div>
+</section>

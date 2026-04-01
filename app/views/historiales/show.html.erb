@@ -1,0 +1,82 @@
+<% content_for :title, "Detalle de historial" %>
+<% content_for :page_title, "Detalle del cambio" %>
+
+<section class="historial-page">
+  <div class="panel">
+    <div class="panel__header">
+      <h3>Detalle del historial</h3>
+      <%= link_to "Volver", historiales_path, class: "button button--ghost" %>
+    </div>
+
+    <div class="historial-detail">
+      <div class="historial-detail__grid">
+        <div class="historial-detail__item">
+          <span class="historial-detail__label">Acción</span>
+          <strong><%= @historial.accion.humanize %></strong>
+        </div>
+
+        <div class="historial-detail__item">
+          <span class="historial-detail__label">Fecha y hora</span>
+          <strong><%= @historial.fecha_evento.strftime("%d/%m/%Y %H:%M:%S") %></strong>
+        </div>
+
+        <div class="historial-detail__item">
+          <span class="historial-detail__label">Usuario</span>
+          <strong><%= @historial.nombre_usuario %></strong>
+        </div>
+
+        <div class="historial-detail__item">
+          <span class="historial-detail__label">Usuario ID</span>
+          <strong><%= @historial.usuario_id || "-" %></strong>
+        </div>
+
+        <div class="historial-detail__item">
+          <span class="historial-detail__label">Módulo</span>
+          <strong><%= @historial.modulo %></strong>
+        </div>
+
+        <div class="historial-detail__item">
+          <span class="historial-detail__label">Entidad</span>
+          <strong><%= @historial.entidad %></strong>
+        </div>
+
+        <div class="historial-detail__item">
+          <span class="historial-detail__label">Registro ID</span>
+          <strong><%= @historial.registro_id || "-" %></strong>
+        </div>
+
+        <div class="historial-detail__item">
+          <span class="historial-detail__label">Request ID</span>
+          <strong><%= @historial.request_id.presence || "-" %></strong>
+        </div>
+      </div>
+
+      <div class="historial-detail__block">
+        <span class="historial-detail__label">Resumen</span>
+        <p><%= @historial.resumen.presence || "Sin resumen." %></p>
+      </div>
+
+      <div class="historial-json-grid">
+        <div class="historial-detail__block">
+          <span class="historial-detail__label">Antes</span>
+
+          <% if @historial.antes_json.present? %>
+            <pre><%= JSON.pretty_generate(@historial.antes_json) %></pre>
+          <% else %>
+            <p>Sin datos previos.</p>
+          <% end %>
+        </div>
+
+        <div class="historial-detail__block">
+          <span class="historial-detail__label">Después</span>
+
+          <% if @historial.despues_json.present? %>
+            <pre><%= JSON.pretty_generate(@historial.despues_json) %></pre>
+          <% else %>
+            <p>Sin datos posteriores.</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

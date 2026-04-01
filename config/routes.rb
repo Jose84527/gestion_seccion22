@@ -5,9 +5,12 @@ Rails.application.routes.draw do
 
   get "menu", to: "home#menu", as: :menu
 
+  resources :historiales, only: %i[index show]
+  
   get "home/index"
 
   get "up" => "rails/health#show", as: :rails_health_check
 
   root "home#index"
+  
 end
