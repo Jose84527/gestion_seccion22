@@ -1,5 +1,6 @@
 class ApplicationController < ActionController::Base
   include AutorizacionPorRol
+  helper NavigationHelper
 
   before_action :establecer_usuario_actual
 

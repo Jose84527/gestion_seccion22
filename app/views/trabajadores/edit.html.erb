@@ -1,0 +1,13 @@
+<% content_for :title, "Editar trabajador" %>
+<% content_for :page_title, "Editar trabajador" %>
+
+<section class="trabajadores-page">
+  <div class="panel">
+    <div class="panel__header">
+      <h3>Editar trabajador</h3>
+      <%= link_to "Volver", trabajador_path(@trabajador), class: "button button--ghost" %>
+    </div>
+
+    <%= render "form", trabajador: @trabajador, conceptos07: @conceptos07 %>
+  </div>
+</section>

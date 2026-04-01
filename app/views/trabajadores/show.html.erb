@@ -1,0 +1,105 @@
+<% content_for :title, "Detalle del trabajador" %>
+<% content_for :page_title, "Detalle del trabajador" %>
+
+<section class="trabajadores-page">
+  <div class="panel">
+    <div class="panel__header">
+      <h3>Información del trabajador</h3>
+
+      <div class="acciones-grupo">
+        <%= link_to "Volver", trabajadores_path, class: "button button--ghost" %>
+
+        <% if puede_realizar_accion?(:trabajadores, :editar) %>
+          <%= link_to "Editar", edit_trabajador_path(@trabajador), class: "button button--primary" %>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="detalle-grid">
+      <div class="detalle-item">
+        <span class="detalle-item__label">Nombres</span>
+        <strong><%= @trabajador.nombres %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Apellido paterno</span>
+        <strong><%= @trabajador.apellido_paterno %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Apellido materno</span>
+        <strong><%= @trabajador.apellido_materno.presence || "-" %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Sexo</span>
+        <strong><%= @trabajador.sexo.humanize %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Fecha de afiliación</span>
+        <strong><%= @trabajador.fecha_afiliacion.strftime("%d/%m/%Y") %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">RFC</span>
+        <strong><%= @trabajador.rfc %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">CURP</span>
+        <strong><%= @trabajador.curp %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Clave de cobro</span>
+        <strong><%= @trabajador.clave_cobro %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">CT</span>
+        <strong><%= @trabajador.ct.presence || "-" %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Teléfono</span>
+        <strong><%= @trabajador.telefono.presence || "-" %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Correo</span>
+        <strong><%= @trabajador.correo.presence || "-" %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Código postal</span>
+        <strong><%= @trabajador.codigo_postal.presence || "-" %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Estado</span>
+        <strong><%= @trabajador.estado_trabajador.humanize %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Salario neto</span>
+        <strong><%= number_to_currency(@trabajador.salario_neto) %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Periodicidad de pago</span>
+        <strong><%= @trabajador.periodicidad_pago.humanize %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Concepto 07</span>
+        <strong><%= "#{@trabajador.concepto07_nivel.clave} - #{@trabajador.concepto07_nivel.nombre}" %></strong>
+      </div>
+    </div>
+
+    <div class="detalle-bloque">
+      <span class="detalle-item__label">Dirección</span>
+      <p><%= @trabajador.direccion.presence || "-" %></p>
+    </div>
+  </div>
+</section>

@@ -10,9 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_01_020427) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_01_201624) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "concepto07_niveles", force: :cascade do |t|
+    t.boolean "activo", default: true, null: false
+    t.string "clave", null: false
+    t.datetime "created_at", null: false
+    t.text "descripcion"
+    t.string "nombre", null: false
+    t.datetime "updated_at", null: false
+    t.index ["activo"], name: "index_concepto07_niveles_on_activo"
+    t.index ["clave"], name: "index_concepto07_niveles_on_clave", unique: true
+  end
 
   create_table "historiales", force: :cascade do |t|
     t.string "accion", null: false
@@ -36,6 +47,35 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_01_020427) do
     t.index ["usuario_id"], name: "index_historiales_on_usuario_id"
   end
 
+  create_table "trabajadores", force: :cascade do |t|
+    t.string "apellido_materno"
+    t.string "apellido_paterno", null: false
+    t.string "clave_cobro", null: false
+    t.string "codigo_postal"
+    t.bigint "concepto07_nivel_id", null: false
+    t.string "correo"
+    t.datetime "created_at", null: false
+    t.string "ct"
+    t.string "curp", null: false
+    t.text "direccion"
+    t.string "estado_trabajador", default: "activo", null: false
+    t.date "fecha_afiliacion", null: false
+    t.string "nombres", null: false
+    t.string "periodicidad_pago", null: false
+    t.string "rfc", null: false
+    t.decimal "salario_neto", precision: 12, scale: 2, null: false
+    t.string "sexo", null: false
+    t.string "telefono"
+    t.datetime "updated_at", null: false
+    t.index ["clave_cobro"], name: "index_trabajadores_on_clave_cobro", unique: true
+    t.index ["concepto07_nivel_id"], name: "index_trabajadores_on_concepto07_nivel_id"
+    t.index ["curp"], name: "index_trabajadores_on_curp", unique: true
+    t.index ["estado_trabajador"], name: "index_trabajadores_on_estado_trabajador"
+    t.index ["periodicidad_pago"], name: "index_trabajadores_on_periodicidad_pago"
+    t.index ["rfc"], name: "index_trabajadores_on_rfc", unique: true
+    t.index ["sexo"], name: "index_trabajadores_on_sexo"
+  end
+
   create_table "usuarios", force: :cascade do |t|
     t.boolean "activo", default: true, null: false
     t.datetime "created_at", null: false
@@ -50,4 +90,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_01_020427) do
   end
 
   add_foreign_key "historiales", "usuarios", on_delete: :nullify
+  add_foreign_key "trabajadores", "concepto07_niveles"
 end

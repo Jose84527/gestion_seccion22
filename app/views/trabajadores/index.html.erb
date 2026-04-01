@@ -1,0 +1,64 @@
+<% content_for :title, "Trabajadores" %>
+<% content_for :page_title, "Trabajadores" %>
+
+<section class="trabajadores-page">
+  <div class="panel">
+    <div class="panel__header">
+      <h3>Listado de trabajadores</h3>
+
+      <% if puede_realizar_accion?(:trabajadores, :crear) %>
+        <%= link_to "Nuevo trabajador", new_trabajador_path, class: "button button--primary" %>
+      <% end %>
+    </div>
+
+    <% if @trabajadores.any? %>
+      <div class="tabla-wrapper">
+        <table class="tabla-base">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>RFC</th>
+              <th>CURP</th>
+              <th>Clave cobro</th>
+              <th>Estado</th>
+              <th>Periodicidad</th>
+              <th>Concepto 07</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <% @trabajadores.each do |trabajador| %>
+              <tr>
+                <td>
+                  <%= [
+                    trabajador.nombres,
+                    trabajador.apellido_paterno,
+                    trabajador.apellido_materno
+                  ].compact.join(" ") %>
+                </td>
+                <td><%= trabajador.rfc %></td>
+                <td><%= trabajador.curp %></td>
+                <td><%= trabajador.clave_cobro %></td>
+                <td><span class="estado-badge"><%= trabajador.estado_trabajador.humanize %></span></td>
+                <td><%= trabajador.periodicidad_pago.humanize %></td>
+                <td><%= "#{trabajador.concepto07_nivel.clave} - #{trabajador.concepto07_nivel.nombre}" %></td>
+                <td class="tabla-base__acciones">
+                  <%= link_to "Ver", trabajador_path(trabajador), class: "button button--ghost" %>
+
+                  <% if puede_realizar_accion?(:trabajadores, :editar) %>
+                    <%= link_to "Editar", edit_trabajador_path(trabajador), class: "button button--ghost" %>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        Aún no hay trabajadores registrados.
+      </div>
+    <% end %>
+  </div>
+</section>

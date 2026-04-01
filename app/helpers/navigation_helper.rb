@@ -2,7 +2,7 @@ module NavigationHelper
   def sidebar_items
     items = [
       { clave: :dashboard, modulo: :dashboard, etiqueta: "Dashboard SG", icono: "⌂", ruta: menu_path },
-      { clave: :trabajadores, modulo: :trabajadores, etiqueta: "Trabajadores", icono: "👥", ruta: nil },
+      { clave: :trabajadores, modulo: :trabajadores, etiqueta: "Trabajadores", icono: "👥", ruta: trabajadores_path },
       { clave: :detalle_trabajador, modulo: :trabajadores, etiqueta: "Detalle trabajador", icono: "🪪", ruta: nil },
       { clave: :cooperaciones, modulo: :cooperaciones, etiqueta: "Cooperaciones", icono: "💰", ruta: nil },
       { clave: :nueva_cooperacion, modulo: :cooperaciones, etiqueta: "Nueva cooperación", icono: "＋", ruta: nil },

@@ -1,0 +1,120 @@
+<%= form_with model: trabajador, class: "formulario-base" do |f| %>
+  <% if trabajador.errors.any? %>
+    <div class="form-errors">
+      <strong>No se pudo guardar el trabajador:</strong>
+      <ul>
+        <% trabajador.errors.full_messages.each do |mensaje| %>
+          <li><%= mensaje %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-grid">
+    <div class="form-field">
+      <%= f.label :nombres, "Nombres" %>
+      <%= f.text_field :nombres, class: "form-input" %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :apellido_paterno, "Apellido paterno" %>
+      <%= f.text_field :apellido_paterno, class: "form-input" %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :apellido_materno, "Apellido materno" %>
+      <%= f.text_field :apellido_materno, class: "form-input" %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :sexo, "Sexo" %>
+      <%= f.select :sexo,
+                   Trabajador.sexos.keys.map { |valor| [valor.humanize, valor] },
+                   { prompt: "Selecciona una opción" },
+                   class: "form-input" %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :fecha_afiliacion, "Fecha de afiliación" %>
+      <%= f.date_field :fecha_afiliacion, class: "form-input" %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :rfc, "RFC" %>
+      <%= f.text_field :rfc, class: "form-input" %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :curp, "CURP" %>
+      <%= f.text_field :curp, class: "form-input" %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :clave_cobro, "Clave de cobro" %>
+      <%= f.text_field :clave_cobro, class: "form-input" %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :ct, "CT" %>
+      <%= f.text_field :ct, class: "form-input" %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :telefono, "Teléfono" %>
+      <%= f.text_field :telefono, class: "form-input" %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :correo, "Correo" %>
+      <%= f.email_field :correo, class: "form-input" %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :codigo_postal, "Código postal" %>
+      <%= f.text_field :codigo_postal, class: "form-input" %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :estado_trabajador, "Estado del trabajador" %>
+      <%= f.select :estado_trabajador,
+                   Trabajador.estado_trabajadores.keys.map { |valor| [valor.humanize, valor] },
+                   {},
+                   class: "form-input" %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :salario_neto, "Salario neto" %>
+      <%= f.number_field :salario_neto, step: "0.01", min: "0", class: "form-input" %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :periodicidad_pago, "Periodicidad de pago" %>
+      <%= f.select :periodicidad_pago,
+                   Trabajador.periodicidad_pagos.keys.map { |valor| [valor.humanize, valor] },
+                   { prompt: "Selecciona una opción" },
+                   class: "form-input" %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :concepto07_nivel_id, "Concepto 07" %>
+      <%= f.select :concepto07_nivel_id,
+                   conceptos07.map { |concepto| ["#{concepto.clave} - #{concepto.nombre}", concepto.id] },
+                   { prompt: "Selecciona un concepto" },
+                   class: "form-input" %>
+    </div>
+
+    <div class="form-field form-field--full">
+      <%= f.label :direccion, "Dirección" %>
+      <%= f.text_area :direccion, class: "form-input form-textarea", rows: 4 %>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <%= link_to "Cancelar",
+                trabajador.persisted? ? trabajador_path(trabajador) : trabajadores_path,
+                class: "button button--ghost" %>
+
+    <%= f.submit trabajador.persisted? ? "Actualizar trabajador" : "Guardar trabajador",
+                 class: "button button--primary" %>
+  </div>
+<% end %>
