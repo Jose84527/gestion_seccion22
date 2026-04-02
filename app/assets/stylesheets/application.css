@@ -946,3 +946,190 @@ button {
     align-items: stretch;
   }
 }
+.form-input--error {
+  border-color: #c94b3f;
+  box-shadow: 0 0 0 3px rgba(201, 75, 63, 0.12);
+}
+
+.field-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #c94b3f;
+}
+
+.catalogo-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-grid--dos-columnas {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.estado-badge--activo {
+  background: #e8f5ea;
+  color: #1d6a3a;
+}
+
+.estado-badge--inactivo {
+  background: #fdeceb;
+  color: #a4382b;
+}
+
+.filtros-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 24px;
+  padding: 18px;
+  background: #faf7f5;
+  border: 1px solid #eee4de;
+  border-radius: 16px;
+}
+
+.filtros-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.filtros-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.listado-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--color-text-soft);
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.pagination__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: #f3f0ee;
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.pagination__link.is-active {
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+@media (max-width: 1100px) {
+  .filtros-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .filtros-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filtros-actions,
+  .listado-meta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.formulario-estado {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.formulario-estado__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 320px);
+  gap: 18px;
+}
+
+.estado-badge--activo {
+  background: #e8f5ea;
+  color: #1d6a3a;
+}
+
+.estado-badge--baja {
+  background: #fdeceb;
+  color: #a4382b;
+}
+
+.estado-badge--suspendido {
+  background: #fff4db;
+  color: #9a6a00;
+}
+
+.filtros-grid--historial {
+  grid-template-columns: minmax(0, 260px);
+}
+
+.filtros-panel--inline {
+  display: inline-flex;
+  width: auto;
+  max-width: 100%;
+  padding: 16px 18px;
+}
+
+.filtros-inline {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filtros-inline__field {
+  min-width: 260px;
+  margin: 0;
+}
+
+.filtros-actions--inline {
+  justify-content: flex-start;
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .filtros-panel--inline {
+    display: flex;
+    width: 100%;
+  }
+
+  .filtros-inline {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filtros-inline__field {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .filtros-actions--inline {
+    width: 100%;
+    justify-content: stretch;
+  }
+}

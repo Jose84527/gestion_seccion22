@@ -8,7 +8,29 @@
       <span class="panel__tag">Cambios registrados en la base</span>
     </div>
 
+    <%= form_with url: historiales_path, method: :get, local: true, class: "filtros-panel filtros-panel--inline" do %>
+  <div class="filtros-inline">
+    <div class="form-field filtros-inline__field">
+      <label for="fecha">Fecha</label>
+      <%= date_field_tag :fecha, @fecha, class: "form-input" %>
+    </div>
+
+    <div class="filtros-actions filtros-actions--inline">
+      <%= submit_tag "Filtrar", class: "button button--primary" %>
+      <%= link_to "Limpiar", historiales_path, class: "button button--ghost" %>
+    </div>
+  </div>
+<% end %>
+
     <% if @historiales.any? %>
+      <div class="listado-meta">
+        <span>
+          Mostrando <strong><%= @historiales.size %></strong> de
+          <strong><%= @total_registros %></strong> registros
+        </span>
+        <span>Página <strong><%= @pagina_actual %></strong> de <strong><%= @total_paginas %></strong></span>
+      </div>
+
       <div class="historial-table-wrapper">
         <table class="historial-table">
           <thead>
@@ -34,9 +56,29 @@
           </tbody>
         </table>
       </div>
+
+      <div class="pagination">
+        <% if @pagina_actual > 1 %>
+          <%= link_to "← Anterior",
+                      historiales_path(request.query_parameters.merge(page: @pagina_actual - 1)),
+                      class: "button button--ghost" %>
+        <% end %>
+
+        <% (1..@total_paginas).each do |pagina| %>
+          <%= link_to pagina,
+                      historiales_path(request.query_parameters.merge(page: pagina)),
+                      class: "pagination__link #{'is-active' if pagina == @pagina_actual}" %>
+        <% end %>
+
+        <% if @pagina_actual < @total_paginas %>
+          <%= link_to "Siguiente →",
+                      historiales_path(request.query_parameters.merge(page: @pagina_actual + 1)),
+                      class: "button button--ghost" %>
+        <% end %>
+      </div>
     <% else %>
       <div class="empty-state">
-        Aún no hay cambios registrados en el historial.
+        No se encontraron registros de historial con los criterios seleccionados.
       </div>
     <% end %>
   </div>

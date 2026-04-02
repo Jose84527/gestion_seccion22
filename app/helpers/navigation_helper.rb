@@ -4,6 +4,7 @@ module NavigationHelper
       { clave: :dashboard, modulo: :dashboard, etiqueta: "Dashboard SG", icono: "⌂", ruta: menu_path },
       { clave: :trabajadores, modulo: :trabajadores, etiqueta: "Trabajadores", icono: "👥", ruta: trabajadores_path },
       { clave: :detalle_trabajador, modulo: :trabajadores, etiqueta: "Detalle trabajador", icono: "🪪", ruta: nil },
+      { clave: :conceptos07, modulo: :conceptos07, etiqueta: "Conceptos 07", icono: "🏷", ruta: concepto07_niveles_path },
       { clave: :cooperaciones, modulo: :cooperaciones, etiqueta: "Cooperaciones", icono: "💰", ruta: nil },
       { clave: :nueva_cooperacion, modulo: :cooperaciones, etiqueta: "Nueva cooperación", icono: "＋", ruta: nil },
       { clave: :eventos, modulo: :eventos, etiqueta: "Eventos", icono: "📅", ruta: nil },

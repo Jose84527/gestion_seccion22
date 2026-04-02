@@ -11,7 +11,52 @@
       <% end %>
     </div>
 
+    <%= form_with url: trabajadores_path, method: :get, local: true, class: "filtros-panel" do %>
+      <div class="filtros-grid">
+        <div class="form-field">
+          <label for="q">Búsqueda por nombre</label>
+          <%= text_field_tag :q,
+                             @q,
+                             class: "form-input",
+                             placeholder: "Busca por nombres o apellidos" %>
+        </div>
+
+        <div class="form-field">
+          <label for="concepto07_nivel_id">Concepto 07</label>
+          <%= select_tag :concepto07_nivel_id,
+                         options_for_select(
+                           [["Todos", ""]] + @conceptos07.map { |concepto| ["#{concepto.clave} - #{concepto.nombre}", concepto.id] },
+                           @concepto07_nivel_id
+                         ),
+                         class: "form-input" %>
+        </div>
+
+        <div class="form-field">
+          <label for="estado_trabajador">Estado</label>
+          <%= select_tag :estado_trabajador,
+                         options_for_select(
+                           [["Todos", ""]] + Trabajador.estado_trabajadores.keys.map { |valor| [valor.humanize, valor] },
+                           @estado_trabajador
+                         ),
+                         class: "form-input" %>
+        </div>
+      </div>
+
+      <div class="filtros-actions">
+        <%= submit_tag "Filtrar", class: "button button--primary" %>
+        <%= link_to "Limpiar", trabajadores_path, class: "button button--ghost" %>
+      </div>
+    <% end %>
+
     <% if @trabajadores.any? %>
+      <div class="listado-meta">
+        <span>
+          Mostrando <strong><%= @trabajadores.size %></strong> de
+          <strong><%= @total_registros %></strong> trabajadores
+        </span>
+        <span>Página <strong><%= @pagina_actual %></strong> de <strong><%= @total_paginas %></strong></span>
+      </div>
+
       <div class="tabla-wrapper">
         <table class="tabla-base">
           <thead>
@@ -55,9 +100,29 @@
           </tbody>
         </table>
       </div>
+
+      <div class="pagination">
+        <% if @pagina_actual > 1 %>
+          <%= link_to "← Anterior",
+                      trabajadores_path(request.query_parameters.merge(page: @pagina_actual - 1)),
+                      class: "button button--ghost" %>
+        <% end %>
+
+        <% (1..@total_paginas).each do |pagina| %>
+          <%= link_to pagina,
+                      trabajadores_path(request.query_parameters.merge(page: pagina)),
+                      class: "pagination__link #{'is-active' if pagina == @pagina_actual}" %>
+        <% end %>
+
+        <% if @pagina_actual < @total_paginas %>
+          <%= link_to "Siguiente →",
+                      trabajadores_path(request.query_parameters.merge(page: @pagina_actual + 1)),
+                      class: "button button--ghost" %>
+        <% end %>
+      </div>
     <% else %>
       <div class="empty-state">
-        Aún no hay trabajadores registrados.
+        No se encontraron trabajadores con los criterios seleccionados.
       </div>
     <% end %>
   </div>

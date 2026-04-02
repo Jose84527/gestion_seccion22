@@ -7,11 +7,12 @@ module Autorizacion
         cooperaciones: :all,
         eventos: :all,
         usuarios: :all,
-        historial: :all
+        historial: :all,
+        conceptos07: :all
       },
       finanzas: {
         trabajadores: %i[ver],
-        cooperaciones: %i[ver crear registrar_pago exentar]
+        cooperaciones: %i[ver crear editar]
       }
     }.freeze
 

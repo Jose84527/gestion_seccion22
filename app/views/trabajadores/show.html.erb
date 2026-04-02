@@ -78,7 +78,11 @@
 
       <div class="detalle-item">
         <span class="detalle-item__label">Estado</span>
-        <strong><%= @trabajador.estado_trabajador.humanize %></strong>
+        <strong>
+          <span class="estado-badge estado-badge--<%= @trabajador.estado_trabajador %>">
+            <%= @trabajador.estado_trabajador.humanize %>
+          </span>
+        </strong>
       </div>
 
       <div class="detalle-item">
@@ -102,4 +106,32 @@
       <p><%= @trabajador.direccion.presence || "-" %></p>
     </div>
   </div>
+
+  <% if puede_realizar_accion?(:trabajadores, :editar) %>
+    <div class="panel">
+      <div class="panel__header">
+        <h3>Cambiar estado del trabajador</h3>
+      </div>
+
+      <%= form_with model: @trabajador,
+                    url: cambiar_estado_trabajador_path(@trabajador),
+                    method: :patch,
+                    local: true,
+                    class: "formulario-estado" do |f| %>
+        <div class="formulario-estado__grid">
+          <div class="form-field">
+            <%= f.label :estado_trabajador, "Nuevo estado" %>
+            <%= f.select :estado_trabajador,
+                         Trabajador.estado_trabajadores.keys.map { |valor| [valor.humanize, valor] },
+                         {},
+                         class: "form-input" %>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <%= f.submit "Actualizar estado", class: "button button--primary" %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 </section>

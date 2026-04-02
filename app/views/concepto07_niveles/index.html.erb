@@ -1,0 +1,56 @@
+<% content_for :title, "Conceptos 07" %>
+<% content_for :page_title, "Conceptos 07" %>
+
+<section class="catalogo-page">
+  <div class="panel">
+    <div class="panel__header">
+      <h3>Catálogo de Conceptos 07</h3>
+      <%= link_to "Nuevo concepto", new_concepto07_nivel_path, class: "button button--primary" %>
+    </div>
+
+    <% if @conceptos07.any? %>
+      <div class="tabla-wrapper">
+        <table class="tabla-base">
+          <thead>
+            <tr>
+              <th>Clave</th>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <% @conceptos07.each do |concepto| %>
+              <tr>
+                <td><%= concepto.clave %></td>
+                <td><%= concepto.nombre %></td>
+                <td><%= concepto.descripcion.presence || "-" %></td>
+                <td>
+                  <span class="estado-badge <%= concepto.activo? ? 'estado-badge--activo' : 'estado-badge--inactivo' %>">
+                    <%= concepto.activo? ? "Activo" : "Inactivo" %>
+                  </span>
+                </td>
+                <td class="tabla-base__acciones">
+                  <%= link_to "Editar", edit_concepto07_nivel_path(concepto), class: "button button--ghost" %>
+
+                  <%= button_to(
+                        concepto.activo? ? "Desactivar" : "Activar",
+                        cambiar_estado_concepto07_nivel_path(concepto),
+                        method: :patch,
+                        class: "button button--ghost"
+                      ) %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        Aún no hay conceptos 07 registrados.
+      </div>
+    <% end %>
+  </div>
+</section>

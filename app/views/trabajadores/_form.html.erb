@@ -13,17 +13,35 @@
   <div class="form-grid">
     <div class="form-field">
       <%= f.label :nombres, "Nombres" %>
-      <%= f.text_field :nombres, class: "form-input" %>
+      <%= f.text_field :nombres,
+                       class: "form-input #{'form-input--error' if trabajador.errors[:nombres].any?}",
+                       minlength: 3,
+                       maxlength: 100 %>
+      <% if trabajador.errors[:nombres].any? %>
+        <small class="field-error"><%= trabajador.errors[:nombres].first %></small>
+      <% end %>
     </div>
 
     <div class="form-field">
       <%= f.label :apellido_paterno, "Apellido paterno" %>
-      <%= f.text_field :apellido_paterno, class: "form-input" %>
+      <%= f.text_field :apellido_paterno,
+                       class: "form-input #{'form-input--error' if trabajador.errors[:apellido_paterno].any?}",
+                       minlength: 3,
+                       maxlength: 100 %>
+      <% if trabajador.errors[:apellido_paterno].any? %>
+        <small class="field-error"><%= trabajador.errors[:apellido_paterno].first %></small>
+      <% end %>
     </div>
 
     <div class="form-field">
       <%= f.label :apellido_materno, "Apellido materno" %>
-      <%= f.text_field :apellido_materno, class: "form-input" %>
+      <%= f.text_field :apellido_materno,
+                       class: "form-input #{'form-input--error' if trabajador.errors[:apellido_materno].any?}",
+                       minlength: 3,
+                       maxlength: 100 %>
+      <% if trabajador.errors[:apellido_materno].any? %>
+        <small class="field-error"><%= trabajador.errors[:apellido_materno].first %></small>
+      <% end %>
     </div>
 
     <div class="form-field">
@@ -31,47 +49,93 @@
       <%= f.select :sexo,
                    Trabajador.sexos.keys.map { |valor| [valor.humanize, valor] },
                    { prompt: "Selecciona una opción" },
-                   class: "form-input" %>
+                   class: "form-input #{'form-input--error' if trabajador.errors[:sexo].any?}" %>
+      <% if trabajador.errors[:sexo].any? %>
+        <small class="field-error"><%= trabajador.errors[:sexo].first %></small>
+      <% end %>
     </div>
 
     <div class="form-field">
       <%= f.label :fecha_afiliacion, "Fecha de afiliación" %>
-      <%= f.date_field :fecha_afiliacion, class: "form-input" %>
+      <%= f.date_field :fecha_afiliacion,
+                       class: "form-input #{'form-input--error' if trabajador.errors[:fecha_afiliacion].any?}",
+                       max: Date.current %>
+      <% if trabajador.errors[:fecha_afiliacion].any? %>
+        <small class="field-error"><%= trabajador.errors[:fecha_afiliacion].first %></small>
+      <% end %>
     </div>
 
     <div class="form-field">
       <%= f.label :rfc, "RFC" %>
-      <%= f.text_field :rfc, class: "form-input" %>
+      <%= f.text_field :rfc,
+                       class: "form-input #{'form-input--error' if trabajador.errors[:rfc].any?}",
+                       maxlength: 13 %>
+      <% if trabajador.errors[:rfc].any? %>
+        <small class="field-error"><%= trabajador.errors[:rfc].first %></small>
+      <% end %>
     </div>
 
     <div class="form-field">
       <%= f.label :curp, "CURP" %>
-      <%= f.text_field :curp, class: "form-input" %>
+      <%= f.text_field :curp,
+                       class: "form-input #{'form-input--error' if trabajador.errors[:curp].any?}",
+                       maxlength: 18 %>
+      <% if trabajador.errors[:curp].any? %>
+        <small class="field-error"><%= trabajador.errors[:curp].first %></small>
+      <% end %>
     </div>
 
     <div class="form-field">
       <%= f.label :clave_cobro, "Clave de cobro" %>
-      <%= f.text_field :clave_cobro, class: "form-input" %>
+      <%= f.text_field :clave_cobro,
+                       class: "form-input #{'form-input--error' if trabajador.errors[:clave_cobro].any?}",
+                       minlength: 3,
+                       maxlength: 30 %>
+      <% if trabajador.errors[:clave_cobro].any? %>
+        <small class="field-error"><%= trabajador.errors[:clave_cobro].first %></small>
+      <% end %>
     </div>
 
     <div class="form-field">
       <%= f.label :ct, "CT" %>
-      <%= f.text_field :ct, class: "form-input" %>
+      <%= f.text_field :ct,
+                       class: "form-input #{'form-input--error' if trabajador.errors[:ct].any?}",
+                       maxlength: 30 %>
+      <% if trabajador.errors[:ct].any? %>
+        <small class="field-error"><%= trabajador.errors[:ct].first %></small>
+      <% end %>
     </div>
 
     <div class="form-field">
       <%= f.label :telefono, "Teléfono" %>
-      <%= f.text_field :telefono, class: "form-input" %>
+      <%= f.text_field :telefono,
+                       class: "form-input #{'form-input--error' if trabajador.errors[:telefono].any?}",
+                       inputmode: "numeric",
+                       maxlength: 10 %>
+      <% if trabajador.errors[:telefono].any? %>
+        <small class="field-error"><%= trabajador.errors[:telefono].first %></small>
+      <% end %>
     </div>
 
     <div class="form-field">
       <%= f.label :correo, "Correo" %>
-      <%= f.email_field :correo, class: "form-input" %>
+      <%= f.email_field :correo,
+                        class: "form-input #{'form-input--error' if trabajador.errors[:correo].any?}",
+                        maxlength: 150 %>
+      <% if trabajador.errors[:correo].any? %>
+        <small class="field-error"><%= trabajador.errors[:correo].first %></small>
+      <% end %>
     </div>
 
     <div class="form-field">
       <%= f.label :codigo_postal, "Código postal" %>
-      <%= f.text_field :codigo_postal, class: "form-input" %>
+      <%= f.text_field :codigo_postal,
+                       class: "form-input #{'form-input--error' if trabajador.errors[:codigo_postal].any?}",
+                       inputmode: "numeric",
+                       maxlength: 5 %>
+      <% if trabajador.errors[:codigo_postal].any? %>
+        <small class="field-error"><%= trabajador.errors[:codigo_postal].first %></small>
+      <% end %>
     </div>
 
     <div class="form-field">
@@ -79,12 +143,21 @@
       <%= f.select :estado_trabajador,
                    Trabajador.estado_trabajadores.keys.map { |valor| [valor.humanize, valor] },
                    {},
-                   class: "form-input" %>
+                   class: "form-input #{'form-input--error' if trabajador.errors[:estado_trabajador].any?}" %>
+      <% if trabajador.errors[:estado_trabajador].any? %>
+        <small class="field-error"><%= trabajador.errors[:estado_trabajador].first %></small>
+      <% end %>
     </div>
 
     <div class="form-field">
       <%= f.label :salario_neto, "Salario neto" %>
-      <%= f.number_field :salario_neto, step: "0.01", min: "0", class: "form-input" %>
+      <%= f.number_field :salario_neto,
+                         step: "0.01",
+                         min: "0.01",
+                         class: "form-input #{'form-input--error' if trabajador.errors[:salario_neto].any?}" %>
+      <% if trabajador.errors[:salario_neto].any? %>
+        <small class="field-error"><%= trabajador.errors[:salario_neto].first %></small>
+      <% end %>
     </div>
 
     <div class="form-field">
@@ -92,7 +165,10 @@
       <%= f.select :periodicidad_pago,
                    Trabajador.periodicidad_pagos.keys.map { |valor| [valor.humanize, valor] },
                    { prompt: "Selecciona una opción" },
-                   class: "form-input" %>
+                   class: "form-input #{'form-input--error' if trabajador.errors[:periodicidad_pago].any?}" %>
+      <% if trabajador.errors[:periodicidad_pago].any? %>
+        <small class="field-error"><%= trabajador.errors[:periodicidad_pago].first %></small>
+      <% end %>
     </div>
 
     <div class="form-field">
@@ -100,12 +176,24 @@
       <%= f.select :concepto07_nivel_id,
                    conceptos07.map { |concepto| ["#{concepto.clave} - #{concepto.nombre}", concepto.id] },
                    { prompt: "Selecciona un concepto" },
-                   class: "form-input" %>
+                   class: "form-input #{'form-input--error' if trabajador.errors[:concepto07_nivel].any? || trabajador.errors[:concepto07_nivel_id].any?}" %>
+      <% if trabajador.errors[:concepto07_nivel].any? %>
+        <small class="field-error"><%= trabajador.errors[:concepto07_nivel].first %></small>
+      <% elsif trabajador.errors[:concepto07_nivel_id].any? %>
+        <small class="field-error"><%= trabajador.errors[:concepto07_nivel_id].first %></small>
+      <% end %>
     </div>
 
     <div class="form-field form-field--full">
       <%= f.label :direccion, "Dirección" %>
-      <%= f.text_area :direccion, class: "form-input form-textarea", rows: 4 %>
+      <%= f.text_area :direccion,
+                      class: "form-input form-textarea #{'form-input--error' if trabajador.errors[:direccion].any?}",
+                      rows: 4,
+                      minlength: 10,
+                      maxlength: 255 %>
+      <% if trabajador.errors[:direccion].any? %>
+        <small class="field-error"><%= trabajador.errors[:direccion].first %></small>
+      <% end %>
     </div>
   </div>
 

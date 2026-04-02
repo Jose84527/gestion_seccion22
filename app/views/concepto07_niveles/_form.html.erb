@@ -1,0 +1,64 @@
+<%= form_with model: concepto07_nivel, class: "formulario-base" do |f| %>
+  <% if concepto07_nivel.errors.any? %>
+    <div class="form-errors">
+      <strong>No se pudo guardar el concepto 07:</strong>
+      <ul>
+        <% concepto07_nivel.errors.full_messages.each do |mensaje| %>
+          <li><%= mensaje %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-grid form-grid--dos-columnas">
+    <div class="form-field">
+      <%= f.label :clave, "Clave" %>
+      <%= f.text_field :clave,
+                       class: "form-input #{'form-input--error' if concepto07_nivel.errors[:clave].any?}",
+                       minlength: 2,
+                       maxlength: 20 %>
+      <% if concepto07_nivel.errors[:clave].any? %>
+        <small class="field-error"><%= concepto07_nivel.errors[:clave].first %></small>
+      <% end %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :nombre, "Nombre" %>
+      <%= f.text_field :nombre,
+                       class: "form-input #{'form-input--error' if concepto07_nivel.errors[:nombre].any?}",
+                       minlength: 3,
+                       maxlength: 100 %>
+      <% if concepto07_nivel.errors[:nombre].any? %>
+        <small class="field-error"><%= concepto07_nivel.errors[:nombre].first %></small>
+      <% end %>
+    </div>
+
+    <div class="form-field form-field--full">
+      <%= f.label :descripcion, "Descripción" %>
+      <%= f.text_area :descripcion,
+                      class: "form-input form-textarea #{'form-input--error' if concepto07_nivel.errors[:descripcion].any?}",
+                      rows: 4,
+                      minlength: 5,
+                      maxlength: 255 %>
+      <% if concepto07_nivel.errors[:descripcion].any? %>
+        <small class="field-error"><%= concepto07_nivel.errors[:descripcion].first %></small>
+      <% end %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :activo, "Estado" %>
+      <%= f.select :activo,
+                   [["Activo", true], ["Inactivo", false]],
+                   {},
+                   class: "form-input #{'form-input--error' if concepto07_nivel.errors[:activo].any?}" %>
+      <% if concepto07_nivel.errors[:activo].any? %>
+        <small class="field-error"><%= concepto07_nivel.errors[:activo].first %></small>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <%= link_to "Cancelar", concepto07_niveles_path, class: "button button--ghost" %>
+    <%= f.submit concepto07_nivel.persisted? ? "Actualizar concepto" : "Guardar concepto", class: "button button--primary" %>
+  </div>
+<% end %>
