@@ -1,12 +1,13 @@
-<% content_for :title, "Editing usuario" %>
+<% content_for :title, "Editar usuario" %>
+<% content_for :page_title, "Editar usuario" %>
 
-<h1>Editing usuario</h1>
+<section class="usuarios-page">
+  <div class="panel">
+    <div class="panel__header">
+      <h3>Editar usuario del sistema</h3>
+      <%= link_to "Volver", usuarios_path, class: "button button--ghost" %>
+    </div>
 
-<%= render "form", usuario: @usuario %>
-
-<br>
-
-<div>
-  <%= link_to "Show this usuario", @usuario %> |
-  <%= link_to "Back to usuarios", usuarios_path %>
-</div>
+    <%= render "form", usuario: @usuario %>
+  </div>
+</section>

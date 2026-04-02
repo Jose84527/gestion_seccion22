@@ -1,37 +1,250 @@
-<%= form_with(model: usuario) do |form| %>
+<%= form_with model: usuario,
+              class: "formulario-base",
+              data: { turbo: false },
+              novalidate: true do |f| %>
   <% if usuario.errors.any? %>
-    <div style="color: red">
-      <h2><%= pluralize(usuario.errors.count, "error") %> prohibited this usuario from being saved:</h2>
-
+    <div class="form-errors">
+      <strong>No se pudo guardar el usuario:</strong>
       <ul>
-        <% usuario.errors.each do |error| %>
-          <li><%= error.full_message %></li>
+        <% usuario.errors.full_messages.each do |mensaje| %>
+          <li><%= mensaje %></li>
         <% end %>
       </ul>
     </div>
   <% end %>
 
-  <div>
-    <%= form.label :nombre_completo, style: "display: block" %>
-    <%= form.text_field :nombre_completo %>
+  <% if usuario.persisted? %>
+    <div class="trabajador-selector__selected trabajador-selector__selected--readonly">
+      <div>
+        <span class="trabajador-selector__selected-label">Trabajador asociado</span>
+        <span class="trabajador-selector__selected-value">
+          <%= usuario.trabajador.present? ? "#{usuario.trabajador.nombre_completo} · #{usuario.trabajador.rfc} · #{usuario.trabajador.clave_cobro}" : "Sin trabajador asociado" %>
+        </span>
+      </div>
+    </div>
+  <% else %>
+    <div class="trabajador-selector"
+         data-controller="trabajador-selector"
+         data-trabajador-selector-url-value="<%= buscar_trabajadores_usuarios_path %>">
+      <%= f.hidden_field :trabajador_id, data: { trabajador_selector_target: "hiddenInput" } %>
+
+      <div class="form-field form-field--full">
+        <%= label_tag :buscar_trabajador_query, "Buscar trabajador" %>
+        <%= text_field_tag :buscar_trabajador_query,
+                           nil,
+                           class: "form-input #{'form-input--error' if usuario.errors[:trabajador].any? || usuario.errors[:trabajador_id].any?}",
+                           placeholder: "Escribe nombre, apellido, RFC o clave de cobro",
+                           autocomplete: "off",
+                           data: {
+                             action: "input->trabajador-selector#search",
+                             trabajador_selector_target: "query"
+                           } %>
+
+        <% if usuario.errors[:trabajador].any? %>
+          <small class="field-error"><%= usuario.errors[:trabajador].first %></small>
+        <% elsif usuario.errors[:trabajador_id].any? %>
+          <small class="field-error"><%= usuario.errors[:trabajador_id].first %></small>
+        <% else %>
+          <small class="helper-text">Escribe al menos 2 caracteres para buscar trabajadores disponibles.</small>
+        <% end %>
+      </div>
+
+      <div class="trabajador-selector__results"
+           data-trabajador-selector-target="results"
+           hidden></div>
+
+      <div class="trabajador-selector__selected"
+           data-trabajador-selector-target="selectedBox"
+           <%= "hidden" unless usuario.trabajador.present? %>>
+        <div>
+          <span class="trabajador-selector__selected-label">Trabajador seleccionado</span>
+          <span class="trabajador-selector__selected-value"
+                data-trabajador-selector-target="selectedText">
+            <%= usuario.trabajador.present? ? "#{usuario.trabajador.nombre_completo} · #{usuario.trabajador.rfc} · #{usuario.trabajador.clave_cobro}" : "" %>
+          </span>
+        </div>
+
+        <button type="button"
+                class="button button--ghost"
+                data-action="click->trabajador-selector#clearSelection">
+          Cambiar trabajador
+        </button>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="form-grid form-grid--dos-columnas">
+    <div class="form-field">
+      <%= f.label :nombre_usuario, "Nombre de usuario" %>
+      <%= f.text_field :nombre_usuario,
+                       class: "form-input #{'form-input--error' if usuario.errors[:nombre_usuario].any?}",
+                       minlength: 3,
+                       maxlength: 30,
+                       autocomplete: "username" %>
+      <% if usuario.errors[:nombre_usuario].any? %>
+        <small class="field-error"><%= usuario.errors[:nombre_usuario].first %></small>
+      <% else %>
+        <small class="helper-text">Usa letras minúsculas, números, punto, guion o guion bajo.</small>
+      <% end %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :rol_sistema, "Rol del sistema" %>
+      <%= f.select :rol_sistema,
+                   Usuario::ROLES_SISTEMA.map { |rol| [rol.humanize, rol] },
+                   {},
+                   class: "form-input #{'form-input--error' if usuario.errors[:rol_sistema].any?}" %>
+      <% if usuario.errors[:rol_sistema].any? %>
+        <small class="field-error"><%= usuario.errors[:rol_sistema].first %></small>
+      <% end %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :activo, "Estado de la cuenta" %>
+      <%= f.select :activo,
+                   [["Activa", true], ["Inactiva", false]],
+                   {},
+                   class: "form-input #{'form-input--error' if usuario.errors[:activo].any?}" %>
+      <% if usuario.errors[:activo].any? %>
+        <small class="field-error"><%= usuario.errors[:activo].first %></small>
+      <% end %>
+    </div>
+
+    <div class="form-field" data-controller="password-toggle">
+      <%= f.label :password, usuario.persisted? ? "Nueva contraseña" : "Contraseña" %>
+
+      <div class="password-field">
+        <%= f.password_field :password,
+                             class: "form-input form-input--with-action #{'form-input--error' if usuario.errors[:password].any?}",
+                             minlength: 6,
+                             maxlength: 72,
+                             autocomplete: "new-password",
+                             data: { "password-toggle-target": "input" } %>
+
+        <button
+          type="button"
+          class="password-field__toggle"
+          data-action="click->password-toggle#toggle"
+          aria-label="Mostrar contraseña"
+        >
+          <svg
+            data-password-toggle-target="visibleIcon"
+            class="password-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+
+          <svg
+            data-password-toggle-target="hiddenIcon"
+            class="password-icon is-hidden"
+            xmlns="http://www.w3.org/2000/svg"
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m3 3 18 18" />
+            <path d="M10.585 10.587A2 2 0 0 0 12 14a2 2 0 0 0 1.414-.586" />
+            <path d="M9.363 5.365A10.77 10.77 0 0 1 12 5c4.29 0 8.007 2.493 9.938 6.108a1 1 0 0 1 0 .784 10.83 10.83 0 0 1-4.338 4.774" />
+            <path d="M6.228 6.233A10.83 10.83 0 0 0 2.062 11.108a1 1 0 0 0 0 .784C3.992 15.507 7.71 18 12 18c1.772 0 3.45-.425 4.938-1.178" />
+          </svg>
+
+          <span class="sr-only" data-password-toggle-target="label">Mostrar contraseña</span>
+        </button>
+      </div>
+
+      <% if usuario.errors[:password].any? %>
+        <small class="field-error"><%= usuario.errors[:password].first %></small>
+      <% elsif usuario.persisted? %>
+        <small class="helper-text">Déjala en blanco si no deseas cambiarla.</small>
+      <% else %>
+        <small class="helper-text">Debe tener al menos 6 caracteres.</small>
+      <% end %>
+    </div>
+
+    <div class="form-field" data-controller="password-toggle">
+      <%= f.label :password_confirmation, usuario.persisted? ? "Confirmar nueva contraseña" : "Confirmar contraseña" %>
+
+      <div class="password-field">
+        <%= f.password_field :password_confirmation,
+                             class: "form-input form-input--with-action #{'form-input--error' if usuario.errors[:password_confirmation].any?}",
+                             minlength: 6,
+                             maxlength: 72,
+                             autocomplete: "new-password",
+                             data: { "password-toggle-target": "input" } %>
+
+        <button
+          type="button"
+          class="password-field__toggle"
+          data-action="click->password-toggle#toggle"
+          aria-label="Mostrar contraseña"
+        >
+          <svg
+            data-password-toggle-target="visibleIcon"
+            class="password-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+
+          <svg
+            data-password-toggle-target="hiddenIcon"
+            class="password-icon is-hidden"
+            xmlns="http://www.w3.org/2000/svg"
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m3 3 18 18" />
+            <path d="M10.585 10.587A2 2 0 0 0 12 14a2 2 0 0 0 1.414-.586" />
+            <path d="M9.363 5.365A10.77 10.77 0 0 1 12 5c4.29 0 8.007 2.493 9.938 6.108a1 1 0 0 1 0 .784 10.83 10.83 0 0 1-4.338 4.774" />
+            <path d="M6.228 6.233A10.83 10.83 0 0 0 2.062 11.108a1 1 0 0 0 0 .784C3.992 15.507 7.71 18 12 18c1.772 0 3.45-.425 4.938-1.178" />
+          </svg>
+
+          <span class="sr-only" data-password-toggle-target="label">Mostrar contraseña</span>
+        </button>
+      </div>
+
+      <% if usuario.errors[:password_confirmation].any? %>
+        <small class="field-error"><%= usuario.errors[:password_confirmation].first %></small>
+      <% end %>
+    </div>
   </div>
 
-  <div>
-    <%= form.label :username, style: "display: block" %>
-    <%= form.text_field :username %>
-  </div>
+  <div class="form-actions">
+    <%= link_to "Cancelar", usuarios_path, class: "button button--ghost" %>
 
-  <div>
-    <%= form.label :email, style: "display: block" %>
-    <%= form.text_field :email %>
-  </div>
-
-  <div>
-    <%= form.label :password_digest, style: "display: block" %>
-    <%= form.text_field :password_digest %>
-  </div>
-
-  <div>
-    <%= form.submit %>
+    <%= f.submit usuario.persisted? ? "Actualizar usuario" : "Guardar usuario",
+                 class: "button button--primary",
+                 data: (usuario.persisted? ? {} : { trabajador_selector_target: "submit" }),
+                 disabled: (!usuario.persisted? && usuario.trabajador.blank?) %>
   </div>
 <% end %>

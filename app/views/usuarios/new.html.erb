@@ -1,49 +1,13 @@
-<div class="container">
-  <h1>Crear Cuenta</h1>
+<% content_for :title, "Nuevo usuario" %>
+<% content_for :page_title, "Nuevo usuario" %>
 
-  <% if @usuario.errors.any? %>
-    <div style="background-color: #ffe6e6; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-      <h4 style="color: red;">Errores:</h4>
-      <ul>
-        <% @usuario.errors.full_messages.each do |mensaje| %>
-          <li><%= mensaje %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
-  <%= form_with model: @usuario do |f| %>
-
-    <div>
-      <%= f.label :nombre_completo, "Nombre completo" %>
-      <%= f.text_field :nombre_completo %>
+<section class="usuarios-page">
+  <div class="panel">
+    <div class="panel__header">
+      <h3>Registrar usuario del sistema</h3>
+      <%= link_to "Volver", usuarios_path, class: "button button--ghost" %>
     </div>
 
-    <div>
-      <%= f.label :username, "Usuario" %>
-      <%= f.text_field :username %>
-    </div>
-
-    <div>
-      <%= f.label :email, "Correo electrónico" %>
-      <%= f.email_field :email %>
-    </div>
-
-    <div>
-      <%= f.label :password, "Contraseña" %>
-      <%= f.password_field :password %>
-    </div>
-
-    <div>
-      <%= f.label :password_confirmation, "Confirmar contraseña" %>
-      <%= f.password_field :password_confirmation %>
-    </div>
-
-    <%= f.submit "Registrarse" %>
-
-  <% end %>
-
-  <div class="text-center">
-    <p>¿Ya tienes cuenta?</p>
-    <%= link_to "Iniciar sesión", login_path %>
+    <%= render "form", usuario: @usuario %>
   </div>
-</div>
+</section>

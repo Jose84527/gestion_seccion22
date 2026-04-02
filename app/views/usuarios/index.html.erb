@@ -1,16 +1,53 @@
-<p style="color: green"><%= notice %></p>
-
 <% content_for :title, "Usuarios" %>
+<% content_for :page_title, "Usuarios del sistema" %>
 
-<h1>Usuarios</h1>
+<section class="usuarios-page">
+  <div class="panel">
+    <div class="panel__header">
+      <h3>Usuarios del sistema</h3>
+      <%= link_to "Nuevo usuario", new_usuario_path, class: "button button--primary" %>
+    </div>
 
-<div id="usuarios">
-  <% @usuarios.each do |usuario| %>
-    <%= render usuario %>
-    <p>
-      <%= link_to "Show this usuario", usuario %>
-    </p>
-  <% end %>
-</div>
+    <% if @usuarios.any? %>
+      <div class="tabla-wrapper">
+        <table class="tabla-base">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Trabajador asociado</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
 
-<%= link_to "New usuario", new_usuario_path %>
+          <tbody>
+            <% @usuarios.each do |usuario| %>
+              <tr>
+                <td><%= usuario.nombre_usuario %></td>
+                <td><%= usuario.trabajador&.nombre_completo || "-" %></td>
+                <td>
+                  <span class="rol-badge rol-badge--<%= usuario.rol_sistema %>">
+                    <%= usuario.rol_sistema.humanize %>
+                  </span>
+                </td>
+                <td>
+                  <span class="estado-badge <%= usuario.activo? ? 'estado-badge--activo' : 'estado-badge--inactivo' %>">
+                    <%= usuario.activo? ? "Activa" : "Inactiva" %>
+                  </span>
+                </td>
+                <td class="tabla-base__acciones">
+                  <%= link_to "Editar", edit_usuario_path(usuario), class: "button button--ghost" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        Aún no hay usuarios del sistema registrados.
+      </div>
+    <% end %>
+  </div>
+</section>

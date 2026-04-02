@@ -2,6 +2,7 @@ class Trabajador < ApplicationRecord
   self.table_name = "trabajadores"
 
   belongs_to :concepto07_nivel
+  has_one :usuario, dependent: :restrict_with_exception
 
   enum :sexo,
        {
