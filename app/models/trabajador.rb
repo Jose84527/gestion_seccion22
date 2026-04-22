@@ -1,6 +1,9 @@
 class Trabajador < ApplicationRecord
   self.table_name = "trabajadores"
 
+  CT_FIJO = "20DIT0002N".freeze
+  TIPOS_TRABAJADOR = %w[docente administrativo].freeze
+
   belongs_to :concepto07_nivel
   has_one :usuario, dependent: :restrict_with_exception
 
@@ -8,6 +11,12 @@ class Trabajador < ApplicationRecord
        {
          hombre: "h",
          mujer: "m"
+       }
+
+  enum :tipo_trabajador,
+       {
+         docente: "docente",
+         administrativo: "administrativo"
        }
 
   enum :estado_trabajador,
@@ -23,9 +32,11 @@ class Trabajador < ApplicationRecord
          semanal: "semanal",
          quincenal: "quincenal",
          mensual: "mensual"
-       }
+       },
+       default: :quincenal
 
   before_validation :normalizar_cadenas
+  before_validation :aplicar_valores_fijos
 
   scope :ordenados, -> { order(:apellido_paterno, :apellido_materno, :nombres) }
 
@@ -51,6 +62,18 @@ class Trabajador < ApplicationRecord
     where(estado_trabajador: estado)
   }
 
+  scope :filtrar_por_sexo, lambda { |sexo|
+    return all if sexo.blank?
+
+    where(sexo: sexo)
+  }
+
+  scope :filtrar_por_tipo_trabajador, lambda { |tipo_trabajador|
+    return all if tipo_trabajador.blank?
+
+    where(tipo_trabajador: tipo_trabajador)
+  }
+
   validates :nombres,
             presence: { message: "es obligatorio" },
             length: { minimum: 3, message: "debe tener al menos 3 caracteres" }
@@ -67,7 +90,11 @@ class Trabajador < ApplicationRecord
             presence: { message: "es obligatorio" },
             inclusion: { in: sexos.keys, message: "no es válido" }
 
-  validates :fecha_afiliacion,
+  validates :tipo_trabajador,
+            presence: { message: "es obligatorio" },
+            inclusion: { in: TIPOS_TRABAJADOR, message: "no es válido" }
+
+  validates :fecha_ingreso,
             presence: { message: "es obligatoria" }
 
   validates :rfc,
@@ -86,10 +113,6 @@ class Trabajador < ApplicationRecord
             presence: { message: "es obligatoria" },
             uniqueness: { case_sensitive: false, message: "ya está registrada" },
             length: { minimum: 3, message: "debe tener al menos 3 caracteres" }
-
-  validates :ct,
-            length: { minimum: 2, message: "debe tener al menos 2 caracteres" },
-            allow_blank: true
 
   validates :telefono,
             format: { with: /\A\d{10}\z/, message: "debe tener 10 dígitos" },
@@ -115,14 +138,13 @@ class Trabajador < ApplicationRecord
             presence: { message: "es obligatoria" },
             inclusion: { in: periodicidad_pagos.keys, message: "no es válida" }
 
-  validates :salario_neto,
-            presence: { message: "es obligatorio" },
-            numericality: { greater_than: 0, message: "debe ser mayor a 0" }
-
-  validates :concepto07_nivel,
+  validates :ct,
             presence: { message: "es obligatorio" }
 
-  validate :fecha_afiliacion_no_puede_ser_futura
+  validates :concepto07_nivel,
+            presence: { message: "es obligatoria" }
+
+  validate :fecha_ingreso_no_puede_ser_futura
 
   def snapshot_para_historial
     {
@@ -131,7 +153,8 @@ class Trabajador < ApplicationRecord
       apellido_paterno: apellido_paterno,
       apellido_materno: apellido_materno,
       sexo: sexo,
-      fecha_afiliacion: fecha_afiliacion,
+      tipo_trabajador: tipo_trabajador,
+      fecha_ingreso: fecha_ingreso,
       rfc: rfc,
       curp: curp,
       clave_cobro: clave_cobro,
@@ -141,16 +164,20 @@ class Trabajador < ApplicationRecord
       direccion: direccion,
       codigo_postal: codigo_postal,
       estado_trabajador: estado_trabajador,
-      salario_neto: salario_neto&.to_s,
       periodicidad_pago: periodicidad_pago,
-      concepto07_nivel_id: concepto07_nivel_id,
-      concepto07_clave: concepto07_nivel&.clave,
-      concepto07_nombre: concepto07_nivel&.nombre
+      categoria_id: concepto07_nivel_id,
+      categoria_clave: concepto07_nivel&.clave,
+      categoria_nombre: concepto07_nivel&.nombre,
+      concepto07: concepto07_nivel&.monto_concepto07&.to_s
     }
   end
 
   def nombre_completo
     [nombres, apellido_paterno, apellido_materno].compact.join(" ")
+  end
+
+  def concepto07_monto
+    concepto07_nivel&.monto_concepto07
   end
 
   private
@@ -162,21 +189,26 @@ class Trabajador < ApplicationRecord
     self.rfc = rfc.to_s.strip.upcase
     self.curp = curp.to_s.strip.upcase
     self.clave_cobro = clave_cobro.to_s.strip.upcase
-    self.ct = ct.to_s.strip.upcase.presence
     self.correo = correo.to_s.strip.downcase.presence
     self.telefono = telefono.to_s.gsub(/\D/, "").presence
     self.direccion = direccion.to_s.strip.presence
     self.codigo_postal = codigo_postal.to_s.gsub(/\D/, "").presence
   end
 
+  def aplicar_valores_fijos
+    self.ct = CT_FIJO
+    self.estado_trabajador = "activo" if estado_trabajador.blank?
+    self.periodicidad_pago = "quincenal" if periodicidad_pago.blank?
+  end
+
   def normalizar_texto(valor)
     valor.to_s.strip.gsub(/\s+/, " ").presence
   end
 
-  def fecha_afiliacion_no_puede_ser_futura
-    return if fecha_afiliacion.blank?
-    return unless fecha_afiliacion > Date.current
+  def fecha_ingreso_no_puede_ser_futura
+    return if fecha_ingreso.blank?
+    return unless fecha_ingreso > Date.current
 
-    errors.add(:fecha_afiliacion, "no puede ser futura")
+    errors.add(:fecha_ingreso, "no puede ser futura")
   end
 end

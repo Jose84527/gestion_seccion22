@@ -1259,3 +1259,26 @@ button {
   }
 }
 
+
+.tabla-acciones-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tabla-acciones-vertical__links {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.estado-inline-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.form-input--small {
+  min-width: 150px;
+}

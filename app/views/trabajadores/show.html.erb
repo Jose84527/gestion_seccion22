@@ -37,8 +37,13 @@
       </div>
 
       <div class="detalle-item">
-        <span class="detalle-item__label">Fecha de afiliación</span>
-        <strong><%= @trabajador.fecha_afiliacion.strftime("%d/%m/%Y") %></strong>
+        <span class="detalle-item__label">Tipo de trabajador</span>
+        <strong><%= @trabajador.tipo_trabajador&.humanize || "-" %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Fecha de ingreso</span>
+        <strong><%= @trabajador.fecha_ingreso.strftime("%d/%m/%Y") %></strong>
       </div>
 
       <div class="detalle-item">
@@ -58,7 +63,7 @@
 
       <div class="detalle-item">
         <span class="detalle-item__label">CT</span>
-        <strong><%= @trabajador.ct.presence || "-" %></strong>
+        <strong><%= @trabajador.ct %></strong>
       </div>
 
       <div class="detalle-item">
@@ -86,18 +91,18 @@
       </div>
 
       <div class="detalle-item">
-        <span class="detalle-item__label">Salario neto</span>
-        <strong><%= number_to_currency(@trabajador.salario_neto) %></strong>
+        <span class="detalle-item__label">Periodicidad de pago</span>
+        <strong>Quincenal</strong>
       </div>
 
       <div class="detalle-item">
-        <span class="detalle-item__label">Periodicidad de pago</span>
-        <strong><%= @trabajador.periodicidad_pago.humanize %></strong>
+        <span class="detalle-item__label">Categoría</span>
+        <strong><%= @trabajador.concepto07_nivel&.nombre || "-" %></strong>
       </div>
 
       <div class="detalle-item">
         <span class="detalle-item__label">Concepto 07</span>
-        <strong><%= "#{@trabajador.concepto07_nivel.clave} - #{@trabajador.concepto07_nivel.nombre}" %></strong>
+        <strong><%= @trabajador.concepto07_monto.present? ? number_to_currency(@trabajador.concepto07_monto) : "-" %></strong>
       </div>
     </div>
 
@@ -106,32 +111,4 @@
       <p><%= @trabajador.direccion.presence || "-" %></p>
     </div>
   </div>
-
-  <% if puede_realizar_accion?(:trabajadores, :editar) %>
-    <div class="panel">
-      <div class="panel__header">
-        <h3>Cambiar estado del trabajador</h3>
-      </div>
-
-      <%= form_with model: @trabajador,
-                    url: cambiar_estado_trabajador_path(@trabajador),
-                    method: :patch,
-                    local: true,
-                    class: "formulario-estado" do |f| %>
-        <div class="formulario-estado__grid">
-          <div class="form-field">
-            <%= f.label :estado_trabajador, "Nuevo estado" %>
-            <%= f.select :estado_trabajador,
-                         Trabajador.estado_trabajadores.keys.map { |valor| [valor.humanize, valor] },
-                         {},
-                         class: "form-input" %>
-          </div>
-        </div>
-
-        <div class="form-actions">
-          <%= f.submit "Actualizar estado", class: "button button--primary" %>
-        </div>
-      <% end %>
-    </div>
-  <% end %>
 </section>

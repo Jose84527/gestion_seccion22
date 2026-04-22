@@ -1,4 +1,7 @@
-<%= form_with model: trabajador, class: "formulario-base" do |f| %>
+<%= form_with model: trabajador,
+              class: "formulario-base",
+              data: { controller: "categoria-selector" },
+              novalidate: true do |f| %>
   <% if trabajador.errors.any? %>
     <div class="form-errors">
       <strong>No se pudo guardar el trabajador:</strong>
@@ -56,12 +59,23 @@
     </div>
 
     <div class="form-field">
-      <%= f.label :fecha_afiliacion, "Fecha de afiliación" %>
-      <%= f.date_field :fecha_afiliacion,
-                       class: "form-input #{'form-input--error' if trabajador.errors[:fecha_afiliacion].any?}",
+      <%= f.label :tipo_trabajador, "Tipo de trabajador" %>
+      <%= f.select :tipo_trabajador,
+                   Trabajador::TIPOS_TRABAJADOR.map { |valor| [valor.humanize, valor] },
+                   { prompt: "Selecciona una opción" },
+                   class: "form-input #{'form-input--error' if trabajador.errors[:tipo_trabajador].any?}" %>
+      <% if trabajador.errors[:tipo_trabajador].any? %>
+        <small class="field-error"><%= trabajador.errors[:tipo_trabajador].first %></small>
+      <% end %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :fecha_ingreso, "Fecha de ingreso" %>
+      <%= f.date_field :fecha_ingreso,
+                       class: "form-input #{'form-input--error' if trabajador.errors[:fecha_ingreso].any?}",
                        max: Date.current %>
-      <% if trabajador.errors[:fecha_afiliacion].any? %>
-        <small class="field-error"><%= trabajador.errors[:fecha_afiliacion].first %></small>
+      <% if trabajador.errors[:fecha_ingreso].any? %>
+        <small class="field-error"><%= trabajador.errors[:fecha_ingreso].first %></small>
       <% end %>
     </div>
 
@@ -97,13 +111,9 @@
     </div>
 
     <div class="form-field">
-      <%= f.label :ct, "CT" %>
-      <%= f.text_field :ct,
-                       class: "form-input #{'form-input--error' if trabajador.errors[:ct].any?}",
-                       maxlength: 30 %>
-      <% if trabajador.errors[:ct].any? %>
-        <small class="field-error"><%= trabajador.errors[:ct].first %></small>
-      <% end %>
+      <label>CT</label>
+      <input type="text" class="form-input" value="<%= Trabajador::CT_FIJO %>" disabled>
+      <small class="helper-text">Dato fijo para todos los trabajadores.</small>
     </div>
 
     <div class="form-field">
@@ -138,50 +148,60 @@
       <% end %>
     </div>
 
-    <div class="form-field">
-      <%= f.label :estado_trabajador, "Estado del trabajador" %>
-      <%= f.select :estado_trabajador,
-                   Trabajador.estado_trabajadores.keys.map { |valor| [valor.humanize, valor] },
-                   {},
-                   class: "form-input #{'form-input--error' if trabajador.errors[:estado_trabajador].any?}" %>
-      <% if trabajador.errors[:estado_trabajador].any? %>
-        <small class="field-error"><%= trabajador.errors[:estado_trabajador].first %></small>
-      <% end %>
-    </div>
+    <% if trabajador.persisted? %>
+      <div class="form-field">
+        <%= f.label :estado_trabajador, "Estado del trabajador" %>
+        <%= f.select :estado_trabajador,
+                     Trabajador.estado_trabajadores.keys.map { |valor| [valor.humanize, valor] },
+                     {},
+                     class: "form-input #{'form-input--error' if trabajador.errors[:estado_trabajador].any?}" %>
+        <% if trabajador.errors[:estado_trabajador].any? %>
+          <small class="field-error"><%= trabajador.errors[:estado_trabajador].first %></small>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="form-field">
+        <label>Estado del trabajador</label>
+        <input type="text" class="form-input" value="Activo" disabled>
+        <small class="helper-text">Al registrar un trabajador se crea con estado activo.</small>
+      </div>
+    <% end %>
 
     <div class="form-field">
-      <%= f.label :salario_neto, "Salario neto" %>
-      <%= f.number_field :salario_neto,
-                         step: "0.01",
-                         min: "0.01",
-                         class: "form-input #{'form-input--error' if trabajador.errors[:salario_neto].any?}" %>
-      <% if trabajador.errors[:salario_neto].any? %>
-        <small class="field-error"><%= trabajador.errors[:salario_neto].first %></small>
-      <% end %>
-    </div>
-
-    <div class="form-field">
-      <%= f.label :periodicidad_pago, "Periodicidad de pago" %>
-      <%= f.select :periodicidad_pago,
-                   Trabajador.periodicidad_pagos.keys.map { |valor| [valor.humanize, valor] },
-                   { prompt: "Selecciona una opción" },
-                   class: "form-input #{'form-input--error' if trabajador.errors[:periodicidad_pago].any?}" %>
-      <% if trabajador.errors[:periodicidad_pago].any? %>
-        <small class="field-error"><%= trabajador.errors[:periodicidad_pago].first %></small>
-      <% end %>
-    </div>
-
-    <div class="form-field">
-      <%= f.label :concepto07_nivel_id, "Concepto 07" %>
+      <%= f.label :concepto07_nivel_id, "Categoría" %>
       <%= f.select :concepto07_nivel_id,
-                   conceptos07.map { |concepto| ["#{concepto.clave} - #{concepto.nombre}", concepto.id] },
-                   { prompt: "Selecciona un concepto" },
-                   class: "form-input #{'form-input--error' if trabajador.errors[:concepto07_nivel].any? || trabajador.errors[:concepto07_nivel_id].any?}" %>
+                   options_for_select(
+                     categorias.map { |categoria| ["#{categoria.nombre} (#{categoria.clave})", categoria.id, { data: { monto: categoria.monto_concepto07 } }] },
+                     trabajador.concepto07_nivel_id
+                   ),
+                   { prompt: "Selecciona una categoría" },
+                   class: "form-input #{'form-input--error' if trabajador.errors[:concepto07_nivel].any? || trabajador.errors[:concepto07_nivel_id].any?}",
+                   data: {
+                     action: "change->categoria-selector#actualizarMonto",
+                     categoria_selector_target: "select"
+                   } %>
       <% if trabajador.errors[:concepto07_nivel].any? %>
         <small class="field-error"><%= trabajador.errors[:concepto07_nivel].first %></small>
       <% elsif trabajador.errors[:concepto07_nivel_id].any? %>
         <small class="field-error"><%= trabajador.errors[:concepto07_nivel_id].first %></small>
       <% end %>
+    </div>
+
+    <div class="form-field">
+      <label>Concepto 07</label>
+      <input type="text"
+             class="form-input"
+             value="<%= trabajador.concepto07_monto.present? ? number_to_currency(trabajador.concepto07_monto) : '' %>"
+             placeholder="Se llenará automáticamente"
+             readonly
+             data-categoria-selector-target="monto">
+      <small class="helper-text">Se toma automáticamente de la categoría seleccionada.</small>
+    </div>
+
+    <div class="form-field">
+      <label>Periodicidad de pago</label>
+      <input type="text" class="form-input" value="Quincenal" disabled>
+      <small class="helper-text">Dato fijo para todos los trabajadores.</small>
     </div>
 
     <div class="form-field form-field--full">

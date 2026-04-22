@@ -7,9 +7,7 @@ Rails.application.routes.draw do
 
   resources :historiales, only: %i[index show]
 
-  resources :trabajadores, only: %i[index show new create edit update] do
-    patch :cambiar_estado, on: :member
-  end
+  resources :trabajadores, only: %i[index show new create edit update]
 
   resources :usuarios, only: %i[index new create edit update] do
     get :buscar_trabajadores, on: :collection
@@ -20,9 +18,9 @@ Rails.application.routes.draw do
   end
 
   resources :cooperaciones do
-  member do
-    patch :cambiar_estado
-  end
+    member do
+      patch :cambiar_estado
+    end
   end
 
   get "home/index"

@@ -22,10 +22,10 @@
         </div>
 
         <div class="form-field">
-          <label for="concepto07_nivel_id">Concepto 07</label>
+          <label for="concepto07_nivel_id">Categoría</label>
           <%= select_tag :concepto07_nivel_id,
                          options_for_select(
-                           [["Todos", ""]] + @conceptos07.map { |concepto| ["#{concepto.clave} - #{concepto.nombre}", concepto.id] },
+                           [["Todas", ""]] + @categorias.map { |categoria| ["#{categoria.nombre} (#{categoria.clave})", categoria.id] },
                            @concepto07_nivel_id
                          ),
                          class: "form-input" %>
@@ -37,6 +37,26 @@
                          options_for_select(
                            [["Todos", ""]] + Trabajador.estado_trabajadores.keys.map { |valor| [valor.humanize, valor] },
                            @estado_trabajador
+                         ),
+                         class: "form-input" %>
+        </div>
+
+        <div class="form-field">
+          <label for="sexo">Sexo</label>
+          <%= select_tag :sexo,
+                         options_for_select(
+                           [["Todos", ""]] + Trabajador.sexos.keys.map { |valor| [valor.humanize, valor] },
+                           @sexo
+                         ),
+                         class: "form-input" %>
+        </div>
+
+        <div class="form-field">
+          <label for="tipo_trabajador">Tipo de trabajador</label>
+          <%= select_tag :tipo_trabajador,
+                         options_for_select(
+                           [["Todos", ""]] + Trabajador::TIPOS_TRABAJADOR.map { |valor| [valor.humanize, valor] },
+                           @tipo_trabajador
                          ),
                          class: "form-input" %>
         </div>
@@ -62,11 +82,12 @@
           <thead>
             <tr>
               <th>Nombre</th>
+              <th>Sexo</th>
+              <th>Tipo</th>
               <th>RFC</th>
-              <th>CURP</th>
               <th>Clave cobro</th>
               <th>Estado</th>
-              <th>Periodicidad</th>
+              <th>Categoría</th>
               <th>Concepto 07</th>
               <th></th>
             </tr>
@@ -75,19 +96,18 @@
           <tbody>
             <% @trabajadores.each do |trabajador| %>
               <tr>
-                <td>
-                  <%= [
-                    trabajador.nombres,
-                    trabajador.apellido_paterno,
-                    trabajador.apellido_materno
-                  ].compact.join(" ") %>
-                </td>
+                <td><%= trabajador.nombre_completo %></td>
+                <td><%= trabajador.sexo.humanize %></td>
+                <td><%= trabajador.tipo_trabajador&.humanize || "-" %></td>
                 <td><%= trabajador.rfc %></td>
-                <td><%= trabajador.curp %></td>
                 <td><%= trabajador.clave_cobro %></td>
-                <td><span class="estado-badge"><%= trabajador.estado_trabajador.humanize %></span></td>
-                <td><%= trabajador.periodicidad_pago.humanize %></td>
-                <td><%= "#{trabajador.concepto07_nivel.clave} - #{trabajador.concepto07_nivel.nombre}" %></td>
+                <td>
+                  <span class="estado-badge estado-badge--<%= trabajador.estado_trabajador %>">
+                    <%= trabajador.estado_trabajador.humanize %>
+                  </span>
+                </td>
+                <td><%= trabajador.concepto07_nivel&.nombre || "-" %></td>
+                <td><%= trabajador.concepto07_monto.present? ? number_to_currency(trabajador.concepto07_monto) : "-" %></td>
                 <td class="tabla-base__acciones">
                   <%= link_to "Ver", trabajador_path(trabajador), class: "button button--ghost" %>
 
