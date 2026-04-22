@@ -3,7 +3,7 @@ module NavigationHelper
     items = [
     { clave: :dashboard, modulo: :dashboard, etiqueta: "Dashboard SG", icono: "⌂", ruta: menu_path },
     { clave: :trabajadores, modulo: :trabajadores, etiqueta: "Trabajadores", icono: "👥", ruta: trabajadores_path },
-    { clave: :conceptos07, modulo: :conceptos07, etiqueta: "Conceptos 07", icono: "🏷", ruta: concepto07_niveles_path },
+    { clave: :conceptos07, modulo: :conceptos07, etiqueta: "Categorías", icono: "🏷", ruta: concepto07_niveles_path },
     { clave: :cooperaciones, modulo: :cooperaciones, etiqueta: "Cooperaciones", icono: "💰", ruta: cooperaciones_path },
     { clave: :eventos, modulo: :eventos, etiqueta: "Eventos", icono: "📅", ruta: nil },
     { clave: :detalle_evento, modulo: :eventos, etiqueta: "Detalle evento", icono: "📌", ruta: nil },

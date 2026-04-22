@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_22_172318) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_22_214019) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -19,6 +19,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_172318) do
     t.string "clave", null: false
     t.datetime "created_at", null: false
     t.text "descripcion"
+    t.decimal "monto_concepto07", precision: 12, scale: 2, default: "0.0", null: false
     t.string "nombre", null: false
     t.datetime "updated_at", null: false
     t.index ["activo"], name: "index_concepto07_niveles_on_activo"
