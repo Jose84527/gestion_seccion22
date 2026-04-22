@@ -1,0 +1,82 @@
+<% content_for :title, "Detalle de cooperación" %>
+<% content_for :page_title, "Detalle de cooperación" %>
+
+<section class="trabajadores-page">
+  <div class="panel">
+    <div class="panel__header">
+      <h3>Información de la cooperación</h3>
+
+      <div class="acciones-grupo">
+        <%= link_to "Volver", cooperaciones_path, class: "button button--ghost" %>
+
+        <% if puede_realizar_accion?(:cooperaciones, :editar) %>
+          <%= link_to "Editar", edit_cooperacion_path(@cooperacion), class: "button button--primary" %>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="detalle-grid">
+      <div class="detalle-item">
+        <span class="detalle-item__label">Nombre</span>
+        <strong><%= @cooperacion.nombre %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Tipo de cooperación</span>
+        <strong><%= @cooperacion.tipo_cooperacion.humanize %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Periodicidad</span>
+        <strong><%= @cooperacion.periodicidad_generacion.humanize %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Monto fijo base</span>
+        <strong>
+          <%= @cooperacion.monto_fijo_base.present? ? number_to_currency(@cooperacion.monto_fijo_base) : "-" %>
+        </strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Fecha inicio de vigencia</span>
+        <strong><%= @cooperacion.fecha_inicio_vigencia&.strftime("%d/%m/%Y") || "-" %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Fecha fin de vigencia</span>
+        <strong><%= @cooperacion.fecha_fin_vigencia&.strftime("%d/%m/%Y") || "-" %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Recurrente</span>
+        <strong><%= @cooperacion.es_recurrente? ? "Sí" : "No" %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Estado</span>
+        <strong>
+          <span class="estado-badge <%= @cooperacion.activa? ? 'estado-badge--activo' : 'estado-badge--inactivo' %>">
+            <%= @cooperacion.activa? ? "Activa" : "Inactiva" %>
+          </span>
+        </strong>
+      </div>
+    </div>
+
+    <div class="detalle-bloque">
+      <span class="detalle-item__label">Descripción</span>
+      <p><%= @cooperacion.descripcion.presence || "-" %></p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel__header">
+      <h3>Acciones relacionadas</h3>
+    </div>
+
+    <div class="acciones-grupo">
+      <span class="button button--ghost">Configuración por Concepto 07 (fase 2)</span>
+      <span class="button button--ghost">Cooperaciones generadas (fase 3)</span>
+    </div>
+  </div>
+</section>

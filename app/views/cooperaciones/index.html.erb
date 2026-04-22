@@ -1,0 +1,69 @@
+<% content_for :title, "Cooperaciones" %>
+<% content_for :page_title, "Cooperaciones" %>
+
+<section class="catalogo-page">
+  <div class="panel">
+    <div class="panel__header">
+      <h3>Catálogo de cooperaciones</h3>
+
+      <% if puede_realizar_accion?(:cooperaciones, :crear) %>
+        <%= link_to "Nueva cooperación", new_cooperacion_path, class: "button button--primary" %>
+      <% end %>
+    </div>
+
+    <% if @cooperaciones.any? %>
+      <div class="tabla-wrapper">
+        <table class="tabla-base">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Tipo</th>
+              <th>Periodicidad</th>
+              <th>Vigencia</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <% @cooperaciones.each do |cooperacion| %>
+              <tr>
+                <td><%= cooperacion.nombre %></td>
+                <td><%= cooperacion.tipo_cooperacion.humanize %></td>
+                <td><%= cooperacion.periodicidad_generacion.humanize %></td>
+                <td>
+                  <%= cooperacion.fecha_inicio_vigencia&.strftime("%d/%m/%Y") || "-" %>
+                  -
+                  <%= cooperacion.fecha_fin_vigencia&.strftime("%d/%m/%Y") || "-" %>
+                </td>
+                <td>
+                  <span class="estado-badge <%= cooperacion.activa? ? 'estado-badge--activo' : 'estado-badge--inactivo' %>">
+                    <%= cooperacion.activa? ? "Activa" : "Inactiva" %>
+                  </span>
+                </td>
+                <td class="tabla-base__acciones">
+                  <%= link_to "Ver", cooperacion_path(cooperacion), class: "button button--ghost" %>
+
+                  <% if puede_realizar_accion?(:cooperaciones, :editar) %>
+                    <%= link_to "Editar", edit_cooperacion_path(cooperacion), class: "button button--ghost" %>
+
+                    <%= button_to(
+                          cooperacion.activa? ? "Desactivar" : "Activar",
+                          cambiar_estado_cooperacion_path(cooperacion),
+                          method: :patch,
+                          class: "button button--ghost"
+                        ) %>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        Aún no hay cooperaciones registradas.
+      </div>
+    <% end %>
+  </div>
+</section>

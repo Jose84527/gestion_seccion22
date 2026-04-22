@@ -1,0 +1,13 @@
+<% content_for :title, "Editar cooperación" %>
+<% content_for :page_title, "Editar cooperación" %>
+
+<section class="catalogo-page">
+  <div class="panel">
+    <div class="panel__header">
+      <h3>Editar cooperación</h3>
+      <%= link_to "Volver", cooperacion_path(@cooperacion), class: "button button--ghost" %>
+    </div>
+
+    <%= render "form", cooperacion: @cooperacion %>
+  </div>
+</section>

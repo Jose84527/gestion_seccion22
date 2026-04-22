@@ -1,0 +1,13 @@
+<% content_for :title, "Nueva cooperación" %>
+<% content_for :page_title, "Nueva cooperación" %>
+
+<section class="catalogo-page">
+  <div class="panel">
+    <div class="panel__header">
+      <h3>Registrar cooperación</h3>
+      <%= link_to "Volver", cooperaciones_path, class: "button button--ghost" %>
+    </div>
+
+    <%= render "form", cooperacion: @cooperacion %>
+  </div>
+</section>
