@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_02_021948) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_22_172318) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -23,6 +23,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_02_021948) do
     t.datetime "updated_at", null: false
     t.index ["activo"], name: "index_concepto07_niveles_on_activo"
     t.index ["clave"], name: "index_concepto07_niveles_on_clave", unique: true
+  end
+
+  create_table "cooperaciones", force: :cascade do |t|
+    t.boolean "activa", default: true, null: false
+    t.datetime "created_at", null: false
+    t.text "descripcion"
+    t.boolean "es_recurrente", default: false, null: false
+    t.date "fecha_fin_vigencia"
+    t.date "fecha_inicio_vigencia"
+    t.decimal "monto_fijo_base", precision: 12, scale: 2
+    t.string "nombre", null: false
+    t.string "periodicidad_generacion", null: false
+    t.string "tipo_cooperacion", null: false
+    t.datetime "updated_at", null: false
+    t.index ["activa"], name: "index_cooperaciones_on_activa"
+    t.index ["nombre"], name: "index_cooperaciones_on_nombre"
+    t.index ["periodicidad_generacion"], name: "index_cooperaciones_on_periodicidad_generacion"
+    t.index ["tipo_cooperacion"], name: "index_cooperaciones_on_tipo_cooperacion"
   end
 
   create_table "historiales", force: :cascade do |t|

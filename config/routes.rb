@@ -19,6 +19,12 @@ Rails.application.routes.draw do
     patch :cambiar_estado, on: :member
   end
 
+  resources :cooperaciones do
+  member do
+    patch :cambiar_estado
+  end
+  end
+
   get "home/index"
 
   get "up" => "rails/health#show", as: :rails_health_check
