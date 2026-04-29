@@ -1,4 +1,5 @@
 class CooperacionesController < ApplicationController
+  COOPERACIONES_POR_PAGINA = 10
   before_action :autenticar_usuario
 
   before_action -> { requiere_permiso!(:cooperaciones, :ver) },
@@ -41,7 +42,28 @@ class CooperacionesController < ApplicationController
                 ]
 
   def index
-    @cooperaciones = Cooperacion.includes(:cooperacion_conceptos, :cooperacion_condonados).recientes
+    @q = params[:q].to_s.strip
+    @estado = params[:estado].to_s.strip
+
+    base = Cooperacion
+          .includes(:cooperacion_conceptos, :cooperacion_condonados)
+          .buscar_por_nombre(@q)
+          .filtrar_por_estado(@estado)
+          .recientes
+
+    @total_registros = base.count
+    @total_paginas = (@total_registros.to_f / COOPERACIONES_POR_PAGINA).ceil
+    @total_paginas = 1 if @total_paginas.zero?
+
+    @pagina_actual = params[:page].to_i
+    @pagina_actual = 1 if @pagina_actual < 1
+    @pagina_actual = @total_paginas if @pagina_actual > @total_paginas
+
+    offset = (@pagina_actual - 1) * COOPERACIONES_POR_PAGINA
+
+    @cooperaciones = base
+                    .offset(offset)
+                    .limit(COOPERACIONES_POR_PAGINA)
   end
 
   def show

@@ -46,6 +46,20 @@ class Cooperacion < ApplicationRecord
   validate :debe_tener_al_menos_un_concepto
 
   scope :recientes, -> { order(created_at: :desc) }
+    scope :buscar_por_nombre, lambda { |termino|
+    return all if termino.blank?
+
+    termino_limpio = ActiveRecord::Base.sanitize_sql_like(termino.to_s.strip)
+
+    where("nombre ILIKE :q", q: "%#{termino_limpio}%")
+  }
+
+  scope :filtrar_por_estado, lambda { |estado|
+    return all if estado.blank?
+    return all unless ESTADOS.include?(estado)
+
+    where(estado: estado)
+  }
 
   def conceptos_validos
     cooperacion_conceptos.reject(&:marked_for_destruction?)

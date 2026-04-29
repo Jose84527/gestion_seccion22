@@ -16,7 +16,51 @@
       <% end %>
     </div>
 
+    <%= form_with url: cooperaciones_path, method: :get, local: true, class: "filtros-panel" do %>
+      <div class="filtros-grid filtros-grid--cooperaciones">
+        <div class="form-field">
+          <label for="q">Buscar por nombre</label>
+          <%= text_field_tag :q,
+                             @q,
+                             class: "form-input",
+                             placeholder: "Ejemplo: Guelaguetza, mayo, bono..." %>
+        </div>
+
+        <div class="form-field">
+          <label for="estado">Estado</label>
+          <%= select_tag :estado,
+                         options_for_select(
+                           [
+                             ["Todos", ""],
+                             ["Activa", "activa"],
+                             ["Completada", "completada"],
+                             ["Cancelada", "cancelada"]
+                           ],
+                           @estado
+                         ),
+                         class: "form-input" %>
+        </div>
+      </div>
+
+      <div class="filtros-actions">
+        <%= submit_tag "Filtrar", class: "button button--primary" %>
+        <%= link_to "Limpiar", cooperaciones_path, class: "button button--ghost" %>
+      </div>
+    <% end %>
+
     <% if @cooperaciones.any? %>
+      <div class="listado-meta">
+        <span>
+          Mostrando <strong><%= @cooperaciones.size %></strong> de
+          <strong><%= @total_registros %></strong> cooperaciones
+        </span>
+
+        <span>
+          Página <strong><%= @pagina_actual %></strong> de
+          <strong><%= @total_paginas %></strong>
+        </span>
+      </div>
+
       <div class="tabla-wrapper">
         <table class="tabla-base">
           <thead>
@@ -35,43 +79,47 @@
             <% @cooperaciones.each do |cooperacion| %>
               <tr>
                 <td><%= cooperacion.nombre %></td>
+
                 <td>
                   <%= cooperacion.fecha_inicio_vigencia&.strftime("%d/%m/%Y") || "-" %>
                   -
                   <%= cooperacion.fecha_fin_vigencia&.strftime("%d/%m/%Y") || "-" %>
                 </td>
+
                 <td><%= cooperacion.cantidad_conceptos %></td>
+
                 <td><%= cooperacion.cantidad_condonados %></td>
+
                 <td><%= number_to_currency(cooperacion.total_esperado) %></td>
+
                 <td>
                   <span class="estado-badge estado-badge--<%= cooperacion.estado %>">
                     <%= cooperacion.estado.humanize %>
                   </span>
                 </td>
+
                 <td class="tabla-base__acciones">
                   <div class="acciones-grupo">
                     <%= link_to "Ver", cooperacion_path(cooperacion), class: "button button--ghost" %>
 
                     <% if puede_realizar_accion?(:cooperaciones, :editar) && cooperacion.activa? %>
-                      <%= link_to "Editar", edit_cooperacion_path(cooperacion), class: "button button--ghost" %>
+                      <%= link_to "Editar",
+                                  edit_cooperacion_path(cooperacion),
+                                  class: "button button--ghost" %>
 
                       <%= link_to "Confirmar",
                                   confirmacion_cooperacion_path(cooperacion),
                                   class: "button button--primary" %>
 
-                      <%= button_to(
-                            "Cancelar",
-                            cambiar_estado_cooperacion_path(cooperacion),
-                            method: :patch,
-                            class: "button button--ghost"
-                          ) %>
+                      <%= button_to "Cancelar",
+                                    cambiar_estado_cooperacion_path(cooperacion),
+                                    method: :patch,
+                                    class: "button button--ghost" %>
                     <% elsif puede_realizar_accion?(:cooperaciones, :editar) && cooperacion.cancelada? %>
-                      <%= button_to(
-                            "Reactivar",
-                            cambiar_estado_cooperacion_path(cooperacion),
-                            method: :patch,
-                            class: "button button--ghost"
-                          ) %>
+                      <%= button_to "Reactivar",
+                                    cambiar_estado_cooperacion_path(cooperacion),
+                                    method: :patch,
+                                    class: "button button--ghost" %>
                     <% end %>
                   </div>
                 </td>
@@ -80,9 +128,31 @@
           </tbody>
         </table>
       </div>
+
+      <% if @total_paginas > 1 %>
+        <div class="pagination">
+          <% if @pagina_actual > 1 %>
+            <%= link_to "← Anterior",
+                        cooperaciones_path(request.query_parameters.merge(page: @pagina_actual - 1)),
+                        class: "button button--ghost" %>
+          <% end %>
+
+          <% (1..@total_paginas).each do |pagina| %>
+            <%= link_to pagina,
+                        cooperaciones_path(request.query_parameters.merge(page: pagina)),
+                        class: "pagination__link #{'is-active' if pagina == @pagina_actual}" %>
+          <% end %>
+
+          <% if @pagina_actual < @total_paginas %>
+            <%= link_to "Siguiente →",
+                        cooperaciones_path(request.query_parameters.merge(page: @pagina_actual + 1)),
+                        class: "button button--ghost" %>
+          <% end %>
+        </div>
+      <% end %>
     <% else %>
       <div class="empty-state">
-        Aún no hay corridas de cooperación registradas.
+        No se encontraron cooperaciones con los filtros seleccionados.
       </div>
     <% end %>
   </div>
