@@ -1,0 +1,107 @@
+<% content_for :title, "Confirmar cooperación" %>
+<% content_for :page_title, "Confirmar cooperación" %>
+
+<section class="catalogo-page">
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Confirmar cooperación</h3>
+        <p class="panel__description">
+          Sube la lista escaneada y confirma que esta corrida ya fue revisada por Finanzas.
+        </p>
+      </div>
+
+      <%= link_to "Volver", cooperaciones_path, class: "button button--ghost" %>
+    </div>
+
+    <div class="detalle-grid">
+      <div class="detalle-item">
+        <span class="detalle-item__label">Cooperación</span>
+        <strong><%= @cooperacion.nombre %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Estado actual</span>
+        <strong>
+          <span class="estado-badge estado-badge--<%= @cooperacion.estado %>">
+            <%= @cooperacion.estado.humanize %>
+          </span>
+        </strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Fecha inicio</span>
+        <strong><%= @cooperacion.fecha_inicio_vigencia&.strftime("%d/%m/%Y") || "-" %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Fecha fin</span>
+        <strong><%= @cooperacion.fecha_fin_vigencia&.strftime("%d/%m/%Y") || "-" %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Conceptos</span>
+        <strong><%= @cooperacion.cantidad_conceptos %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Condonados</span>
+        <strong><%= @cooperacion.cantidad_condonados %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Total esperado</span>
+        <strong><%= number_to_currency(@total_esperado) %></strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Evidencia de confirmación</h3>
+        <p class="panel__description">
+          El archivo debe ser el PDF escaneado de la lista marcada manualmente.
+        </p>
+      </div>
+    </div>
+
+    <%= form_with url: confirmar_cooperacion_path(@cooperacion),
+                  method: :patch,
+                  local: true,
+                  html: { multipart: true },
+                  class: "formulario-base" do %>
+
+      <div class="form-grid form-grid--dos-columnas">
+        <div class="form-field">
+          <%= label_tag :lista_confirmacion_pdf, "PDF escaneado de lista" %>
+          <%= file_field_tag :lista_confirmacion_pdf,
+                             accept: "application/pdf,.pdf",
+                             class: "form-input" %>
+          <small class="helper-text">
+            Sube el PDF de la lista ya marcada. Este archivo se guardará en Supabase Storage.
+          </small>
+        </div>
+
+        <div class="form-field">
+          <%= label_tag :observaciones_confirmacion, "Observaciones" %>
+          <%= text_area_tag :observaciones_confirmacion,
+                            params[:observaciones_confirmacion],
+                            class: "form-input form-textarea",
+                            rows: 4,
+                            placeholder: "Opcional: agrega notas sobre la confirmación" %>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <%= link_to "Cancelar", cooperaciones_path, class: "button button--ghost" %>
+
+        <%= submit_tag "Confirmar cooperación",
+                       class: "button button--primary",
+                       data: {
+                         turbo_confirm: "¿Confirmas que esta cooperación debe marcarse como completada?"
+                       } %>
+      </div>
+    <% end %>
+  </div>
+</section>

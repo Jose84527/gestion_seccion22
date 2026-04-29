@@ -28,6 +28,12 @@ Rails.application.routes.draw do
     patch :cambiar_estado
     get :pdf_lista_general
     get :pdf_recibos
+    get :confirmacion
+    patch :confirmar
+    get :ver_lista_confirmacion
+
+    get :corregir_evidencia
+    patch :actualizar_evidencia
   end
 end
 

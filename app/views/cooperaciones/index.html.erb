@@ -49,18 +49,31 @@
                   </span>
                 </td>
                 <td class="tabla-base__acciones">
-                  <%= link_to "Ver", cooperacion_path(cooperacion), class: "button button--ghost" %>
+                  <div class="acciones-grupo">
+                    <%= link_to "Ver", cooperacion_path(cooperacion), class: "button button--ghost" %>
 
-                  <% if puede_realizar_accion?(:cooperaciones, :editar) && !cooperacion.completada? %>
-                    <%= link_to "Editar", edit_cooperacion_path(cooperacion), class: "button button--ghost" %>
+                    <% if puede_realizar_accion?(:cooperaciones, :editar) && cooperacion.activa? %>
+                      <%= link_to "Editar", edit_cooperacion_path(cooperacion), class: "button button--ghost" %>
 
-                    <%= button_to(
-                          cooperacion.activa? ? "Cancelar" : "Reactivar",
-                          cambiar_estado_cooperacion_path(cooperacion),
-                          method: :patch,
-                          class: "button button--ghost"
-                        ) %>
-                  <% end %>
+                      <%= link_to "Confirmar",
+                                  confirmacion_cooperacion_path(cooperacion),
+                                  class: "button button--primary" %>
+
+                      <%= button_to(
+                            "Cancelar",
+                            cambiar_estado_cooperacion_path(cooperacion),
+                            method: :patch,
+                            class: "button button--ghost"
+                          ) %>
+                    <% elsif puede_realizar_accion?(:cooperaciones, :editar) && cooperacion.cancelada? %>
+                      <%= button_to(
+                            "Reactivar",
+                            cambiar_estado_cooperacion_path(cooperacion),
+                            method: :patch,
+                            class: "button button--ghost"
+                          ) %>
+                    <% end %>
+                  </div>
                 </td>
               </tr>
             <% end %>

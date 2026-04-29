@@ -1,10 +1,44 @@
 class CooperacionesController < ApplicationController
   before_action :autenticar_usuario
+
   before_action -> { requiere_permiso!(:cooperaciones, :ver) },
-                only: %i[index show buscar_trabajadores pdf_lista_general pdf_recibos]
-  before_action -> { requiere_permiso!(:cooperaciones, :crear) }, only: %i[new create]
-  before_action -> { requiere_permiso!(:cooperaciones, :editar) }, only: %i[edit update cambiar_estado]
-  before_action :set_cooperacion, only: %i[show edit update cambiar_estado pdf_lista_general pdf_recibos]
+                only: %i[
+                  index
+                  show
+                  buscar_trabajadores
+                  pdf_lista_general
+                  pdf_recibos
+                  ver_lista_confirmacion
+                ]
+
+  before_action -> { requiere_permiso!(:cooperaciones, :crear) },
+                only: %i[new create]
+
+  before_action -> { requiere_permiso!(:cooperaciones, :editar) },
+                only: %i[
+                  edit
+                  update
+                  cambiar_estado
+                  confirmacion
+                  confirmar
+                  corregir_evidencia
+                  actualizar_evidencia
+                ]
+
+  before_action :set_cooperacion,
+                only: %i[
+                  show
+                  edit
+                  update
+                  cambiar_estado
+                  pdf_lista_general
+                  pdf_recibos
+                  confirmacion
+                  confirmar
+                  ver_lista_confirmacion
+                  corregir_evidencia
+                  actualizar_evidencia
+                ]
 
   def index
     @cooperaciones = Cooperacion.includes(:cooperacion_conceptos, :cooperacion_condonados).recientes
@@ -56,6 +90,11 @@ class CooperacionesController < ApplicationController
   end
 
   def update
+    if @cooperacion.completada?
+      return redirect_to cooperacion_path(@cooperacion),
+                         alert: "No se puede editar una cooperación completada"
+    end
+
     snapshot_antes = @cooperacion.snapshot_para_historial
 
     if @cooperacion.update(cooperacion_params)
@@ -132,6 +171,159 @@ class CooperacionesController < ApplicationController
               disposition: "inline"
   end
 
+  def confirmacion
+    unless @cooperacion.activa?
+      return redirect_to cooperaciones_path,
+                         alert: "Solo se pueden confirmar cooperaciones activas"
+    end
+
+    @total_esperado = @cooperacion.total_esperado
+  end
+
+  def confirmar
+    unless @cooperacion.activa?
+      return redirect_to cooperaciones_path,
+                         alert: "Solo se pueden confirmar cooperaciones activas"
+    end
+
+    archivo = params[:lista_confirmacion_pdf]
+
+    if archivo.blank?
+      @total_esperado = @cooperacion.total_esperado
+      flash.now[:alert] = "Debes subir el PDF escaneado de la lista de confirmación"
+      return render :confirmacion, status: :unprocessable_entity
+    end
+
+    snapshot_antes = @cooperacion.snapshot_para_historial
+
+    begin
+      nombre_archivo = "lista_confirmacion_#{@cooperacion.nombre}.pdf"
+
+      ruta_pdf = uploader_listas.upload_pdf!(
+        uploaded_file: archivo,
+        folder: "cooperaciones/#{@cooperacion.id}/confirmacion",
+        filename: nombre_archivo
+      )
+
+      @cooperacion.update!(
+        estado: "completada",
+        confirmada_at: Time.current,
+        confirmada_por: usuario_actual,
+        lista_confirmacion_pdf_path: ruta_pdf,
+        observaciones_confirmacion: params[:observaciones_confirmacion].to_s.strip.presence
+      )
+
+      Historiales::Registrador.registrar!(
+        usuario: usuario_actual,
+        accion: "editar",
+        modulo: "cooperaciones",
+        entidad: "Cooperacion",
+        registro_id: @cooperacion.id,
+        resumen: "Se confirmó la cooperación #{@cooperacion.nombre}",
+        antes: snapshot_antes,
+        despues: @cooperacion.snapshot_para_historial,
+        request: request
+      )
+
+      redirect_to cooperacion_path(@cooperacion), notice: "Cooperación confirmada correctamente"
+    rescue Supabase::StorageUploader::Error => e
+      @total_esperado = @cooperacion.total_esperado
+      flash.now[:alert] = e.message
+      render :confirmacion, status: :unprocessable_entity
+    rescue ActiveRecord::RecordInvalid => e
+      @total_esperado = @cooperacion.total_esperado
+      flash.now[:alert] = e.record.errors.full_messages.to_sentence
+      render :confirmacion, status: :unprocessable_entity
+    end
+  end
+
+  def ver_lista_confirmacion
+    if @cooperacion.lista_confirmacion_pdf_path.blank?
+      return redirect_to cooperacion_path(@cooperacion),
+                         alert: "Esta cooperación no tiene PDF de confirmación registrado"
+    end
+
+    url = uploader_listas.signed_url!(
+      object_path: @cooperacion.lista_confirmacion_pdf_path,
+      expires_in: 3600
+    )
+
+    redirect_to url, allow_other_host: true
+  rescue Supabase::StorageUploader::Error => e
+    redirect_to cooperacion_path(@cooperacion), alert: e.message
+  end
+
+  def corregir_evidencia
+    unless @cooperacion.completada?
+      return redirect_to cooperacion_path(@cooperacion),
+                         alert: "Solo se puede corregir evidencia de cooperaciones completadas"
+    end
+  end
+
+  def actualizar_evidencia
+    unless @cooperacion.completada?
+      return redirect_to cooperacion_path(@cooperacion),
+                         alert: "Solo se puede corregir evidencia de cooperaciones completadas"
+    end
+
+    archivo = params[:lista_confirmacion_pdf]
+    motivo = params[:motivo_correccion].to_s.strip
+
+    if archivo.blank? || motivo.blank?
+      flash.now[:alert] = "Debes subir un PDF y escribir el motivo de la corrección"
+      return render :corregir_evidencia, status: :unprocessable_entity
+    end
+
+    snapshot_antes = @cooperacion.snapshot_para_historial
+    ruta_anterior = @cooperacion.lista_confirmacion_pdf_path
+
+    begin
+      nombre_archivo = "lista_confirmacion_#{@cooperacion.nombre}_corregida_#{Time.current.strftime('%Y%m%d%H%M%S')}.pdf"
+
+      nueva_ruta_pdf = uploader_listas.upload_pdf!(
+        uploaded_file: archivo,
+        folder: "cooperaciones/#{@cooperacion.id}/confirmacion/correcciones",
+        filename: nombre_archivo
+      )
+
+      observaciones_actuales = @cooperacion.observaciones_confirmacion.to_s.strip
+      nueva_observacion = [
+        observaciones_actuales.presence,
+        "Corrección de evidencia #{Time.current.strftime('%d/%m/%Y %H:%M')} por #{usuario_actual&.nombre_usuario}: #{motivo}"
+      ].compact.join("\n\n")
+
+      @cooperacion.update!(
+        lista_confirmacion_pdf_path: nueva_ruta_pdf,
+        observaciones_confirmacion: nueva_observacion
+      )
+
+      Historiales::Registrador.registrar!(
+        usuario: usuario_actual,
+        accion: "editar",
+        modulo: "cooperaciones",
+        entidad: "Cooperacion",
+        registro_id: @cooperacion.id,
+        resumen: "Se corrigió el PDF de evidencia de la cooperación #{@cooperacion.nombre}",
+        antes: snapshot_antes.merge(
+          evidencia_anterior: ruta_anterior
+        ),
+        despues: @cooperacion.snapshot_para_historial.merge(
+          evidencia_nueva: nueva_ruta_pdf,
+          motivo_correccion: motivo
+        ),
+        request: request
+      )
+
+      redirect_to cooperacion_path(@cooperacion), notice: "Evidencia corregida correctamente"
+    rescue Supabase::StorageUploader::Error => e
+      flash.now[:alert] = e.message
+      render :corregir_evidencia, status: :unprocessable_entity
+    rescue ActiveRecord::RecordInvalid => e
+      flash.now[:alert] = e.record.errors.full_messages.to_sentence
+      render :corregir_evidencia, status: :unprocessable_entity
+    end
+  end
+
   def buscar_trabajadores
     termino = params[:q].to_s.strip
 
@@ -193,6 +385,12 @@ class CooperacionesController < ApplicationController
         :trabajador_id,
         :_destroy
       ]
+    )
+  end
+
+  def uploader_listas
+    Supabase::StorageUploader.new(
+      bucket: ENV["SUPABASE_LISTAS_COOPERACIONES_BUCKET"].presence || ENV["SUPABASE_STORAGE_BUCKET"]
     )
   end
 end

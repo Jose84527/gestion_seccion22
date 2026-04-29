@@ -14,7 +14,7 @@
       <div class="acciones-grupo">
         <%= link_to "Volver", cooperaciones_path, class: "button button--ghost" %>
 
-        <% if puede_realizar_accion?(:cooperaciones, :editar) && !@cooperacion.completada? %>
+        <% if puede_realizar_accion?(:cooperaciones, :editar) && @cooperacion.activa? %>
           <%= link_to "Editar", edit_cooperacion_path(@cooperacion), class: "button button--primary" %>
         <% end %>
       </div>
@@ -54,6 +54,18 @@
         <span class="detalle-item__label">Total esperado</span>
         <strong><%= number_to_currency(@total_esperado) %></strong>
       </div>
+
+      <% if @cooperacion.completada? %>
+        <div class="detalle-item">
+          <span class="detalle-item__label">Confirmada el</span>
+          <strong><%= @cooperacion.confirmada_at&.strftime("%d/%m/%Y %H:%M") || "-" %></strong>
+        </div>
+
+        <div class="detalle-item">
+          <span class="detalle-item__label">Confirmada por</span>
+          <strong><%= @cooperacion.confirmada_por&.nombre_usuario || "-" %></strong>
+        </div>
+      <% end %>
     </div>
   </div>
 
@@ -226,30 +238,100 @@
     <% end %>
   </div>
 
+  <% if @cooperacion.completada? %>
+    <div class="panel">
+      <div class="panel__header">
+        <div>
+          <h3>Confirmación de cooperación</h3>
+          <p class="panel__description">
+            Evidencia registrada al completar la corrida.
+          </p>
+        </div>
+      </div>
+
+      <div class="detalle-grid">
+        <div class="detalle-item">
+          <span class="detalle-item__label">Fecha de confirmación</span>
+          <strong><%= @cooperacion.confirmada_at&.strftime("%d/%m/%Y %H:%M") || "-" %></strong>
+        </div>
+
+        <div class="detalle-item">
+          <span class="detalle-item__label">Confirmada por</span>
+          <strong><%= @cooperacion.confirmada_por&.nombre_usuario || "-" %></strong>
+        </div>
+      </div>
+
+      <div class="detalle-bloque">
+        <span class="detalle-item__label">Archivo PDF escaneado</span>
+        <p><%= @cooperacion.lista_confirmacion_pdf_path.presence || "-" %></p>
+      </div>
+
+      <% if @cooperacion.lista_confirmacion_pdf_path.present? %>
+        <div class="finanzas-actions">
+          <% if @cooperacion.lista_confirmacion_pdf_path.present? %>
+  <div class="finanzas-actions">
+    <%= link_to "Ver PDF escaneado",
+                ver_lista_confirmacion_cooperacion_path(@cooperacion),
+                class: "button button--primary",
+                target: "_blank",
+                rel: "noopener" %>
+
+    <% if puede_realizar_accion?(:cooperaciones, :editar) %>
+      <%= link_to "Corregir PDF de evidencia",
+                  corregir_evidencia_cooperacion_path(@cooperacion),
+                  class: "button button--ghost" %>
+    <% end %>
+  </div>
+<% end %>
+        </div>
+      <% end %>
+
+      <div class="detalle-bloque">
+  <span class="detalle-item__label">Observaciones</span>
+
+  <% if @cooperacion.observaciones_confirmacion.present? %>
+    <div class="observaciones-confirmacion">
+      <%= simple_format(@cooperacion.observaciones_confirmacion) %>
+    </div>
+  <% else %>
+    <p>-</p>
+  <% end %>
+</div>
+    </div>
+  <% end %>
+
   <div class="panel">
-  <div class="panel__header">
-    <div>
-      <h3>Documentos</h3>
-      <p class="panel__description">
-        Exportación inicial en PDF con datos en crudo.
-      </p>
+    <div class="panel__header">
+      <div>
+        <h3>Documentos</h3>
+        <p class="panel__description">
+          Exportación inicial en PDF de recibos y lista general.
+        </p>
+      </div>
+    </div>
+
+    <div class="finanzas-actions">
+      <%= link_to "Generar PDF de recibos",
+                  pdf_recibos_cooperacion_path(@cooperacion),
+                  class: "button button--ghost",
+                  target: "_blank",
+                  rel: "noopener" %>
+
+      <%= link_to "Generar PDF de lista general",
+                  pdf_lista_general_cooperacion_path(@cooperacion),
+                  class: "button button--ghost",
+                  target: "_blank",
+                  rel: "noopener" %>
+
+      <% if puede_realizar_accion?(:cooperaciones, :editar) && @cooperacion.activa? %>
+        <%= link_to "Confirmar cooperación",
+                    confirmacion_cooperacion_path(@cooperacion),
+                    class: "button button--primary" %>
+      <% elsif @cooperacion.completada? %>
+        <span class="button button--ghost is-disabled">Cooperación completada</span>
+      <% elsif @cooperacion.cancelada? %>
+        <span class="button button--ghost is-disabled">Cooperación cancelada</span>
+      <% end %>
     </div>
   </div>
-
-  <div class="finanzas-actions">
-    <%= link_to "Generar PDF de recibos",
-                pdf_recibos_cooperacion_path(@cooperacion),
-                class: "button button--ghost",
-                target: "_blank",
-                rel: "noopener" %>
-
-    <%= link_to "Generar PDF de lista general",
-                pdf_lista_general_cooperacion_path(@cooperacion),
-                class: "button button--ghost",
-                target: "_blank",
-                rel: "noopener" %>
-
-    <span class="button button--ghost is-disabled">Confirmar cooperación</span>
-  </div>
-</div>
 </section>

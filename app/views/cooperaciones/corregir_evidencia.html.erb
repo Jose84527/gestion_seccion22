@@ -1,0 +1,110 @@
+<% content_for :title, "Corregir evidencia" %>
+<% content_for :page_title, "Corregir evidencia" %>
+
+<section class="catalogo-page">
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Corregir PDF de evidencia</h3>
+        <p class="panel__description">
+          Esta acción solo reemplaza el PDF escaneado de confirmación. La cooperación seguirá marcada como completada.
+        </p>
+      </div>
+
+      <%= link_to "Volver", cooperacion_path(@cooperacion), class: "button button--ghost" %>
+    </div>
+
+    <div class="detalle-grid">
+      <div class="detalle-item">
+        <span class="detalle-item__label">Cooperación</span>
+        <strong><%= @cooperacion.nombre %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Estado</span>
+        <strong>
+          <span class="estado-badge estado-badge--<%= @cooperacion.estado %>">
+            <%= @cooperacion.estado.humanize %>
+          </span>
+        </strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Confirmada el</span>
+        <strong><%= @cooperacion.confirmada_at&.strftime("%d/%m/%Y %H:%M") || "-" %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Confirmada por</span>
+        <strong><%= @cooperacion.confirmada_por&.nombre_usuario || "-" %></strong>
+      </div>
+    </div>
+
+    <div class="detalle-bloque">
+      <span class="detalle-item__label">PDF actual</span>
+      <p><%= @cooperacion.lista_confirmacion_pdf_path.presence || "-" %></p>
+
+      <% if @cooperacion.lista_confirmacion_pdf_path.present? %>
+        <div class="finanzas-actions">
+          <%= link_to "Ver PDF actual",
+                      ver_lista_confirmacion_cooperacion_path(@cooperacion),
+                      class: "button button--ghost",
+                      target: "_blank",
+                      rel: "noopener" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Nueva evidencia</h3>
+        <p class="panel__description">
+          Sube el PDF correcto y escribe el motivo de la corrección.
+        </p>
+      </div>
+    </div>
+
+    <%= form_with url: actualizar_evidencia_cooperacion_path(@cooperacion),
+                  method: :patch,
+                  local: true,
+                  html: { multipart: true },
+                  class: "formulario-base" do %>
+
+      <div class="form-grid form-grid--dos-columnas">
+        <div class="form-field">
+          <%= label_tag :lista_confirmacion_pdf, "Nuevo PDF escaneado" %>
+          <%= file_field_tag :lista_confirmacion_pdf,
+                             accept: "application/pdf,.pdf",
+                             class: "form-input" %>
+          <small class="helper-text">
+            Solo se permite PDF. Este archivo reemplazará la evidencia visible de la cooperación.
+          </small>
+        </div>
+
+        <div class="form-field">
+          <%= label_tag :motivo_correccion, "Motivo de corrección" %>
+          <%= text_area_tag :motivo_correccion,
+                            params[:motivo_correccion],
+                            class: "form-input form-textarea",
+                            rows: 4,
+                            placeholder: "Ejemplo: Se subió una lista incompleta por error." %>
+          <small class="helper-text">
+            El motivo quedará registrado en historial.
+          </small>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <%= link_to "Cancelar", cooperacion_path(@cooperacion), class: "button button--ghost" %>
+
+        <%= submit_tag "Actualizar evidencia",
+                       class: "button button--primary",
+                       data: {
+                         turbo_confirm: "¿Confirmas que deseas reemplazar el PDF de evidencia?"
+                       } %>
+      </div>
+    <% end %>
+  </div>
+</section>

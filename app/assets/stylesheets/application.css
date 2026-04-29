@@ -1513,3 +1513,19 @@ button {
   background: #eee4de;
   color: #75665f;
 }
+.observaciones-confirmacion {
+  margin-top: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #faf7f5;
+  border: 1px solid #eee4de;
+  line-height: 1.6;
+}
+
+.observaciones-confirmacion p {
+  margin: 0 0 10px;
+}
+
+.observaciones-confirmacion p:last-child {
+  margin-bottom: 0;
+}
