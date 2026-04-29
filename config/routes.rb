@@ -20,14 +20,16 @@ Rails.application.routes.draw do
   end
 
   resources :cooperaciones do
-    collection do
-      get :buscar_trabajadores
-    end
-
-    member do
-      patch :cambiar_estado
-    end
+  collection do
+    get :buscar_trabajadores
   end
+
+  member do
+    patch :cambiar_estado
+    get :pdf_lista_general
+    get :pdf_recibos
+  end
+end
 
   get "home/index"
 

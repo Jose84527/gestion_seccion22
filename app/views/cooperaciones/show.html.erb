@@ -227,19 +227,29 @@
   </div>
 
   <div class="panel">
-    <div class="panel__header">
-      <div>
-        <h3>Documentos</h3>
-        <p class="panel__description">
-          La generación de PDF de recibos y lista general se integrará en el siguiente bloque.
-        </p>
-      </div>
-    </div>
-
-    <div class="finanzas-actions">
-      <span class="button button--ghost is-disabled">Generar PDF de recibos</span>
-      <span class="button button--ghost is-disabled">Generar PDF de lista general</span>
-      <span class="button button--ghost is-disabled">Confirmar cooperación</span>
+  <div class="panel__header">
+    <div>
+      <h3>Documentos</h3>
+      <p class="panel__description">
+        Exportación inicial en PDF con datos en crudo.
+      </p>
     </div>
   </div>
+
+  <div class="finanzas-actions">
+    <%= link_to "Generar PDF de recibos",
+                pdf_recibos_cooperacion_path(@cooperacion),
+                class: "button button--ghost",
+                target: "_blank",
+                rel: "noopener" %>
+
+    <%= link_to "Generar PDF de lista general",
+                pdf_lista_general_cooperacion_path(@cooperacion),
+                class: "button button--ghost",
+                target: "_blank",
+                rel: "noopener" %>
+
+    <span class="button button--ghost is-disabled">Confirmar cooperación</span>
+  </div>
+</div>
 </section>

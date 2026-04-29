@@ -1,9 +1,10 @@
 class CooperacionesController < ApplicationController
   before_action :autenticar_usuario
-  before_action -> { requiere_permiso!(:cooperaciones, :ver) }, only: %i[index show buscar_trabajadores]
+  before_action -> { requiere_permiso!(:cooperaciones, :ver) },
+                only: %i[index show buscar_trabajadores pdf_lista_general pdf_recibos]
   before_action -> { requiere_permiso!(:cooperaciones, :crear) }, only: %i[new create]
   before_action -> { requiere_permiso!(:cooperaciones, :editar) }, only: %i[edit update cambiar_estado]
-  before_action :set_cooperacion, only: %i[show edit update cambiar_estado]
+  before_action :set_cooperacion, only: %i[show edit update cambiar_estado pdf_lista_general pdf_recibos]
 
   def index
     @cooperaciones = Cooperacion.includes(:cooperacion_conceptos, :cooperacion_condonados).recientes
@@ -111,6 +112,24 @@ class CooperacionesController < ApplicationController
     else
       redirect_to cooperaciones_path, alert: "No se pudo cambiar el estado de la cooperación"
     end
+  end
+
+  def pdf_lista_general
+    pdf = Pdf::CooperacionListaGeneralPdf.new(@cooperacion).render
+
+    send_data pdf,
+              filename: "lista_general_cooperacion_#{@cooperacion.id}.pdf",
+              type: "application/pdf",
+              disposition: "inline"
+  end
+
+  def pdf_recibos
+    pdf = Pdf::CooperacionRecibosPdf.new(@cooperacion).render
+
+    send_data pdf,
+              filename: "recibos_cooperacion_#{@cooperacion.id}.pdf",
+              type: "application/pdf",
+              disposition: "inline"
   end
 
   def buscar_trabajadores
