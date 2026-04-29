@@ -129,7 +129,7 @@
         </table>
       </div>
 
-      <% if @total_paginas > 1 %>
+      <% if @total_paginas.to_i > 1 %>
         <div class="pagination">
           <% if @pagina_actual > 1 %>
             <%= link_to "← Anterior",

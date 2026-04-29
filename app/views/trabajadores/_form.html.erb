@@ -61,7 +61,7 @@
     <div class="form-field">
       <%= f.label :tipo_trabajador, "Tipo de trabajador" %>
       <%= f.select :tipo_trabajador,
-                   Trabajador::TIPOS_TRABAJADOR.map { |valor| [valor.humanize, valor] },
+                   Trabajador.tipo_trabajadores.keys.map { |valor| [valor.humanize, valor] },
                    { prompt: "Selecciona una opción" },
                    class: "form-input #{'form-input--error' if trabajador.errors[:tipo_trabajador].any?}" %>
       <% if trabajador.errors[:tipo_trabajador].any? %>
@@ -202,6 +202,21 @@
       <label>Periodicidad de pago</label>
       <input type="text" class="form-input" value="Quincenal" disabled>
       <small class="helper-text">Dato fijo para todos los trabajadores.</small>
+    </div>
+
+    <div class="form-field">
+      <div class="checkbox-field">
+        <%= f.check_box :condonado_habitual %>
+        <%= f.label :condonado_habitual, "Condonado habitual" %>
+      </div>
+
+      <small class="helper-text">
+        Si está marcado, este trabajador se agregará automáticamente como condonado al crear nuevas cooperaciones.
+      </small>
+
+      <% if trabajador.errors[:condonado_habitual].any? %>
+        <small class="field-error"><%= trabajador.errors[:condonado_habitual].first %></small>
+      <% end %>
     </div>
 
     <div class="form-field form-field--full">

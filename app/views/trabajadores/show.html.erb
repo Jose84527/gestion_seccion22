@@ -33,7 +33,7 @@
 
       <div class="detalle-item">
         <span class="detalle-item__label">Sexo</span>
-        <strong><%= @trabajador.sexo.humanize %></strong>
+        <strong><%= @trabajador.sexo&.humanize || "-" %></strong>
       </div>
 
       <div class="detalle-item">
@@ -43,7 +43,7 @@
 
       <div class="detalle-item">
         <span class="detalle-item__label">Fecha de ingreso</span>
-        <strong><%= @trabajador.fecha_ingreso.strftime("%d/%m/%Y") %></strong>
+        <strong><%= @trabajador.fecha_ingreso&.strftime("%d/%m/%Y") || "-" %></strong>
       </div>
 
       <div class="detalle-item">
@@ -85,7 +85,7 @@
         <span class="detalle-item__label">Estado</span>
         <strong>
           <span class="estado-badge estado-badge--<%= @trabajador.estado_trabajador %>">
-            <%= @trabajador.estado_trabajador.humanize %>
+            <%= @trabajador.estado_trabajador&.humanize || "-" %>
           </span>
         </strong>
       </div>
@@ -102,7 +102,20 @@
 
       <div class="detalle-item">
         <span class="detalle-item__label">Concepto 07</span>
-        <strong><%= @trabajador.concepto07_monto.present? ? number_to_currency(@trabajador.concepto07_monto) : "-" %></strong>
+        <strong>
+          <%= @trabajador.concepto07_monto.present? ? number_to_currency(@trabajador.concepto07_monto) : "-" %>
+        </strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Condonado habitual</span>
+        <strong>
+          <% if @trabajador.condonado_habitual? %>
+            <span class="estado-badge estado-badge--condonado">Sí</span>
+          <% else %>
+            <span class="estado-badge estado-badge--pendiente">No</span>
+          <% end %>
+        </strong>
       </div>
     </div>
 

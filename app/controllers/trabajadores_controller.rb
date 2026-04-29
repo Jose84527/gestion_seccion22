@@ -16,7 +16,7 @@ class TrabajadoresController < ApplicationController
     @tipo_trabajador = params[:tipo_trabajador].to_s
 
     base = Trabajador.includes(:concepto07_nivel)
-                     .buscar_por_nombre(@q)
+                     .buscar_por_texto(@q)
                      .filtrar_por_concepto07(@concepto07_nivel_id)
                      .filtrar_por_estado(@estado_trabajador)
                      .filtrar_por_sexo(@sexo)
@@ -32,7 +32,10 @@ class TrabajadoresController < ApplicationController
     @pagina_actual = @total_paginas if @pagina_actual > @total_paginas
 
     offset = (@pagina_actual - 1) * TRABAJADORES_POR_PAGINA
-    @trabajadores = base.offset(offset).limit(TRABAJADORES_POR_PAGINA)
+
+    @trabajadores = base
+                    .offset(offset)
+                    .limit(TRABAJADORES_POR_PAGINA)
   end
 
   def show
@@ -121,12 +124,14 @@ class TrabajadoresController < ApplicationController
       :rfc,
       :curp,
       :clave_cobro,
+      :ct,
       :telefono,
       :correo,
       :direccion,
       :codigo_postal,
       :estado_trabajador,
-      :concepto07_nivel_id
+      :concepto07_nivel_id,
+      :condonado_habitual
     )
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_29_193425) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_29_220525) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -96,6 +96,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_29_193425) do
     t.string "clave_cobro", null: false
     t.string "codigo_postal"
     t.bigint "concepto07_nivel_id", null: false
+    t.boolean "condonado_habitual", default: false, null: false
     t.string "correo"
     t.datetime "created_at", null: false
     t.string "ct", default: "20DIT0002N"
@@ -112,6 +113,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_29_193425) do
     t.datetime "updated_at", null: false
     t.index ["clave_cobro"], name: "index_trabajadores_on_clave_cobro", unique: true
     t.index ["concepto07_nivel_id"], name: "index_trabajadores_on_concepto07_nivel_id"
+    t.index ["condonado_habitual"], name: "index_trabajadores_on_condonado_habitual"
     t.index ["curp"], name: "index_trabajadores_on_curp", unique: true
     t.index ["estado_trabajador"], name: "index_trabajadores_on_estado_trabajador"
     t.index ["periodicidad_pago"], name: "index_trabajadores_on_periodicidad_pago"

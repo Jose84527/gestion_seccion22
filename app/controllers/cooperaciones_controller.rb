@@ -1,5 +1,6 @@
 class CooperacionesController < ApplicationController
   COOPERACIONES_POR_PAGINA = 10
+
   before_action :autenticar_usuario
 
   before_action -> { requiere_permiso!(:cooperaciones, :ver) },
@@ -46,10 +47,10 @@ class CooperacionesController < ApplicationController
     @estado = params[:estado].to_s.strip
 
     base = Cooperacion
-          .includes(:cooperacion_conceptos, :cooperacion_condonados)
-          .buscar_por_nombre(@q)
-          .filtrar_por_estado(@estado)
-          .recientes
+           .includes(:cooperacion_conceptos, :cooperacion_condonados)
+           .buscar_por_nombre(@q)
+           .filtrar_por_estado(@estado)
+           .recientes
 
     @total_registros = base.count
     @total_paginas = (@total_registros.to_f / COOPERACIONES_POR_PAGINA).ceil
@@ -62,8 +63,8 @@ class CooperacionesController < ApplicationController
     offset = (@pagina_actual - 1) * COOPERACIONES_POR_PAGINA
 
     @cooperaciones = base
-                    .offset(offset)
-                    .limit(COOPERACIONES_POR_PAGINA)
+                     .offset(offset)
+                     .limit(COOPERACIONES_POR_PAGINA)
   end
 
   def show
@@ -81,6 +82,8 @@ class CooperacionesController < ApplicationController
       tipo_cooperacion: "fija",
       posicion: 1
     )
+
+    cargar_condonados_habituales
   end
 
   def create
@@ -309,6 +312,7 @@ class CooperacionesController < ApplicationController
       )
 
       observaciones_actuales = @cooperacion.observaciones_confirmacion.to_s.strip
+
       nueva_observacion = [
         observaciones_actuales.presence,
         "Corrección de evidencia #{Time.current.strftime('%d/%m/%Y %H:%M')} por #{usuario_actual&.nombre_usuario}: #{motivo}"
@@ -385,6 +389,12 @@ class CooperacionesController < ApplicationController
       tipo_cooperacion: "fija",
       posicion: 1
     )
+  end
+
+  def cargar_condonados_habituales
+    Trabajador.condonados_habituales.find_each do |trabajador|
+      @cooperacion.cooperacion_condonados.build(trabajador: trabajador)
+    end
   end
 
   def cooperacion_params
