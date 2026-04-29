@@ -5,6 +5,8 @@ Rails.application.routes.draw do
 
   get "menu", to: "home#menu", as: :menu
 
+  get "finanzas", to: "finanzas/dashboard#index", as: :finanzas
+
   resources :historiales, only: %i[index show]
 
   resources :trabajadores, only: %i[index show new create edit update]
@@ -18,6 +20,10 @@ Rails.application.routes.draw do
   end
 
   resources :cooperaciones do
+    collection do
+      get :buscar_trabajadores
+    end
+
     member do
       patch :cambiar_estado
     end

@@ -1,15 +1,20 @@
 <% content_for :title, "Detalle de cooperación" %>
 <% content_for :page_title, "Detalle de cooperación" %>
 
-<section class="trabajadores-page">
+<section class="catalogo-page">
   <div class="panel">
     <div class="panel__header">
-      <h3>Información de la cooperación</h3>
+      <div>
+        <h3><%= @cooperacion.nombre %></h3>
+        <p class="panel__description">
+          Detalle general de la corrida de cooperación.
+        </p>
+      </div>
 
       <div class="acciones-grupo">
         <%= link_to "Volver", cooperaciones_path, class: "button button--ghost" %>
 
-        <% if puede_realizar_accion?(:cooperaciones, :editar) %>
+        <% if puede_realizar_accion?(:cooperaciones, :editar) && !@cooperacion.completada? %>
           <%= link_to "Editar", edit_cooperacion_path(@cooperacion), class: "button button--primary" %>
         <% end %>
       </div>
@@ -17,66 +22,224 @@
 
     <div class="detalle-grid">
       <div class="detalle-item">
-        <span class="detalle-item__label">Nombre</span>
-        <strong><%= @cooperacion.nombre %></strong>
-      </div>
-
-      <div class="detalle-item">
-        <span class="detalle-item__label">Tipo de cooperación</span>
-        <strong><%= @cooperacion.tipo_cooperacion.humanize %></strong>
-      </div>
-
-      <div class="detalle-item">
-        <span class="detalle-item__label">Periodicidad</span>
-        <strong><%= @cooperacion.periodicidad_generacion.humanize %></strong>
-      </div>
-
-      <div class="detalle-item">
-        <span class="detalle-item__label">Monto fijo base</span>
+        <span class="detalle-item__label">Estado</span>
         <strong>
-          <%= @cooperacion.monto_fijo_base.present? ? number_to_currency(@cooperacion.monto_fijo_base) : "-" %>
+          <span class="estado-badge estado-badge--<%= @cooperacion.estado %>">
+            <%= @cooperacion.estado.humanize %>
+          </span>
         </strong>
       </div>
 
       <div class="detalle-item">
-        <span class="detalle-item__label">Fecha inicio de vigencia</span>
+        <span class="detalle-item__label">Fecha inicio</span>
         <strong><%= @cooperacion.fecha_inicio_vigencia&.strftime("%d/%m/%Y") || "-" %></strong>
       </div>
 
       <div class="detalle-item">
-        <span class="detalle-item__label">Fecha fin de vigencia</span>
+        <span class="detalle-item__label">Fecha fin</span>
         <strong><%= @cooperacion.fecha_fin_vigencia&.strftime("%d/%m/%Y") || "-" %></strong>
       </div>
 
       <div class="detalle-item">
-        <span class="detalle-item__label">Recurrente</span>
-        <strong><%= @cooperacion.es_recurrente? ? "Sí" : "No" %></strong>
+        <span class="detalle-item__label">Conceptos</span>
+        <strong><%= @cooperacion.cantidad_conceptos %></strong>
       </div>
 
       <div class="detalle-item">
-        <span class="detalle-item__label">Estado</span>
-        <strong>
-          <span class="estado-badge <%= @cooperacion.activa? ? 'estado-badge--activo' : 'estado-badge--inactivo' %>">
-            <%= @cooperacion.activa? ? "Activa" : "Inactiva" %>
-          </span>
-        </strong>
+        <span class="detalle-item__label">Condonados</span>
+        <strong><%= @cooperacion.cantidad_condonados %></strong>
       </div>
-    </div>
 
-    <div class="detalle-bloque">
-      <span class="detalle-item__label">Descripción</span>
-      <p><%= @cooperacion.descripcion.presence || "-" %></p>
+      <div class="detalle-item">
+        <span class="detalle-item__label">Total esperado</span>
+        <strong><%= number_to_currency(@total_esperado) %></strong>
+      </div>
     </div>
   </div>
 
   <div class="panel">
     <div class="panel__header">
-      <h3>Acciones relacionadas</h3>
+      <div>
+        <h3>Conceptos incluidos</h3>
+        <p class="panel__description">
+          Conceptos que se aplicarán en esta corrida.
+        </p>
+      </div>
     </div>
 
-    <div class="acciones-grupo">
-      <span class="button button--ghost">Configuración por Concepto 07 (fase 2)</span>
-      <span class="button button--ghost">Cooperaciones generadas (fase 3)</span>
+    <% if @cooperacion.cooperacion_conceptos.any? %>
+      <div class="tabla-wrapper">
+        <table class="tabla-base">
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              <th>Descripción</th>
+              <th>Tipo</th>
+              <th>Monto fijo</th>
+              <th>Porcentaje</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <% @cooperacion.cooperacion_conceptos.each do |concepto| %>
+              <tr>
+                <td><strong><%= concepto.nombre %></strong></td>
+                <td><%= concepto.descripcion.presence || "-" %></td>
+                <td><%= concepto.tipo_cooperacion.humanize %></td>
+                <td><%= concepto.monto_fijo.present? ? number_to_currency(concepto.monto_fijo) : "-" %></td>
+                <td><%= concepto.porcentaje.present? ? "#{concepto.porcentaje}%" : "-" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        Esta cooperación no tiene conceptos registrados.
+      </div>
+    <% end %>
+  </div>
+
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Desglose por trabajador</h3>
+        <p class="panel__description">
+          Vista previa de importes individuales antes de generar recibos o lista general.
+        </p>
+      </div>
+    </div>
+
+    <% if @desglose_trabajadores.any? %>
+      <div class="tabla-wrapper">
+        <table class="tabla-base">
+          <thead>
+            <tr>
+              <th>Trabajador</th>
+              <th>Tipo</th>
+              <th>Categoría</th>
+              <th>Concepto 07</th>
+              <th>Estado</th>
+              <th>Desglose</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <% @desglose_trabajadores.each do |fila| %>
+              <% trabajador = fila[:trabajador] %>
+
+              <tr>
+                <td>
+                  <strong><%= trabajador.nombre_completo %></strong>
+                  <br>
+                  <small><%= trabajador.rfc %> · <%= trabajador.clave_cobro %></small>
+                </td>
+
+                <td><%= trabajador.tipo_trabajador&.humanize || "-" %></td>
+
+                <td><%= trabajador.concepto07_nivel&.nombre || "-" %></td>
+
+                <td><%= number_to_currency(fila[:concepto07]) %></td>
+
+                <td>
+                  <% if fila[:condonado] %>
+                    <span class="estado-badge estado-badge--condonado">Condonado</span>
+                  <% else %>
+                    <span class="estado-badge estado-badge--pendiente">Pendiente</span>
+                  <% end %>
+                </td>
+
+                <td>
+                  <% if fila[:condonado] %>
+                    <strong>CONDONADO</strong>
+                  <% else %>
+                    <div class="desglose-conceptos">
+                      <% fila[:conceptos].each do |concepto| %>
+                        <div class="desglose-conceptos__item">
+                          <span><%= concepto[:nombre] %></span>
+                          <strong><%= number_to_currency(concepto[:importe]) %></strong>
+                        </div>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </td>
+
+                <td>
+                  <strong><%= number_to_currency(fila[:total]) %></strong>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+
+          <tfoot>
+            <tr>
+              <td colspan="6" class="tabla-total-label">Total esperado</td>
+              <td><strong><%= number_to_currency(@total_esperado) %></strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        No hay trabajadores activos para calcular esta cooperación.
+      </div>
+    <% end %>
+  </div>
+
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Trabajadores condonados</h3>
+        <p class="panel__description">
+          Trabajadores exentos dentro de esta corrida.
+        </p>
+      </div>
+    </div>
+
+    <% if @cooperacion.trabajadores_condonados.any? %>
+      <div class="tabla-wrapper">
+        <table class="tabla-base">
+          <thead>
+            <tr>
+              <th>Trabajador</th>
+              <th>RFC</th>
+              <th>Tipo</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <% @cooperacion.trabajadores_condonados.each do |trabajador| %>
+              <tr>
+                <td><%= trabajador.nombre_completo %></td>
+                <td><%= trabajador.rfc %></td>
+                <td><%= trabajador.tipo_trabajador&.humanize || "-" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        No hay trabajadores condonados en esta cooperación.
+      </div>
+    <% end %>
+  </div>
+
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Documentos</h3>
+        <p class="panel__description">
+          La generación de PDF de recibos y lista general se integrará en el siguiente bloque.
+        </p>
+      </div>
+    </div>
+
+    <div class="finanzas-actions">
+      <span class="button button--ghost is-disabled">Generar PDF de recibos</span>
+      <span class="button button--ghost is-disabled">Generar PDF de lista general</span>
+      <span class="button button--ghost is-disabled">Confirmar cooperación</span>
     </div>
   </div>
 </section>

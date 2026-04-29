@@ -1,27 +1,34 @@
 class CooperacionesController < ApplicationController
   before_action :autenticar_usuario
-  before_action -> { requiere_permiso!(:cooperaciones, :ver) }, only: %i[index show]
+  before_action -> { requiere_permiso!(:cooperaciones, :ver) }, only: %i[index show buscar_trabajadores]
   before_action -> { requiere_permiso!(:cooperaciones, :crear) }, only: %i[new create]
   before_action -> { requiere_permiso!(:cooperaciones, :editar) }, only: %i[edit update cambiar_estado]
   before_action :set_cooperacion, only: %i[show edit update cambiar_estado]
 
   def index
-    @cooperaciones = Cooperacion.order(:nombre)
+    @cooperaciones = Cooperacion.includes(:cooperacion_conceptos, :cooperacion_condonados).recientes
   end
 
   def show
+    @desglose_trabajadores = @cooperacion.desglose_por_trabajador
+    @total_esperado = @desglose_trabajadores.sum { |fila| fila[:total].to_d }
   end
 
   def new
     @cooperacion = Cooperacion.new(
-      activa: true,
-      es_recurrente: false,
-      periodicidad_generacion: "mensual"
+      estado: "activa",
+      fecha_inicio_vigencia: Date.current
+    )
+
+    @cooperacion.cooperacion_conceptos.build(
+      tipo_cooperacion: "fija",
+      posicion: 1
     )
   end
 
   def create
     @cooperacion = Cooperacion.new(cooperacion_params)
+    @cooperacion.estado = "activa"
 
     if @cooperacion.save
       Historiales::Registrador.registrar!(
@@ -30,7 +37,7 @@ class CooperacionesController < ApplicationController
         modulo: "cooperaciones",
         entidad: "Cooperacion",
         registro_id: @cooperacion.id,
-        resumen: "Se creó la cooperación #{@cooperacion.nombre}",
+        resumen: "Se creó la corrida de cooperación #{@cooperacion.nombre}",
         antes: nil,
         despues: @cooperacion.snapshot_para_historial,
         request: request
@@ -44,6 +51,7 @@ class CooperacionesController < ApplicationController
   end
 
   def edit
+    preparar_edicion
   end
 
   def update
@@ -59,7 +67,7 @@ class CooperacionesController < ApplicationController
           modulo: "cooperaciones",
           entidad: "Cooperacion",
           registro_id: @cooperacion.id,
-          resumen: "Se actualizó la cooperación #{@cooperacion.nombre}",
+          resumen: "Se actualizó la corrida de cooperación #{@cooperacion.nombre}",
           antes: snapshot_antes,
           despues: snapshot_despues,
           request: request
@@ -69,15 +77,21 @@ class CooperacionesController < ApplicationController
       redirect_to cooperacion_path(@cooperacion), notice: "Cooperación actualizada correctamente"
     else
       flash.now[:alert] = "No se pudo actualizar la cooperación"
+      preparar_edicion
       render :edit, status: :unprocessable_entity
     end
   end
 
   def cambiar_estado
-    snapshot_antes = @cooperacion.snapshot_para_historial
-    nuevo_estado = !@cooperacion.activa?
+    if @cooperacion.completada?
+      return redirect_to cooperaciones_path,
+                         alert: "No se puede cambiar el estado de una cooperación completada"
+    end
 
-    if @cooperacion.update(activa: nuevo_estado)
+    snapshot_antes = @cooperacion.snapshot_para_historial
+    nuevo_estado = @cooperacion.activa? ? "cancelada" : "activa"
+
+    if @cooperacion.update(estado: nuevo_estado)
       snapshot_despues = @cooperacion.snapshot_para_historial
 
       Historiales::Registrador.registrar!(
@@ -86,17 +100,43 @@ class CooperacionesController < ApplicationController
         modulo: "cooperaciones",
         entidad: "Cooperacion",
         registro_id: @cooperacion.id,
-        resumen: nuevo_estado ? "Se activó la cooperación #{@cooperacion.nombre}" : "Se desactivó la cooperación #{@cooperacion.nombre}",
+        resumen: "Se cambió el estado de la cooperación #{@cooperacion.nombre} a #{nuevo_estado}",
         antes: snapshot_antes,
         despues: snapshot_despues,
         request: request
       )
 
       redirect_to cooperaciones_path,
-                  notice: nuevo_estado ? "Cooperación activada correctamente" : "Cooperación desactivada correctamente"
+                  notice: nuevo_estado == "activa" ? "Cooperación reactivada correctamente" : "Cooperación cancelada correctamente"
     else
       redirect_to cooperaciones_path, alert: "No se pudo cambiar el estado de la cooperación"
     end
+  end
+
+  def buscar_trabajadores
+    termino = params[:q].to_s.strip
+
+    return render json: [] if termino.length < 2
+
+    trabajadores = Trabajador.includes(:concepto07_nivel)
+                             .where(estado_trabajador: "activo")
+                             .where(
+                               "nombres ILIKE :q OR apellido_paterno ILIKE :q OR apellido_materno ILIKE :q OR rfc ILIKE :q OR clave_cobro ILIKE :q",
+                               q: "%#{termino}%"
+                             )
+                             .ordenados
+                             .limit(10)
+
+    render json: trabajadores.map { |trabajador|
+      {
+        id: trabajador.id,
+        nombre: trabajador.nombre_completo,
+        rfc: trabajador.rfc,
+        clave_cobro: trabajador.clave_cobro,
+        tipo_trabajador: trabajador.tipo_trabajador&.humanize,
+        etiqueta: "#{trabajador.nombre_completo} · #{trabajador.rfc} · #{trabajador.clave_cobro}"
+      }
+    }
   end
 
   private
@@ -105,17 +145,35 @@ class CooperacionesController < ApplicationController
     @cooperacion = Cooperacion.find(params[:id])
   end
 
+  def preparar_edicion
+    return if @cooperacion.cooperacion_conceptos.any?
+
+    @cooperacion.cooperacion_conceptos.build(
+      tipo_cooperacion: "fija",
+      posicion: 1
+    )
+  end
+
   def cooperacion_params
     params.require(:cooperacion).permit(
       :nombre,
-      :descripcion,
-      :tipo_cooperacion,
-      :monto_fijo_base,
-      :es_recurrente,
-      :periodicidad_generacion,
       :fecha_inicio_vigencia,
       :fecha_fin_vigencia,
-      :activa
+      cooperacion_conceptos_attributes: [
+        :id,
+        :nombre,
+        :descripcion,
+        :tipo_cooperacion,
+        :monto_fijo,
+        :porcentaje,
+        :posicion,
+        :_destroy
+      ],
+      cooperacion_condonados_attributes: [
+        :id,
+        :trabajador_id,
+        :_destroy
+      ]
     )
   end
 end

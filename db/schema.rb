@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_22_223941) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_29_193425) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -26,22 +26,46 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_223941) do
     t.index ["clave"], name: "index_concepto07_niveles_on_clave", unique: true
   end
 
-  create_table "cooperaciones", force: :cascade do |t|
-    t.boolean "activa", default: true, null: false
+  create_table "cooperacion_conceptos", force: :cascade do |t|
+    t.bigint "cooperacion_id", null: false
     t.datetime "created_at", null: false
     t.text "descripcion"
-    t.boolean "es_recurrente", default: false, null: false
-    t.date "fecha_fin_vigencia"
-    t.date "fecha_inicio_vigencia"
-    t.decimal "monto_fijo_base", precision: 12, scale: 2
+    t.decimal "monto_fijo", precision: 12, scale: 2
     t.string "nombre", null: false
-    t.string "periodicidad_generacion", null: false
+    t.decimal "porcentaje", precision: 5, scale: 2
+    t.integer "posicion", default: 0, null: false
     t.string "tipo_cooperacion", null: false
     t.datetime "updated_at", null: false
-    t.index ["activa"], name: "index_cooperaciones_on_activa"
+    t.index ["cooperacion_id"], name: "index_cooperacion_conceptos_on_cooperacion_id"
+    t.index ["posicion"], name: "index_cooperacion_conceptos_on_posicion"
+    t.index ["tipo_cooperacion"], name: "index_cooperacion_conceptos_on_tipo_cooperacion"
+  end
+
+  create_table "cooperacion_condonados", force: :cascade do |t|
+    t.bigint "cooperacion_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "trabajador_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["cooperacion_id", "trabajador_id"], name: "idx_cooperacion_condonados_unicos", unique: true
+    t.index ["cooperacion_id"], name: "index_cooperacion_condonados_on_cooperacion_id"
+    t.index ["trabajador_id"], name: "index_cooperacion_condonados_on_trabajador_id"
+  end
+
+  create_table "cooperaciones", force: :cascade do |t|
+    t.datetime "confirmada_at"
+    t.bigint "confirmada_por_id"
+    t.datetime "created_at", null: false
+    t.text "descripcion"
+    t.string "estado", default: "activa", null: false
+    t.date "fecha_fin_vigencia"
+    t.date "fecha_inicio_vigencia"
+    t.string "lista_confirmacion_pdf_path"
+    t.string "nombre", null: false
+    t.text "observaciones_confirmacion"
+    t.datetime "updated_at", null: false
+    t.index ["confirmada_por_id"], name: "index_cooperaciones_on_confirmada_por_id"
+    t.index ["estado"], name: "index_cooperaciones_on_estado"
     t.index ["nombre"], name: "index_cooperaciones_on_nombre"
-    t.index ["periodicidad_generacion"], name: "index_cooperaciones_on_periodicidad_generacion"
-    t.index ["tipo_cooperacion"], name: "index_cooperaciones_on_tipo_cooperacion"
   end
 
   create_table "historiales", force: :cascade do |t|
@@ -82,7 +106,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_223941) do
     t.string "nombres", null: false
     t.string "periodicidad_pago", default: "quincenal", null: false
     t.string "rfc", null: false
-    t.decimal "salario_neto", precision: 12, scale: 2, null: false
     t.string "sexo", null: false
     t.string "telefono"
     t.string "tipo_trabajador"
@@ -109,6 +132,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_223941) do
     t.index ["trabajador_id"], name: "index_usuarios_on_trabajador_id", unique: true
   end
 
+  add_foreign_key "cooperacion_conceptos", "cooperaciones"
+  add_foreign_key "cooperacion_condonados", "cooperaciones"
+  add_foreign_key "cooperacion_condonados", "trabajadores"
+  add_foreign_key "cooperaciones", "usuarios", column: "confirmada_por_id"
   add_foreign_key "historiales", "usuarios", on_delete: :nullify
   add_foreign_key "trabajadores", "concepto07_niveles"
   add_foreign_key "usuarios", "trabajadores", on_delete: :restrict

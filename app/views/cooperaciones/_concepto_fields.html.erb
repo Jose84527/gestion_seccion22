@@ -1,0 +1,88 @@
+<div class="concepto-card"
+     data-controller="cooperacion-concepto"
+     data-cooperacion-form-target="concepto">
+  <%= f.hidden_field :id if f.object.persisted? %>
+  <%= f.hidden_field :posicion, value: f.object.posicion.presence || 0 %>
+  <%= f.hidden_field :_destroy, value: "0", data: { destroy_field: "true" } %>
+
+  <div class="concepto-card__header">
+    <strong>Concepto</strong>
+
+    <button type="button"
+            class="button button--ghost"
+            data-action="click->cooperacion-form#removeConcepto">
+      Quitar concepto
+    </button>
+  </div>
+
+  <div class="form-grid form-grid--dos-columnas">
+    <div class="form-field">
+      <%= f.label :nombre, "Nombre del concepto" %>
+      <%= f.text_field :nombre,
+                       class: "form-input #{'form-input--error' if f.object.errors[:nombre].any?}",
+                       minlength: 3,
+                       maxlength: 100 %>
+      <% if f.object.errors[:nombre].any? %>
+        <small class="field-error"><%= f.object.errors[:nombre].first %></small>
+      <% end %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :descripcion, "Descripción" %>
+      <%= f.text_field :descripcion,
+                       class: "form-input #{'form-input--error' if f.object.errors[:descripcion].any?}",
+                       maxlength: 255 %>
+      <% if f.object.errors[:descripcion].any? %>
+        <small class="field-error"><%= f.object.errors[:descripcion].first %></small>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="concepto-parametros-linea">
+    <div class="form-field">
+      <%= f.label :tipo_cooperacion, "Tipo" %>
+      <%= f.select :tipo_cooperacion,
+                   [
+                     ["Fija", "fija"],
+                     ["Porcentaje", "porcentaje"],
+                     ["Mixta", "mixta"]
+                   ],
+                   { prompt: "Selecciona un tipo" },
+                   class: "form-input #{'form-input--error' if f.object.errors[:tipo_cooperacion].any?}",
+                   data: {
+                     action: "change->cooperacion-concepto#toggle",
+                     cooperacion_concepto_target: "tipo"
+                   } %>
+      <% if f.object.errors[:tipo_cooperacion].any? %>
+        <small class="field-error"><%= f.object.errors[:tipo_cooperacion].first %></small>
+      <% end %>
+    </div>
+
+    <div class="form-field" data-cooperacion-concepto-target="montoWrapper">
+      <%= f.label :monto_fijo, "Monto fijo" %>
+      <%= f.number_field :monto_fijo,
+                         class: "form-input #{'form-input--error' if f.object.errors[:monto_fijo].any?}",
+                         step: "50",
+                         min: "0",
+                         data: { cooperacion_concepto_target: "monto" } %>
+      <% if f.object.errors[:monto_fijo].any? %>
+        <small class="field-error"><%= f.object.errors[:monto_fijo].first %></small>
+      <% end %>
+    </div>
+
+    <div class="form-field" data-cooperacion-concepto-target="porcentajeWrapper">
+      <%= f.label :porcentaje, "Porcentaje" %>
+      <%= f.number_field :porcentaje,
+                         class: "form-input #{'form-input--error' if f.object.errors[:porcentaje].any?}",
+                         step: "1",
+                         min: "0",
+                         max: "100",
+                         data: { cooperacion_concepto_target: "porcentaje" } %>
+      <% if f.object.errors[:porcentaje].any? %>
+        <small class="field-error"><%= f.object.errors[:porcentaje].first %></small>
+      <% else %>
+        <small class="helper-text">Se calcula sobre el concepto 07.</small>
+      <% end %>
+    </div>
+  </div>
+</div>

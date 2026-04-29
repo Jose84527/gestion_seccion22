@@ -6,6 +6,9 @@ class Trabajador < ApplicationRecord
 
   belongs_to :concepto07_nivel
   has_one :usuario, dependent: :restrict_with_exception
+  
+  has_many :cooperacion_condonados, dependent: :restrict_with_exception
+  has_many :cooperaciones_condonadas, through: :cooperacion_condonados, source: :cooperacion
 
   enum :sexo,
        {

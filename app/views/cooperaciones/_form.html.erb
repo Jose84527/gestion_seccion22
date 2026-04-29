@@ -1,4 +1,11 @@
-<%= form_with model: cooperacion, class: "formulario-base" do |f| %>
+<%= form_with model: cooperacion,
+              class: "formulario-base",
+              data: {
+                controller: "cooperacion-form condonados-selector",
+                action: "submit->cooperacion-form#enableAllDisabledFields",
+                "condonados-selector-url-value": buscar_trabajadores_cooperaciones_path
+              },
+              novalidate: true do |f| %>
   <% if cooperacion.errors.any? %>
     <div class="form-errors">
       <strong>No se pudo guardar la cooperación:</strong>
@@ -10,114 +17,159 @@
     </div>
   <% end %>
 
-  <div class="form-grid form-grid--dos-columnas">
-    <div class="form-field">
-      <%= f.label :nombre, "Nombre" %>
-      <%= f.text_field :nombre,
-                       class: "form-input #{'form-input--error' if cooperacion.errors[:nombre].any?}",
-                       minlength: 3,
-                       maxlength: 100 %>
-      <% if cooperacion.errors[:nombre].any? %>
-        <small class="field-error"><%= cooperacion.errors[:nombre].first %></small>
+  <div class="form-section">
+    <div class="form-section__header">
+      <h4>Datos generales</h4>
+      <p>Información principal de la corrida de cooperación.</p>
+    </div>
+
+    <div class="form-grid form-grid--dos-columnas">
+      <div class="form-field">
+        <%= f.label :nombre, "Nombre de la cooperación" %>
+        <%= f.text_field :nombre,
+                         class: "form-input #{'form-input--error' if cooperacion.errors[:nombre].any?}",
+                         minlength: 3,
+                         maxlength: 100 %>
+        <% if cooperacion.errors[:nombre].any? %>
+          <small class="field-error"><%= cooperacion.errors[:nombre].first %></small>
+        <% end %>
+      </div>
+
+      <div class="form-field">
+        <label>Estado</label>
+        <input type="text" class="form-input" value="<%= cooperacion.estado.presence&.humanize || 'Activa' %>" disabled>
+        <small class="helper-text">Al crear una cooperación queda activa por default.</small>
+      </div>
+
+      <div class="form-field">
+        <%= f.label :fecha_inicio_vigencia, "Fecha inicio" %>
+        <%= f.date_field :fecha_inicio_vigencia,
+                         class: "form-input #{'form-input--error' if cooperacion.errors[:fecha_inicio_vigencia].any?}" %>
+        <% if cooperacion.errors[:fecha_inicio_vigencia].any? %>
+          <small class="field-error"><%= cooperacion.errors[:fecha_inicio_vigencia].first %></small>
+        <% end %>
+      </div>
+
+      <div class="form-field">
+        <%= f.label :fecha_fin_vigencia, "Fecha fin" %>
+        <%= f.date_field :fecha_fin_vigencia,
+                         class: "form-input #{'form-input--error' if cooperacion.errors[:fecha_fin_vigencia].any?}" %>
+        <% if cooperacion.errors[:fecha_fin_vigencia].any? %>
+          <small class="field-error"><%= cooperacion.errors[:fecha_fin_vigencia].first %></small>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="form-section__header form-section__header--actions">
+      <div>
+        <h4>Conceptos de cooperación</h4>
+        <p>Agrega uno o varios conceptos para esta corrida.</p>
+      </div>
+
+      <button type="button"
+              class="button button--ghost"
+              data-action="click->cooperacion-form#addConcepto">
+        Agregar concepto
+      </button>
+    </div>
+
+    <% if cooperacion.errors[:cooperacion_conceptos].any? %>
+      <small class="field-error"><%= cooperacion.errors[:cooperacion_conceptos].first %></small>
+    <% end %>
+
+    <div data-cooperacion-form-target="conceptos">
+      <%= f.fields_for :cooperacion_conceptos do |concepto_form| %>
+        <%= render "concepto_fields", f: concepto_form %>
       <% end %>
     </div>
 
-    <div class="form-field">
-      <%= f.label :tipo_cooperacion, "Tipo de cooperación" %>
-      <%= f.select :tipo_cooperacion,
-                   [
-                     ["Porcentaje", "porcentaje"],
-                     ["Monto fijo", "monto_fijo"],
-                     ["Mixta", "mixta"]
-                   ],
-                   { prompt: "Selecciona un tipo" },
-                   class: "form-input #{'form-input--error' if cooperacion.errors[:tipo_cooperacion].any?}" %>
-      <% if cooperacion.errors[:tipo_cooperacion].any? %>
-        <small class="field-error"><%= cooperacion.errors[:tipo_cooperacion].first %></small>
+    <template data-cooperacion-form-target="template">
+      <%= f.fields_for :cooperacion_conceptos, CooperacionConcepto.new, child_index: "NEW_RECORD" do |concepto_form| %>
+        <%= render "concepto_fields", f: concepto_form %>
       <% end %>
+    </template>
+  </div>
+
+  <div class="form-section">
+    <div class="form-section__header">
+      <h4>Condonados</h4>
+      <p>Agrega trabajadores exentos para esta corrida de cooperación.</p>
     </div>
 
-    <div class="form-field form-field--full">
-      <%= f.label :descripcion, "Descripción" %>
-      <%= f.text_area :descripcion,
-                      class: "form-input form-textarea #{'form-input--error' if cooperacion.errors[:descripcion].any?}",
-                      rows: 4,
-                      maxlength: 255 %>
-      <% if cooperacion.errors[:descripcion].any? %>
-        <small class="field-error"><%= cooperacion.errors[:descripcion].first %></small>
-      <% end %>
-    </div>
+    <div class="condonados-selector">
+      <div class="form-field">
+        <label for="buscar_condonado_query">Buscar trabajador</label>
+        <input type="text"
+               id="buscar_condonado_query"
+               class="form-input"
+               placeholder="Escribe nombre, RFC o clave de cobro"
+               autocomplete="off"
+               data-action="input->condonados-selector#search"
+               data-condonados-selector-target="query">
 
-    <div class="form-field">
-      <%= f.label :monto_fijo_base, "Monto fijo base" %>
-      <%= f.number_field :monto_fijo_base,
-                         class: "form-input #{'form-input--error' if cooperacion.errors[:monto_fijo_base].any?}",
-                         step: "0.01",
-                         min: 0 %>
-      <% if cooperacion.errors[:monto_fijo_base].any? %>
-        <small class="field-error"><%= cooperacion.errors[:monto_fijo_base].first %></small>
-      <% end %>
-    </div>
+        <small class="helper-text">Escribe al menos 2 caracteres para buscar trabajadores activos.</small>
+      </div>
 
-    <div class="form-field">
-      <%= f.label :periodicidad_generacion, "Periodicidad" %>
-      <%= f.select :periodicidad_generacion,
-                   [
-                     ["Única", "unica"],
-                     ["Semanal", "semanal"],
-                     ["Quincenal", "quincenal"],
-                     ["Mensual", "mensual"]
-                   ],
-                   { prompt: "Selecciona una periodicidad" },
-                   class: "form-input #{'form-input--error' if cooperacion.errors[:periodicidad_generacion].any?}" %>
-      <% if cooperacion.errors[:periodicidad_generacion].any? %>
-        <small class="field-error"><%= cooperacion.errors[:periodicidad_generacion].first %></small>
-      <% end %>
-    </div>
+      <div class="trabajador-selector__results"
+           data-condonados-selector-target="results"
+           hidden></div>
 
-    <div class="form-field">
-      <%= f.label :fecha_inicio_vigencia, "Fecha inicio de vigencia" %>
-      <%= f.date_field :fecha_inicio_vigencia,
-                       class: "form-input #{'form-input--error' if cooperacion.errors[:fecha_inicio_vigencia].any?}" %>
-      <% if cooperacion.errors[:fecha_inicio_vigencia].any? %>
-        <small class="field-error"><%= cooperacion.errors[:fecha_inicio_vigencia].first %></small>
-      <% end %>
-    </div>
+      <div class="condonados-list"
+           data-condonados-selector-target="list">
+        <%= f.fields_for :cooperacion_condonados do |condonado_form| %>
+          <% trabajador = condonado_form.object.trabajador %>
 
-    <div class="form-field">
-      <%= f.label :fecha_fin_vigencia, "Fecha fin de vigencia" %>
-      <%= f.date_field :fecha_fin_vigencia,
-                       class: "form-input #{'form-input--error' if cooperacion.errors[:fecha_fin_vigencia].any?}" %>
-      <% if cooperacion.errors[:fecha_fin_vigencia].any? %>
-        <small class="field-error"><%= cooperacion.errors[:fecha_fin_vigencia].first %></small>
-      <% end %>
-    </div>
+          <div class="condonado-item"
+               data-condonados-selector-target="item"
+               data-trabajador-id="<%= condonado_form.object.trabajador_id %>">
+            <%= condonado_form.hidden_field :id if condonado_form.object.persisted? %>
+            <%= condonado_form.hidden_field :trabajador_id %>
+            <%= condonado_form.hidden_field :_destroy,
+                                            value: "0",
+                                            data: { destroy_field: "true" } %>
 
-    <div class="form-field">
-      <%= f.label :es_recurrente, "¿Es recurrente?" %>
-      <%= f.select :es_recurrente,
-                   [["Sí", true], ["No", false]],
-                   {},
-                   class: "form-input #{'form-input--error' if cooperacion.errors[:es_recurrente].any?}" %>
-      <% if cooperacion.errors[:es_recurrente].any? %>
-        <small class="field-error"><%= cooperacion.errors[:es_recurrente].first %></small>
-      <% end %>
-    </div>
+            <span>
+              <strong><%= trabajador&.nombre_completo || "Trabajador" %></strong>
+              <% if trabajador.present? %>
+                <small><%= trabajador.rfc %> · <%= trabajador.clave_cobro %></small>
+              <% end %>
+            </span>
 
-    <div class="form-field">
-      <%= f.label :activa, "Estado" %>
-      <%= f.select :activa,
-                   [["Activa", true], ["Inactiva", false]],
-                   {},
-                   class: "form-input #{'form-input--error' if cooperacion.errors[:activa].any?}" %>
-      <% if cooperacion.errors[:activa].any? %>
-        <small class="field-error"><%= cooperacion.errors[:activa].first %></small>
-      <% end %>
+            <button type="button"
+                    class="button button--ghost"
+                    data-action="click->condonados-selector#removeExisting">
+              Quitar
+            </button>
+          </div>
+        <% end %>
+      </div>
+
+      <template data-condonados-selector-target="template">
+        <div class="condonado-item"
+             data-condonados-selector-target="item"
+             data-trabajador-id="TRABAJADOR_ID">
+          <input type="hidden" name="cooperacion[cooperacion_condonados_attributes][NEW_RECORD][trabajador_id]" value="TRABAJADOR_ID">
+          <span>
+            <strong>TRABAJADOR_NOMBRE</strong>
+            <small>TRABAJADOR_META</small>
+          </span>
+          <button type="button"
+                  class="button button--ghost"
+                  data-action="click->condonados-selector#removeNew">
+            Quitar
+          </button>
+        </div>
+      </template>
     </div>
   </div>
 
   <div class="form-actions">
-    <%= link_to "Cancelar", cooperaciones_path, class: "button button--ghost" %>
+    <%= link_to "Cancelar",
+                cooperacion.persisted? ? cooperacion_path(cooperacion) : cooperaciones_path,
+                class: "button button--ghost" %>
+
     <%= f.submit cooperacion.persisted? ? "Actualizar cooperación" : "Guardar cooperación",
                  class: "button button--primary" %>
   </div>

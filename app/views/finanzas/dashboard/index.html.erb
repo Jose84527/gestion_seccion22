@@ -1,0 +1,75 @@
+<% content_for :title, "Finanzas" %>
+<% content_for :page_title, "Dashboard financiero" %>
+
+<section class="finanzas-page">
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Dashboard financiero</h3>
+        <p class="panel__description">
+          Resumen general de cooperaciones, ingresos confirmados y control financiero.
+        </p>
+      </div>
+    </div>
+
+    <div class="finanzas-grid">
+      <div class="finanzas-card">
+        <span class="finanzas-card__label">Cooperaciones registradas</span>
+        <strong class="finanzas-card__value"><%= @total_cooperaciones %></strong>
+      </div>
+
+      <div class="finanzas-card">
+        <span class="finanzas-card__label">Cooperaciones activas</span>
+        <strong class="finanzas-card__value"><%= @cooperaciones_activas %></strong>
+      </div>
+
+      <div class="finanzas-card">
+        <span class="finanzas-card__label">Cooperaciones completadas</span>
+        <strong class="finanzas-card__value"><%= @cooperaciones_completadas %></strong>
+      </div>
+
+      <div class="finanzas-card">
+        <span class="finanzas-card__label">Total esperado</span>
+        <strong class="finanzas-card__value"><%= number_to_currency(@total_esperado) %></strong>
+      </div>
+
+      <div class="finanzas-card">
+        <span class="finanzas-card__label">Total confirmado</span>
+        <strong class="finanzas-card__value"><%= number_to_currency(@total_confirmado) %></strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Accesos rápidos</h3>
+        <p class="panel__description">
+          Opciones principales del área financiera.
+        </p>
+      </div>
+    </div>
+
+    <div class="finanzas-actions">
+      <%= link_to "Nueva cooperación", new_cooperacion_path, class: "button button--primary" %>
+      <%= link_to "Control de cooperaciones", cooperaciones_path, class: "button button--ghost" %>
+      <span class="button button--ghost is-disabled">Egresos próximamente</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Próximos apartados</h3>
+        <p class="panel__description">
+          Esta sección quedará preparada para reportes, egresos y gráficas financieras.
+        </p>
+      </div>
+    </div>
+
+    <div class="empty-state">
+      Las gráficas financieras se integrarán cuando terminemos la nueva estructura de cooperaciones,
+      confirmación global de pagos y egresos.
+    </div>
+  </div>
+</section>
