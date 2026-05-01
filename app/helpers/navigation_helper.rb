@@ -12,7 +12,7 @@ module NavigationHelper
       { clave: :finanzas_dashboard, modulo: :cooperaciones, etiqueta: "Dashboard financiero", icono: "↳", ruta: finanzas_path, tipo: :subitem },
       { clave: :nueva_cooperacion, modulo: :cooperaciones, etiqueta: "Nueva cooperación", icono: "↳", ruta: new_cooperacion_path, tipo: :subitem },
       { clave: :control_cooperaciones, modulo: :cooperaciones, etiqueta: "Control de cooperaciones", icono: "↳", ruta: cooperaciones_path, tipo: :subitem },
-      { clave: :egresos, modulo: :cooperaciones, etiqueta: "Egresos", icono: "↳", ruta: nil, tipo: :subitem },
+      { clave: :egresos, modulo: :cooperaciones, etiqueta: "Egresos", icono: "↳", ruta: egresos_path, tipo: :subitem },
 
       { clave: :eventos, modulo: :eventos, etiqueta: "Eventos", icono: "📅", ruta: nil },
       { clave: :detalle_evento, modulo: :eventos, etiqueta: "Detalle evento", icono: "📌", ruta: nil },

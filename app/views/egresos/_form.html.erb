@@ -1,0 +1,97 @@
+<%= form_with model: egreso,
+              class: "formulario-base",
+              novalidate: true do |f| %>
+  <% if egreso.errors.any? %>
+    <div class="form-errors">
+      <strong>No se pudo guardar el egreso:</strong>
+      <ul>
+        <% egreso.errors.full_messages.each do |mensaje| %>
+          <li><%= mensaje %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <% if egreso.persisted? %>
+    <div class="form-grid form-grid--dos-columnas">
+      <div class="form-field">
+        <label>Folio N.P.</label>
+        <input type="text" class="form-input" value="<%= egreso.folio_np %>" disabled>
+        <small class="helper-text">El folio es generado automáticamente por el sistema.</small>
+      </div>
+
+      <div class="form-field">
+        <label>Estado</label>
+        <input type="text" class="form-input" value="<%= egreso.estado.humanize %>" disabled>
+      </div>
+    </div>
+  <% else %>
+    <div class="form-grid form-grid--dos-columnas">
+      <div class="form-field">
+        <label>Folio N.P.</label>
+        <input type="text" class="form-input" value="Se generará automáticamente" disabled>
+        <small class="helper-text">Formato: N.P. 0001, N.P. 0002, N.P. 0003...</small>
+      </div>
+
+      <div class="form-field">
+        <label>Estado</label>
+        <input type="text" class="form-input" value="Registrado" disabled>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="form-grid form-grid--dos-columnas">
+    <div class="form-field">
+      <%= f.label :monto, "Monto" %>
+      <%= f.number_field :monto,
+                         class: "form-input #{'form-input--error' if egreso.errors[:monto].any?}",
+                         min: "0.01",
+                         step: "0.01" %>
+      <% if egreso.errors[:monto].any? %>
+        <small class="field-error"><%= egreso.errors[:monto].first %></small>
+      <% end %>
+    </div>
+
+    <div class="form-field">
+      <%= f.label :fecha_egreso, "Fecha del egreso" %>
+      <%= f.date_field :fecha_egreso,
+                       class: "form-input #{'form-input--error' if egreso.errors[:fecha_egreso].any?}" %>
+      <% if egreso.errors[:fecha_egreso].any? %>
+        <small class="field-error"><%= egreso.errors[:fecha_egreso].first %></small>
+      <% end %>
+    </div>
+
+    <div class="form-field form-field--full">
+      <%= f.label :concepto, "Concepto" %>
+      <%= f.text_field :concepto,
+                       class: "form-input #{'form-input--error' if egreso.errors[:concepto].any?}",
+                       minlength: 3,
+                       maxlength: 150,
+                       placeholder: "Ejemplo: Compra de papelería para asamblea" %>
+      <% if egreso.errors[:concepto].any? %>
+        <small class="field-error"><%= egreso.errors[:concepto].first %></small>
+      <% end %>
+    </div>
+
+    <div class="form-field form-field--full">
+      <%= f.label :observaciones, "Observaciones" %>
+      <%= f.text_area :observaciones,
+                      class: "form-input form-textarea #{'form-input--error' if egreso.errors[:observaciones].any?}",
+                      rows: 4,
+                      maxlength: 500,
+                      placeholder: "Opcional" %>
+      <% if egreso.errors[:observaciones].any? %>
+        <small class="field-error"><%= egreso.errors[:observaciones].first %></small>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <%= link_to "Cancelar",
+                egreso.persisted? ? egreso_path(egreso) : egresos_path,
+                class: "button button--ghost" %>
+
+    <%= f.submit egreso.persisted? ? "Actualizar egreso" : "Guardar egreso",
+                 class: "button button--primary" %>
+  </div>
+<% end %>

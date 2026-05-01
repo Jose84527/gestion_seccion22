@@ -37,6 +37,18 @@ Rails.application.routes.draw do
   end
 end
 
+resources :egresos do
+  member do
+    patch :cancelar
+    get :pdf
+    get :confirmacion
+    patch :confirmar
+    get :ver_evidencia
+    get :corregir_evidencia
+    patch :actualizar_evidencia
+  end
+end
+
   get "home/index"
 
   get "up" => "rails/health#show", as: :rails_health_check

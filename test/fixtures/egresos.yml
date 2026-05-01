@@ -1,0 +1,23 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  numero_np: 1
+  folio_np: MyString
+  monto: 9.99
+  concepto: MyString
+  fecha_egreso: 2026-05-01
+  observaciones: MyText
+  estado: MyString
+  evidencia_pdf_path: MyString
+  confirmado_at: 2026-05-01 10:59:05
+
+two:
+  numero_np: 1
+  folio_np: MyString
+  monto: 9.99
+  concepto: MyString
+  fecha_egreso: 2026-05-01
+  observaciones: MyText
+  estado: MyString
+  evidencia_pdf_path: MyString
+  confirmado_at: 2026-05-01 10:59:05

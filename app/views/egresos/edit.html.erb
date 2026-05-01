@@ -1,0 +1,19 @@
+<% content_for :title, "Editar egreso" %>
+<% content_for :page_title, "Editar egreso" %>
+
+<section class="catalogo-page">
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Editar egreso</h3>
+        <p class="panel__description">
+          Solo se pueden editar egresos en estado registrado.
+        </p>
+      </div>
+
+      <%= link_to "Volver", egreso_path(@egreso), class: "button button--ghost" %>
+    </div>
+
+    <%= render "form", egreso: @egreso %>
+  </div>
+</section>

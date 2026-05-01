@@ -1,0 +1,19 @@
+<% content_for :title, "Nuevo egreso" %>
+<% content_for :page_title, "Nuevo egreso" %>
+
+<section class="catalogo-page">
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Registrar egreso</h3>
+        <p class="panel__description">
+          Captura una salida de dinero de la Secretaría de Finanzas.
+        </p>
+      </div>
+
+      <%= link_to "Volver", egresos_path, class: "button button--ghost" %>
+    </div>
+
+    <%= render "form", egreso: @egreso %>
+  </div>
+</section>

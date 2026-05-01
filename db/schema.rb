@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_29_220525) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_01_180018) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -66,6 +66,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_29_220525) do
     t.index ["confirmada_por_id"], name: "index_cooperaciones_on_confirmada_por_id"
     t.index ["estado"], name: "index_cooperaciones_on_estado"
     t.index ["nombre"], name: "index_cooperaciones_on_nombre"
+  end
+
+  create_table "egresos", force: :cascade do |t|
+    t.string "concepto", null: false
+    t.datetime "confirmado_at"
+    t.datetime "created_at", null: false
+    t.string "estado", default: "registrado", null: false
+    t.string "evidencia_pdf_path"
+    t.date "fecha_egreso", null: false
+    t.string "folio_np", null: false
+    t.decimal "monto", precision: 12, scale: 2, null: false
+    t.integer "numero_np", null: false
+    t.text "observaciones"
+    t.text "observaciones_evidencia"
+    t.datetime "updated_at", null: false
+    t.index ["estado"], name: "index_egresos_on_estado"
+    t.index ["fecha_egreso"], name: "index_egresos_on_fecha_egreso"
+    t.index ["folio_np"], name: "index_egresos_on_folio_np", unique: true
+    t.index ["numero_np"], name: "index_egresos_on_numero_np", unique: true
   end
 
   create_table "historiales", force: :cascade do |t|
