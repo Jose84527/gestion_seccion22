@@ -4,6 +4,32 @@ module Finanzas
     before_action -> { requiere_permiso!(:cooperaciones, :ver) }
 
     def index
+      cargar_reporte
+    end
+
+    def excel
+      cargar_reporte
+
+      archivo = Excel::ReporteFinancieroXlsx.new(
+        tipo: @tipo,
+        fecha_inicio: @fecha_inicio,
+        fecha_fin: @fecha_fin,
+        ingresos: @ingresos,
+        egresos: @egresos,
+        total_ingresos: @total_ingresos,
+        total_egresos: @total_egresos,
+        saldo_final: @saldo_final
+      ).render
+
+      send_data archivo,
+                filename: nombre_archivo_excel,
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                disposition: "attachment"
+    end
+
+    private
+
+    def cargar_reporte
       @tipo = params[:tipo].presence_in(%w[general ingresos egresos]) || "general"
 
       @fecha_inicio = parsear_fecha(params[:fecha_inicio])
@@ -16,8 +42,6 @@ module Finanzas
       @total_egresos = @egresos.sum { |egreso| egreso.monto.to_d }
       @saldo_final = @total_ingresos - @total_egresos
     end
-
-    private
 
     def ingresos_confirmados
       base = Cooperacion.where(estado: "completada")
@@ -41,13 +65,8 @@ module Finanzas
     end
 
     def aplicar_rango_datetime(scope, columna)
-      if @fecha_inicio.present?
-        scope = scope.where("#{columna} >= ?", @fecha_inicio.beginning_of_day)
-      end
-
-      if @fecha_fin.present?
-        scope = scope.where("#{columna} <= ?", @fecha_fin.end_of_day)
-      end
+      scope = scope.where("#{columna} >= ?", @fecha_inicio.beginning_of_day) if @fecha_inicio.present?
+      scope = scope.where("#{columna} <= ?", @fecha_fin.end_of_day) if @fecha_fin.present?
 
       scope
     end
@@ -65,6 +84,11 @@ module Finanzas
       Date.parse(valor.to_s)
     rescue ArgumentError
       nil
+    end
+
+    def nombre_archivo_excel
+      fecha = Time.current.strftime("%Y%m%d_%H%M%S")
+      "reporte_financiero_#{@tipo}_#{fecha}.xlsx"
     end
   end
 end

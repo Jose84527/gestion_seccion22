@@ -7,6 +7,7 @@ Rails.application.routes.draw do
 
   get "finanzas", to: "finanzas/dashboard#index", as: :finanzas
   get "finanzas/reportes", to: "finanzas/reportes#index", as: :finanzas_reportes
+  get "finanzas/reportes/excel", to: "finanzas/reportes#excel", as: :finanzas_reportes_excel
 
   resources :historiales, only: %i[index show]
 

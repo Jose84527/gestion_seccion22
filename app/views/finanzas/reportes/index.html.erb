@@ -46,9 +46,18 @@
       </div>
 
       <div class="filtros-actions">
-        <%= submit_tag "Generar reporte", class: "button button--primary" %>
-        <%= link_to "Limpiar", finanzas_reportes_path, class: "button button--ghost" %>
-      </div>
+  <%= submit_tag "Generar reporte", class: "button button--primary" %>
+
+  <%= link_to "Exportar Excel",
+              finanzas_reportes_excel_path(
+                tipo: @tipo,
+                fecha_inicio: @fecha_inicio,
+                fecha_fin: @fecha_fin
+              ),
+              class: "button button--ghost" %>
+
+  <%= link_to "Limpiar", finanzas_reportes_path, class: "button button--ghost" %>
+</div>
     <% end %>
   </div>
 
