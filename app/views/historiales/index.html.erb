@@ -9,18 +9,28 @@
     </div>
 
     <%= form_with url: historiales_path, method: :get, local: true, class: "filtros-panel filtros-panel--inline" do %>
-  <div class="filtros-inline">
-    <div class="form-field filtros-inline__field">
-      <label for="fecha">Fecha</label>
-      <%= date_field_tag :fecha, @fecha, class: "form-input" %>
-    </div>
+      <div class="filtros-inline">
+        <div class="form-field filtros-inline__field">
+          <label for="fecha">Fecha</label>
+          <%= date_field_tag :fecha, @fecha, class: "form-input" %>
+        </div>
 
-    <div class="filtros-actions filtros-actions--inline">
-      <%= submit_tag "Filtrar", class: "button button--primary" %>
-      <%= link_to "Limpiar", historiales_path, class: "button button--ghost" %>
-    </div>
-  </div>
-<% end %>
+        <div class="form-field filtros-inline__field">
+          <label for="modulo">Módulo</label>
+          <%= select_tag :modulo,
+                         options_for_select(
+                           [["Todos", ""]] + @modulos_disponibles.map { |modulo| [nombre_modulo_historial(modulo), modulo] },
+                           @modulo
+                         ),
+                         class: "form-input" %>
+        </div>
+
+        <div class="filtros-actions filtros-actions--inline">
+          <%= submit_tag "Filtrar", class: "button button--primary" %>
+          <%= link_to "Limpiar", historiales_path, class: "button button--ghost" %>
+        </div>
+      </div>
+    <% end %>
 
     <% if @historiales.any? %>
       <div class="listado-meta">
@@ -28,7 +38,11 @@
           Mostrando <strong><%= @historiales.size %></strong> de
           <strong><%= @total_registros %></strong> registros
         </span>
-        <span>Página <strong><%= @pagina_actual %></strong> de <strong><%= @total_paginas %></strong></span>
+
+        <span>
+          Página <strong><%= @pagina_actual %></strong> de
+          <strong><%= @total_paginas %></strong>
+        </span>
       </div>
 
       <div class="historial-table-wrapper">
@@ -36,6 +50,7 @@
           <thead>
             <tr>
               <th>Acción</th>
+              <th>Módulo</th>
               <th>Fecha y hora</th>
               <th>Usuario</th>
               <th></th>
@@ -45,11 +60,30 @@
           <tbody>
             <% @historiales.each do |historial| %>
               <tr>
-                <td><span class="historial-badge"><%= historial.accion.humanize %></span></td>
-                <td><%= historial.fecha_evento.strftime("%d/%m/%Y %H:%M:%S") %></td>
-                <td><%= historial.nombre_usuario %></td>
+                <td>
+                  <span class="historial-badge">
+                    <%= historial.accion.humanize %>
+                  </span>
+                </td>
+
+                <td>
+                  <span class="historial-badge">
+                    <%= nombre_modulo_historial(historial.modulo) %>
+                  </span>
+                </td>
+
+                <td>
+                  <%= historial.fecha_evento.strftime("%d/%m/%Y %H:%M:%S") %>
+                </td>
+
+                <td>
+                  <%= historial.nombre_usuario %>
+                </td>
+
                 <td class="historial-table__actions">
-                  <%= link_to "Ver detalle", historial_path(historial), class: "button button--ghost" %>
+                  <%= link_to "Ver detalle",
+                              historial_path(historial),
+                              class: "button button--ghost" %>
                 </td>
               </tr>
             <% end %>
@@ -57,25 +91,27 @@
         </table>
       </div>
 
-      <div class="pagination">
-        <% if @pagina_actual > 1 %>
-          <%= link_to "← Anterior",
-                      historiales_path(request.query_parameters.merge(page: @pagina_actual - 1)),
-                      class: "button button--ghost" %>
-        <% end %>
+      <% if @total_paginas.to_i > 1 %>
+        <div class="pagination">
+          <% if @pagina_actual > 1 %>
+            <%= link_to "← Anterior",
+                        historiales_path(request.query_parameters.merge(page: @pagina_actual - 1)),
+                        class: "button button--ghost" %>
+          <% end %>
 
-        <% (1..@total_paginas).each do |pagina| %>
-          <%= link_to pagina,
-                      historiales_path(request.query_parameters.merge(page: pagina)),
-                      class: "pagination__link #{'is-active' if pagina == @pagina_actual}" %>
-        <% end %>
+          <% (1..@total_paginas).each do |pagina| %>
+            <%= link_to pagina,
+                        historiales_path(request.query_parameters.merge(page: pagina)),
+                        class: "pagination__link #{'is-active' if pagina == @pagina_actual}" %>
+          <% end %>
 
-        <% if @pagina_actual < @total_paginas %>
-          <%= link_to "Siguiente →",
-                      historiales_path(request.query_parameters.merge(page: @pagina_actual + 1)),
-                      class: "button button--ghost" %>
-        <% end %>
-      </div>
+          <% if @pagina_actual < @total_paginas %>
+            <%= link_to "Siguiente →",
+                        historiales_path(request.query_parameters.merge(page: @pagina_actual + 1)),
+                        class: "button button--ghost" %>
+          <% end %>
+        </div>
+      <% end %>
     <% else %>
       <div class="empty-state">
         No se encontraron registros de historial con los criterios seleccionados.

@@ -8,23 +8,83 @@ module NavigationHelper
 
       { clave: :conceptos07, modulo: :conceptos07, etiqueta: "Categorías", icono: "🏷", ruta: concepto07_niveles_path },
 
-      { clave: :finanzas, modulo: :cooperaciones, etiqueta: "Finanzas", icono: "💼", ruta: finanzas_path, tipo: :grupo },
-      { clave: :finanzas_dashboard, modulo: :cooperaciones, etiqueta: "Dashboard financiero", icono: "↳", ruta: finanzas_path, tipo: :subitem },
-      { clave: :nueva_cooperacion, modulo: :cooperaciones, etiqueta: "Nueva cooperación", icono: "↳", ruta: new_cooperacion_path, tipo: :subitem },
-      { clave: :control_cooperaciones, modulo: :cooperaciones, etiqueta: "Control de cooperaciones", icono: "↳", ruta: cooperaciones_path, tipo: :subitem },
-      { clave: :egresos, modulo: :cooperaciones, etiqueta: "Egresos", icono: "↳", ruta: egresos_path, tipo: :subitem },
-
-      { clave: :eventos, modulo: :eventos, etiqueta: "Eventos", icono: "📅", ruta: nil },
-      { clave: :detalle_evento, modulo: :eventos, etiqueta: "Detalle evento", icono: "📌", ruta: nil },
-      { clave: :registro_asistencia, modulo: :eventos, etiqueta: "Registro asistencia", icono: "📝", ruta: nil },
-      { clave: :reporte_participacion, modulo: :eventos, etiqueta: "Reporte participación", icono: "📊", ruta: nil },
-      { clave: :generar_constancia, modulo: :eventos, etiqueta: "Generar constancia", icono: "📄", ruta: nil },
-
-      { clave: :usuarios, modulo: :usuarios, etiqueta: "Usuarios", icono: "⚙", ruta: usuarios_path },
-      { clave: :historial, modulo: :historial, etiqueta: "Historial", icono: "🕘", ruta: historiales_path }
+      { clave: :finanzas, modulo: :cooperaciones, etiqueta: "Finanzas", icono: "💼", ruta: finanzas_path, tipo: :grupo }
     ]
 
+    items.concat(finanzas_subitems) if finanzas_activa?
+
+    items.concat(
+      [
+        { clave: :eventos, modulo: :eventos, etiqueta: "Eventos", icono: "📅", ruta: nil },
+        { clave: :detalle_evento, modulo: :eventos, etiqueta: "Detalle evento", icono: "📌", ruta: nil },
+        { clave: :registro_asistencia, modulo: :eventos, etiqueta: "Registro asistencia", icono: "📝", ruta: nil },
+        { clave: :reporte_participacion, modulo: :eventos, etiqueta: "Reporte participación", icono: "📊", ruta: nil },
+        { clave: :generar_constancia, modulo: :eventos, etiqueta: "Generar constancia", icono: "📄", ruta: nil },
+
+        { clave: :usuarios, modulo: :usuarios, etiqueta: "Usuarios", icono: "⚙", ruta: usuarios_path },
+        { clave: :historial, modulo: :historial, etiqueta: "Historial", icono: "🕘", ruta: historiales_path }
+      ]
+    )
+
     items.select { |item| puede_ver_modulo?(item[:modulo]) }
+  end
+
+  def finanzas_subitems
+    [
+      {
+        clave: :finanzas_dashboard,
+        modulo: :cooperaciones,
+        etiqueta: "Dashboard financiero",
+        icono: "↳",
+        ruta: finanzas_path,
+        tipo: :subitem
+      },
+      {
+        clave: :nueva_cooperacion,
+        modulo: :cooperaciones,
+        etiqueta: "Nueva cooperación",
+        icono: "↳",
+        ruta: new_cooperacion_path,
+        tipo: :subitem
+      },
+      {
+        clave: :control_cooperaciones,
+        modulo: :cooperaciones,
+        etiqueta: "Control de cooperaciones",
+        icono: "↳",
+        ruta: cooperaciones_path,
+        tipo: :subitem
+      },
+      {
+        clave: :egresos,
+        modulo: :cooperaciones,
+        etiqueta: "Egresos",
+        icono: "↳",
+        ruta: egresos_path,
+        tipo: :subitem
+      },
+      {
+        clave: :reportes_financieros,
+        modulo: :cooperaciones,
+        etiqueta: "Reportes financieros",
+        icono: "↳",
+        ruta: finanzas_reportes_path,
+        tipo: :subitem
+      }
+    ]
+  end
+
+  def finanzas_activa?
+    rutas_finanzas = [
+      finanzas_path,
+      cooperaciones_path,
+      egresos_path,
+      finanzas_reportes_path
+    ]
+
+    rutas_finanzas.any? do |ruta|
+      request.path == ruta || request.path.start_with?("#{ruta}/")
+    end
   end
 
   def clase_item_sidebar(item)
@@ -33,13 +93,33 @@ module NavigationHelper
     clases << "sidebar__item--group" if item[:tipo] == :grupo
     clases << "sidebar__item--subitem" if item[:tipo] == :subitem
 
-    if item[:ruta].present?
-      clases << "is-active" if current_page?(item[:ruta])
+    if item[:clave] == :finanzas
+      clases << "is-active" if finanzas_activa?
+      clases << "is-open" if finanzas_activa?
+    elsif item[:ruta].present?
+      clases << "is-active" if item_activo?(item)
     else
       clases << "is-disabled"
     end
 
     clases.join(" ")
+  end
+
+  def item_activo?(item)
+    case item[:clave]
+    when :finanzas_dashboard
+      current_page?(finanzas_path)
+    when :nueva_cooperacion
+      current_page?(new_cooperacion_path)
+    when :control_cooperaciones
+      request.path.start_with?(cooperaciones_path) && !current_page?(new_cooperacion_path)
+    when :egresos
+      request.path.start_with?(egresos_path)
+    when :reportes_financieros
+      request.path.start_with?(finanzas_reportes_path)
+    else
+      current_page?(item[:ruta])
+    end
   end
 
   def iniciales_usuario_actual
