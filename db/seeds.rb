@@ -1,9 +1,21 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+# Seeds para entorno de desarrollo / demostración.
+# Deja la base limpia con un único usuario administrador inicial.
+
+puts "Creando usuario administrador inicial..."
+
+admin = Usuario.find_or_initialize_by(nombre_usuario: "admin")
+
+admin.password = "admin123"
+admin.password_confirmation = "admin123"
+admin.rol_sistema = "admin"
+admin.activo = true
+admin.trabajador_id = nil
+admin.ultimo_acceso_at = nil
+
+# Se saltan validaciones porque el modelo Usuario exige trabajador en creación,
+# pero para la cuenta inicial de administración necesitamos permitir admin sin trabajador.
+admin.save!(validate: false)
+
+puts "Usuario administrador listo:"
+puts "  usuario: admin"
+puts "  contraseña: admin123"

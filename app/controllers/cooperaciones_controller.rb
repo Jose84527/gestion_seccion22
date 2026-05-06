@@ -1,5 +1,6 @@
 class CooperacionesController < ApplicationController
   COOPERACIONES_POR_PAGINA = 10
+  DESGLOSE_TRABAJADORES_POR_PAGINA = 15
 
   before_action :autenticar_usuario
 
@@ -47,7 +48,7 @@ class CooperacionesController < ApplicationController
     @estado = params[:estado].to_s.strip
 
     base = Cooperacion
-           .includes(:cooperacion_conceptos, :cooperacion_condonados)
+           .includes(:cooperacion_conceptos, :cooperacion_condonados, :cooperacion_detalles_confirmados)
            .buscar_por_nombre(@q)
            .filtrar_por_estado(@estado)
            .recientes
@@ -68,9 +69,22 @@ class CooperacionesController < ApplicationController
   end
 
   def show
-    @desglose_trabajadores = @cooperacion.desglose_por_trabajador
-    @total_esperado = @desglose_trabajadores.sum { |fila| fila[:total].to_d }
-  end
+  @desglose_trabajadores = @cooperacion.desglose_por_trabajador
+  @total_esperado = @cooperacion.total_esperado
+
+  @total_desglose_registros = @desglose_trabajadores.size
+  @desglose_total_paginas = (@total_desglose_registros.to_f / DESGLOSE_TRABAJADORES_POR_PAGINA).ceil
+  @desglose_total_paginas = 1 if @desglose_total_paginas.zero?
+
+  @desglose_pagina_actual = params[:desglose_page].to_i
+  @desglose_pagina_actual = 1 if @desglose_pagina_actual < 1
+  @desglose_pagina_actual = @desglose_total_paginas if @desglose_pagina_actual > @desglose_total_paginas
+
+  offset = (@desglose_pagina_actual - 1) * DESGLOSE_TRABAJADORES_POR_PAGINA
+
+  @desglose_trabajadores_paginados =
+    @desglose_trabajadores.slice(offset, DESGLOSE_TRABAJADORES_POR_PAGINA) || []
+end
 
   def new
     @cooperacion = Cooperacion.new(
@@ -157,8 +171,6 @@ class CooperacionesController < ApplicationController
     nuevo_estado = @cooperacion.activa? ? "cancelada" : "activa"
 
     if @cooperacion.update(estado: nuevo_estado)
-      snapshot_despues = @cooperacion.snapshot_para_historial
-
       Historiales::Registrador.registrar!(
         usuario: usuario_actual,
         accion: "editar",
@@ -167,7 +179,7 @@ class CooperacionesController < ApplicationController
         registro_id: @cooperacion.id,
         resumen: "Se cambió el estado de la cooperación #{@cooperacion.nombre} a #{nuevo_estado}",
         antes: snapshot_antes,
-        despues: snapshot_despues,
+        despues: @cooperacion.snapshot_para_historial,
         request: request
       )
 
@@ -230,13 +242,17 @@ class CooperacionesController < ApplicationController
         filename: nombre_archivo
       )
 
-      @cooperacion.update!(
-        estado: "completada",
-        confirmada_at: Time.current,
-        confirmada_por: usuario_actual,
-        lista_confirmacion_pdf_path: ruta_pdf,
-        observaciones_confirmacion: params[:observaciones_confirmacion].to_s.strip.presence
-      )
+      @cooperacion.transaction do
+        @cooperacion.generar_snapshot_confirmado!
+
+        @cooperacion.update!(
+          estado: "completada",
+          confirmada_at: Time.current,
+          confirmada_por: usuario_actual,
+          lista_confirmacion_pdf_path: ruta_pdf,
+          observaciones_confirmacion: params[:observaciones_confirmacion].to_s.strip.presence
+        )
+      end
 
       Historiales::Registrador.registrar!(
         usuario: usuario_actual,
@@ -246,7 +262,7 @@ class CooperacionesController < ApplicationController
         registro_id: @cooperacion.id,
         resumen: "Se confirmó la cooperación #{@cooperacion.nombre}",
         antes: snapshot_antes,
-        despues: @cooperacion.snapshot_para_historial,
+        despues: @cooperacion.reload.snapshot_para_historial,
         request: request
       )
 

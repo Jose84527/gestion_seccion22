@@ -65,6 +65,11 @@
           <span class="detalle-item__label">Confirmada por</span>
           <strong><%= @cooperacion.confirmada_por&.nombre_usuario || "-" %></strong>
         </div>
+
+        <div class="detalle-item">
+          <span class="detalle-item__label">Datos congelados el</span>
+          <strong><%= @cooperacion.snapshot_generado_at&.strftime("%d/%m/%Y %H:%M") || "-" %></strong>
+        </div>
       <% end %>
     </div>
   </div>
@@ -74,7 +79,7 @@
       <div>
         <h3>Conceptos incluidos</h3>
         <p class="panel__description">
-          Conceptos que se aplicarán en esta corrida.
+          Conceptos aplicados en esta corrida.
         </p>
       </div>
     </div>
@@ -97,7 +102,7 @@
               <tr>
                 <td><strong><%= concepto.nombre %></strong></td>
                 <td><%= concepto.descripcion.presence || "-" %></td>
-                <td><%= concepto.tipo_cooperacion.humanize %></td>
+                <td><%= concepto.tipo_cooperacion&.humanize || "-" %></td>
                 <td><%= concepto.monto_fijo.present? ? number_to_currency(concepto.monto_fijo) : "-" %></td>
                 <td><%= concepto.porcentaje.present? ? "#{concepto.porcentaje}%" : "-" %></td>
               </tr>
@@ -112,17 +117,37 @@
     <% end %>
   </div>
 
-  <div class="panel">
+  <div class="panel" id="desglose-trabajadores">
     <div class="panel__header">
       <div>
         <h3>Desglose por trabajador</h3>
         <p class="panel__description">
-          Vista previa de importes individuales antes de generar recibos o lista general.
+          <% if @cooperacion.completada? %>
+            Datos congelados al momento de confirmar la cooperación.
+          <% else %>
+            Vista previa de importes individuales antes de generar recibos o lista general.
+          <% end %>
         </p>
       </div>
     </div>
 
+    <% desglose_paginado = @desglose_trabajadores_paginados || @desglose_trabajadores %>
+
     <% if @desglose_trabajadores.any? %>
+      <% if @total_desglose_registros.present? %>
+        <div class="listado-meta">
+          <span>
+            Mostrando <strong><%= desglose_paginado.size %></strong> de
+            <strong><%= @total_desglose_registros %></strong> trabajadores
+          </span>
+
+          <span>
+            Página <strong><%= @desglose_pagina_actual %></strong> de
+            <strong><%= @desglose_total_paginas %></strong>
+          </span>
+        </div>
+      <% end %>
+
       <div class="tabla-wrapper">
         <table class="tabla-base">
           <thead>
@@ -138,21 +163,30 @@
           </thead>
 
           <tbody>
-            <% @desglose_trabajadores.each do |fila| %>
+            <% desglose_paginado.each do |fila_original| %>
+              <% fila = fila_original.respond_to?(:with_indifferent_access) ? fila_original.with_indifferent_access : {} %>
               <% trabajador = fila[:trabajador] %>
+
+              <% nombre_trabajador = fila[:nombre_trabajador].presence || fila[:nombre].presence || trabajador&.nombre_completo || "Trabajador sin nombre" %>
+              <% rfc_trabajador = fila[:rfc].presence || trabajador&.rfc || "-" %>
+              <% clave_cobro = fila[:clave_cobro].presence || trabajador&.clave_cobro || "-" %>
+              <% tipo_trabajador = fila[:tipo_trabajador].presence || trabajador&.tipo_trabajador %>
+              <% categoria_nombre = fila[:categoria_nombre].presence || trabajador&.concepto07_nivel&.nombre || "-" %>
+              <% concepto07_monto = fila[:concepto07].presence || fila[:concepto07_monto].presence || trabajador&.concepto07_monto || 0 %>
+              <% conceptos_fila = fila[:conceptos].presence || fila[:detalle_conceptos].presence || [] %>
 
               <tr>
                 <td>
-                  <strong><%= trabajador.nombre_completo %></strong>
+                  <strong><%= nombre_trabajador %></strong>
                   <br>
-                  <small><%= trabajador.rfc %> · <%= trabajador.clave_cobro %></small>
+                  <small><%= rfc_trabajador %> · <%= clave_cobro %></small>
                 </td>
 
-                <td><%= trabajador.tipo_trabajador&.humanize || "-" %></td>
+                <td><%= tipo_trabajador.present? ? tipo_trabajador.to_s.humanize : "-" %></td>
 
-                <td><%= trabajador.concepto07_nivel&.nombre || "-" %></td>
+                <td><%= categoria_nombre %></td>
 
-                <td><%= number_to_currency(fila[:concepto07]) %></td>
+                <td><%= number_to_currency(concepto07_monto.to_d) %></td>
 
                 <td>
                   <% if fila[:condonado] %>
@@ -166,19 +200,25 @@
                   <% if fila[:condonado] %>
                     <strong>CONDONADO</strong>
                   <% else %>
-                    <div class="desglose-conceptos">
-                      <% fila[:conceptos].each do |concepto| %>
-                        <div class="desglose-conceptos__item">
-                          <span><%= concepto[:nombre] %></span>
-                          <strong><%= number_to_currency(concepto[:importe]) %></strong>
-                        </div>
-                      <% end %>
-                    </div>
+                    <% if conceptos_fila.any? %>
+                      <div class="desglose-conceptos">
+                        <% conceptos_fila.each do |concepto_original| %>
+                          <% concepto = concepto_original.respond_to?(:with_indifferent_access) ? concepto_original.with_indifferent_access : {} %>
+
+                          <div class="desglose-conceptos__item">
+                            <span><%= concepto[:nombre].presence || "Concepto" %></span>
+                            <strong><%= number_to_currency(concepto[:importe].to_d) %></strong>
+                          </div>
+                        <% end %>
+                      </div>
+                    <% else %>
+                      <span>-</span>
+                    <% end %>
                   <% end %>
                 </td>
 
                 <td>
-                  <strong><%= number_to_currency(fila[:total]) %></strong>
+                  <strong><%= number_to_currency(fila[:total].to_d) %></strong>
                 </td>
               </tr>
             <% end %>
@@ -192,6 +232,46 @@
           </tfoot>
         </table>
       </div>
+
+      <% if @desglose_total_paginas.to_i > 1 %>
+        <div class="pagination">
+          <% if @desglose_pagina_actual > 1 %>
+            <%= link_to "← Anterior",
+                        cooperacion_path(
+                          @cooperacion,
+                          request.query_parameters.merge(
+                            desglose_page: @desglose_pagina_actual - 1,
+                            anchor: "desglose-trabajadores"
+                          )
+                        ),
+                        class: "button button--ghost" %>
+          <% end %>
+
+          <% (1..@desglose_total_paginas).each do |pagina| %>
+            <%= link_to pagina,
+                        cooperacion_path(
+                          @cooperacion,
+                          request.query_parameters.merge(
+                            desglose_page: pagina,
+                            anchor: "desglose-trabajadores"
+                          )
+                        ),
+                        class: "pagination__link #{'is-active' if pagina == @desglose_pagina_actual}" %>
+          <% end %>
+
+          <% if @desglose_pagina_actual < @desglose_total_paginas %>
+            <%= link_to "Siguiente →",
+                        cooperacion_path(
+                          @cooperacion,
+                          request.query_parameters.merge(
+                            desglose_page: @desglose_pagina_actual + 1,
+                            anchor: "desglose-trabajadores"
+                          )
+                        ),
+                        class: "button button--ghost" %>
+          <% end %>
+        </div>
+      <% end %>
     <% else %>
       <div class="empty-state">
         No hay trabajadores activos para calcular esta cooperación.
@@ -209,7 +289,12 @@
       </div>
     </div>
 
-    <% if @cooperacion.trabajadores_condonados.any? %>
+    <% filas_condonadas = @desglose_trabajadores.select do |fila_original|
+      fila = fila_original.respond_to?(:with_indifferent_access) ? fila_original.with_indifferent_access : {}
+      fila[:condonado]
+    end %>
+
+    <% if filas_condonadas.any? %>
       <div class="tabla-wrapper">
         <table class="tabla-base">
           <thead>
@@ -221,11 +306,18 @@
           </thead>
 
           <tbody>
-            <% @cooperacion.trabajadores_condonados.each do |trabajador| %>
+            <% filas_condonadas.each do |fila_original| %>
+              <% fila = fila_original.respond_to?(:with_indifferent_access) ? fila_original.with_indifferent_access : {} %>
+              <% trabajador = fila[:trabajador] %>
+
+              <% nombre_trabajador = fila[:nombre_trabajador].presence || fila[:nombre].presence || trabajador&.nombre_completo || "Trabajador sin nombre" %>
+              <% rfc_trabajador = fila[:rfc].presence || trabajador&.rfc || "-" %>
+              <% tipo_trabajador = fila[:tipo_trabajador].presence || trabajador&.tipo_trabajador %>
+
               <tr>
-                <td><%= trabajador.nombre_completo %></td>
-                <td><%= trabajador.rfc %></td>
-                <td><%= trabajador.tipo_trabajador&.humanize || "-" %></td>
+                <td><%= nombre_trabajador %></td>
+                <td><%= rfc_trabajador %></td>
+                <td><%= tipo_trabajador.present? ? tipo_trabajador.to_s.humanize : "-" %></td>
               </tr>
             <% end %>
           </tbody>
@@ -259,6 +351,11 @@
           <span class="detalle-item__label">Confirmada por</span>
           <strong><%= @cooperacion.confirmada_por&.nombre_usuario || "-" %></strong>
         </div>
+
+        <div class="detalle-item">
+          <span class="detalle-item__label">Total congelado</span>
+          <strong><%= number_to_currency(@cooperacion.total_confirmado_snapshot || @total_esperado) %></strong>
+        </div>
       </div>
 
       <div class="detalle-bloque">
@@ -268,35 +365,31 @@
 
       <% if @cooperacion.lista_confirmacion_pdf_path.present? %>
         <div class="finanzas-actions">
-          <% if @cooperacion.lista_confirmacion_pdf_path.present? %>
-  <div class="finanzas-actions">
-    <%= link_to "Ver PDF escaneado",
-                ver_lista_confirmacion_cooperacion_path(@cooperacion),
-                class: "button button--primary",
-                target: "_blank",
-                rel: "noopener" %>
+          <%= link_to "Ver PDF escaneado",
+                      ver_lista_confirmacion_cooperacion_path(@cooperacion),
+                      class: "button button--primary",
+                      target: "_blank",
+                      rel: "noopener" %>
 
-    <% if puede_realizar_accion?(:cooperaciones, :editar) %>
-      <%= link_to "Corregir PDF de evidencia",
-                  corregir_evidencia_cooperacion_path(@cooperacion),
-                  class: "button button--ghost" %>
-    <% end %>
-  </div>
-<% end %>
+          <% if puede_realizar_accion?(:cooperaciones, :editar) %>
+            <%= link_to "Corregir PDF de evidencia",
+                        corregir_evidencia_cooperacion_path(@cooperacion),
+                        class: "button button--ghost" %>
+          <% end %>
         </div>
       <% end %>
 
       <div class="detalle-bloque">
-  <span class="detalle-item__label">Observaciones</span>
+        <span class="detalle-item__label">Observaciones</span>
 
-  <% if @cooperacion.observaciones_confirmacion.present? %>
-    <div class="observaciones-confirmacion">
-      <%= simple_format(@cooperacion.observaciones_confirmacion) %>
-    </div>
-  <% else %>
-    <p>-</p>
-  <% end %>
-</div>
+        <% if @cooperacion.observaciones_confirmacion.present? %>
+          <div class="observaciones-confirmacion">
+            <%= simple_format(@cooperacion.observaciones_confirmacion) %>
+          </div>
+        <% else %>
+          <p>-</p>
+        <% end %>
+      </div>
     </div>
   <% end %>
 
@@ -305,7 +398,7 @@
       <div>
         <h3>Documentos</h3>
         <p class="panel__description">
-          Exportación inicial en PDF de recibos y lista general.
+          Exportación en PDF de recibos y lista general.
         </p>
       </div>
     </div>

@@ -1,6 +1,14 @@
 <%= form_with model: usuario,
               class: "formulario-base",
-              data: { turbo: false },
+              data: (
+                usuario.persisted? ?
+                  { turbo: false } :
+                  {
+                    turbo: false,
+                    controller: "trabajador-selector",
+                    trabajador_selector_url_value: buscar_trabajadores_usuarios_path
+                  }
+              ),
               novalidate: true do |f| %>
   <% if usuario.errors.any? %>
     <div class="form-errors">
@@ -23,9 +31,7 @@
       </div>
     </div>
   <% else %>
-    <div class="trabajador-selector"
-         data-controller="trabajador-selector"
-         data-trabajador-selector-url-value="<%= buscar_trabajadores_usuarios_path %>">
+    <div class="trabajador-selector">
       <%= f.hidden_field :trabajador_id, data: { trabajador_selector_target: "hiddenInput" } %>
 
       <div class="form-field form-field--full">
@@ -81,6 +87,7 @@
                        minlength: 3,
                        maxlength: 30,
                        autocomplete: "username" %>
+
       <% if usuario.errors[:nombre_usuario].any? %>
         <small class="field-error"><%= usuario.errors[:nombre_usuario].first %></small>
       <% else %>
@@ -94,6 +101,7 @@
                    Usuario::ROLES_SISTEMA.map { |rol| [rol.humanize, rol] },
                    {},
                    class: "form-input #{'form-input--error' if usuario.errors[:rol_sistema].any?}" %>
+
       <% if usuario.errors[:rol_sistema].any? %>
         <small class="field-error"><%= usuario.errors[:rol_sistema].first %></small>
       <% end %>
@@ -105,6 +113,7 @@
                    [["Activa", true], ["Inactiva", false]],
                    {},
                    class: "form-input #{'form-input--error' if usuario.errors[:activo].any?}" %>
+
       <% if usuario.errors[:activo].any? %>
         <small class="field-error"><%= usuario.errors[:activo].first %></small>
       <% end %>

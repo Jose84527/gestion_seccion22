@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_01_180018) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_06_020654) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -51,6 +51,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_01_180018) do
     t.index ["trabajador_id"], name: "index_cooperacion_condonados_on_trabajador_id"
   end
 
+  create_table "cooperacion_detalles_confirmados", force: :cascade do |t|
+    t.string "categoria_nombre"
+    t.string "clave_cobro"
+    t.decimal "concepto07_monto", precision: 12, scale: 2, default: "0.0", null: false
+    t.boolean "condonado", default: false, null: false
+    t.bigint "cooperacion_id", null: false
+    t.datetime "created_at", null: false
+    t.string "curp"
+    t.jsonb "detalle_conceptos", default: [], null: false
+    t.string "nombre_trabajador", null: false
+    t.string "rfc"
+    t.string "tipo_trabajador"
+    t.decimal "total", precision: 12, scale: 2, default: "0.0", null: false
+    t.bigint "trabajador_id"
+    t.datetime "updated_at", null: false
+    t.index ["condonado"], name: "index_cooperacion_detalles_confirmados_on_condonado"
+    t.index ["cooperacion_id", "trabajador_id"], name: "idx_detalles_confirmados_coop_trabajador", unique: true
+    t.index ["cooperacion_id"], name: "index_cooperacion_detalles_confirmados_on_cooperacion_id"
+  end
+
   create_table "cooperaciones", force: :cascade do |t|
     t.datetime "confirmada_at"
     t.bigint "confirmada_por_id"
@@ -62,6 +82,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_01_180018) do
     t.string "lista_confirmacion_pdf_path"
     t.string "nombre", null: false
     t.text "observaciones_confirmacion"
+    t.datetime "snapshot_generado_at"
+    t.decimal "total_confirmado_snapshot", precision: 12, scale: 2
     t.datetime "updated_at", null: false
     t.index ["confirmada_por_id"], name: "index_cooperaciones_on_confirmada_por_id"
     t.index ["estado"], name: "index_cooperaciones_on_estado"
@@ -156,6 +178,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_01_180018) do
   add_foreign_key "cooperacion_conceptos", "cooperaciones"
   add_foreign_key "cooperacion_condonados", "cooperaciones"
   add_foreign_key "cooperacion_condonados", "trabajadores"
+  add_foreign_key "cooperacion_detalles_confirmados", "cooperaciones"
+  add_foreign_key "cooperacion_detalles_confirmados", "trabajadores", on_delete: :nullify
   add_foreign_key "cooperaciones", "usuarios", column: "confirmada_por_id"
   add_foreign_key "historiales", "usuarios", on_delete: :nullify
   add_foreign_key "trabajadores", "concepto07_niveles"
