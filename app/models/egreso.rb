@@ -1,6 +1,8 @@
 class Egreso < ApplicationRecord
   ESTADOS = %w[registrado confirmado cancelado].freeze
 
+  belongs_to :cuenta_financiera
+
   enum :estado,
        {
          registrado: "registrado",
@@ -12,14 +14,23 @@ class Egreso < ApplicationRecord
   before_validation :normalizar_campos
   before_validation :asignar_folio_np, on: :create
 
+  validates :cuenta_financiera,
+            presence: { message: "es obligatoria" }
+
   validates :numero_np,
             presence: { message: "es obligatorio" },
             numericality: { only_integer: true, greater_than: 0, message: "debe ser mayor a 0" },
-            uniqueness: { message: "ya existe" }
+            uniqueness: {
+              scope: :cuenta_financiera_id,
+              message: "ya existe para esta cuenta financiera"
+            }
 
   validates :folio_np,
             presence: { message: "es obligatorio" },
-            uniqueness: { message: "ya existe" }
+            uniqueness: {
+              scope: :cuenta_financiera_id,
+              message: "ya existe para esta cuenta financiera"
+            }
 
   validates :monto,
             presence: { message: "es obligatorio" },
@@ -49,7 +60,7 @@ class Egreso < ApplicationRecord
   }
 
   scope :ordenados_por_folio, lambda {
-    order(numero_np: :desc)
+    order(:cuenta_financiera_id, numero_np: :desc)
   }
 
   scope :buscar_por_texto, lambda { |termino|
@@ -68,6 +79,12 @@ class Egreso < ApplicationRecord
     return all unless ESTADOS.include?(estado)
 
     where(estado: estado)
+  }
+
+  scope :filtrar_por_cuenta_financiera, lambda { |cuenta_financiera_id|
+    return all if cuenta_financiera_id.blank?
+
+    where(cuenta_financiera_id: cuenta_financiera_id)
   }
 
   def editable?
@@ -94,7 +111,9 @@ class Egreso < ApplicationRecord
       estado: estado,
       evidencia_pdf_path: evidencia_pdf_path,
       observaciones_evidencia: observaciones_evidencia,
-      confirmado_at: confirmado_at
+      confirmado_at: confirmado_at,
+      cuenta_financiera_id: cuenta_financiera_id,
+      cuenta_financiera_nombre: cuenta_financiera&.nombre
     }
   end
 
@@ -108,11 +127,17 @@ class Egreso < ApplicationRecord
   end
 
   def asignar_folio_np
+    return if numero_np.present? && folio_np.present?
+    return if cuenta_financiera_id.blank?
+
     self.numero_np = siguiente_numero_np if numero_np.blank?
     self.folio_np = format("N.P. %04d", numero_np) if folio_np.blank?
   end
 
   def siguiente_numero_np
-    Egreso.maximum(:numero_np).to_i + 1
+    Egreso
+      .where(cuenta_financiera_id: cuenta_financiera_id)
+      .maximum(:numero_np)
+      .to_i + 1
   end
 end

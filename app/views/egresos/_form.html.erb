@@ -12,8 +12,40 @@
     </div>
   <% end %>
 
-  <% if egreso.persisted? %>
-    <div class="form-grid form-grid--dos-columnas">
+  <div class="form-grid form-grid--dos-columnas">
+    <% if admin_actual? %>
+      <div class="form-field">
+        <%= f.label :cuenta_financiera_id, "Cuenta financiera" %>
+        <%= f.select :cuenta_financiera_id,
+                     options_from_collection_for_select(
+                       @cuentas_financieras || [],
+                       :id,
+                       :nombre,
+                       egreso.cuenta_financiera_id
+                     ),
+                     { include_blank: "Selecciona una cuenta financiera" },
+                     class: "form-input #{'form-input--error' if egreso.errors[:cuenta_financiera].any? || egreso.errors[:cuenta_financiera_id].any?}" %>
+
+        <% if egreso.errors[:cuenta_financiera].any? %>
+          <small class="field-error"><%= egreso.errors[:cuenta_financiera].first %></small>
+        <% elsif egreso.errors[:cuenta_financiera_id].any? %>
+          <small class="field-error"><%= egreso.errors[:cuenta_financiera_id].first %></small>
+        <% else %>
+          <small class="helper-text">El admin puede asignar este egreso a una secretaría específica.</small>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="form-field">
+        <label>Cuenta financiera</label>
+        <input type="text"
+               class="form-input"
+               value="<%= @cuenta_financiera_actual&.nombre || egreso.cuenta_financiera&.nombre || '-' %>"
+               disabled>
+        <small class="helper-text">Este egreso se registrará en tu cuenta financiera asignada.</small>
+      </div>
+    <% end %>
+
+    <% if egreso.persisted? %>
       <div class="form-field">
         <label>Folio N.P.</label>
         <input type="text" class="form-input" value="<%= egreso.folio_np %>" disabled>
@@ -24,9 +56,7 @@
         <label>Estado</label>
         <input type="text" class="form-input" value="<%= egreso.estado.humanize %>" disabled>
       </div>
-    </div>
-  <% else %>
-    <div class="form-grid form-grid--dos-columnas">
+    <% else %>
       <div class="form-field">
         <label>Folio N.P.</label>
         <input type="text" class="form-input" value="Se generará automáticamente" disabled>
@@ -37,8 +67,8 @@
         <label>Estado</label>
         <input type="text" class="form-input" value="Registrado" disabled>
       </div>
-    </div>
-  <% end %>
+    <% end %>
+  </div>
 
   <div class="form-grid form-grid--dos-columnas">
     <div class="form-field">

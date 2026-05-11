@@ -3,6 +3,8 @@ class CooperacionesController < ApplicationController
   DESGLOSE_TRABAJADORES_POR_PAGINA = 15
 
   before_action :autenticar_usuario
+  before_action :requiere_cuenta_financiera_para_finanzas!
+  before_action :cargar_contexto_financiero
 
   before_action -> { requiere_permiso!(:cooperaciones, :ver) },
                 only: %i[
@@ -47,8 +49,8 @@ class CooperacionesController < ApplicationController
     @q = params[:q].to_s.strip
     @estado = params[:estado].to_s.strip
 
-    base = Cooperacion
-           .includes(:cooperacion_conceptos, :cooperacion_condonados, :cooperacion_detalles_confirmados)
+    base = cooperaciones_visibles
+           .includes(:cuenta_financiera, :cooperacion_conceptos, :cooperacion_condonados, :cooperacion_detalles_confirmados)
            .buscar_por_nombre(@q)
            .filtrar_por_estado(@estado)
            .recientes
@@ -69,28 +71,30 @@ class CooperacionesController < ApplicationController
   end
 
   def show
-  @desglose_trabajadores = @cooperacion.desglose_por_trabajador
-  @total_esperado = @cooperacion.total_esperado
+    @desglose_trabajadores = @cooperacion.desglose_por_trabajador
+    @total_esperado = @cooperacion.total_esperado
 
-  @total_desglose_registros = @desglose_trabajadores.size
-  @desglose_total_paginas = (@total_desglose_registros.to_f / DESGLOSE_TRABAJADORES_POR_PAGINA).ceil
-  @desglose_total_paginas = 1 if @desglose_total_paginas.zero?
+    @total_desglose_registros = @desglose_trabajadores.size
+    @desglose_total_paginas = (@total_desglose_registros.to_f / DESGLOSE_TRABAJADORES_POR_PAGINA).ceil
+    @desglose_total_paginas = 1 if @desglose_total_paginas.zero?
 
-  @desglose_pagina_actual = params[:desglose_page].to_i
-  @desglose_pagina_actual = 1 if @desglose_pagina_actual < 1
-  @desglose_pagina_actual = @desglose_total_paginas if @desglose_pagina_actual > @desglose_total_paginas
+    @desglose_pagina_actual = params[:desglose_page].to_i
+    @desglose_pagina_actual = 1 if @desglose_pagina_actual < 1
+    @desglose_pagina_actual = @desglose_total_paginas if @desglose_pagina_actual > @desglose_total_paginas
 
-  offset = (@desglose_pagina_actual - 1) * DESGLOSE_TRABAJADORES_POR_PAGINA
+    offset = (@desglose_pagina_actual - 1) * DESGLOSE_TRABAJADORES_POR_PAGINA
 
-  @desglose_trabajadores_paginados =
-    @desglose_trabajadores.slice(offset, DESGLOSE_TRABAJADORES_POR_PAGINA) || []
-end
+    @desglose_trabajadores_paginados =
+      @desglose_trabajadores.slice(offset, DESGLOSE_TRABAJADORES_POR_PAGINA) || []
+  end
 
   def new
     @cooperacion = Cooperacion.new(
       estado: "activa",
       fecha_inicio_vigencia: Date.current
     )
+
+    asignar_cuenta_financiera_a_registro(@cooperacion)
 
     @cooperacion.cooperacion_conceptos.build(
       tipo_cooperacion: "fija",
@@ -101,8 +105,12 @@ end
   end
 
   def create
-    @cooperacion = Cooperacion.new(cooperacion_params)
+    parametros = cooperacion_params
+
+    @cooperacion = Cooperacion.new(parametros)
     @cooperacion.estado = "activa"
+
+    asignar_cuenta_financiera_a_registro(@cooperacion, parametros)
 
     if @cooperacion.save
       Historiales::Registrador.registrar!(
@@ -135,8 +143,9 @@ end
     end
 
     snapshot_antes = @cooperacion.snapshot_para_historial
+    parametros = cooperacion_params
 
-    if @cooperacion.update(cooperacion_params)
+    if @cooperacion.update(parametros)
       snapshot_despues = @cooperacion.snapshot_para_historial
 
       if snapshot_antes != snapshot_despues
@@ -394,8 +403,17 @@ end
 
   private
 
+  def cooperaciones_visibles
+    aplicar_cuenta_financiera(Cooperacion.all)
+  end
+
   def set_cooperacion
-    @cooperacion = Cooperacion.find(params[:id])
+    @cooperacion = cooperaciones_visibles.find(params[:id])
+  end
+
+  def cargar_contexto_financiero
+    @cuentas_financieras = cuentas_financieras_disponibles
+    @cuenta_financiera_actual = cuenta_financiera_contexto
   end
 
   def preparar_edicion
@@ -414,10 +432,11 @@ end
   end
 
   def cooperacion_params
-    params.require(:cooperacion).permit(
+    permitidos = params.require(:cooperacion).permit(
       :nombre,
       :fecha_inicio_vigencia,
       :fecha_fin_vigencia,
+      :cuenta_financiera_id,
       cooperacion_conceptos_attributes: [
         :id,
         :nombre,
@@ -434,6 +453,10 @@ end
         :_destroy
       ]
     )
+
+    permitidos.delete(:cuenta_financiera_id) unless admin_actual?
+
+    permitidos
   end
 
   def uploader_listas

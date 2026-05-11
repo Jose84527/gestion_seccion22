@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_06_020654) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_11_195212) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -75,6 +75,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_06_020654) do
     t.datetime "confirmada_at"
     t.bigint "confirmada_por_id"
     t.datetime "created_at", null: false
+    t.bigint "cuenta_financiera_id"
     t.text "descripcion"
     t.string "estado", default: "activa", null: false
     t.date "fecha_fin_vigencia"
@@ -86,14 +87,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_06_020654) do
     t.decimal "total_confirmado_snapshot", precision: 12, scale: 2
     t.datetime "updated_at", null: false
     t.index ["confirmada_por_id"], name: "index_cooperaciones_on_confirmada_por_id"
+    t.index ["cuenta_financiera_id"], name: "index_cooperaciones_on_cuenta_financiera_id"
     t.index ["estado"], name: "index_cooperaciones_on_estado"
     t.index ["nombre"], name: "index_cooperaciones_on_nombre"
+  end
+
+  create_table "cuentas_financieras", force: :cascade do |t|
+    t.boolean "activa", default: true, null: false
+    t.datetime "created_at", null: false
+    t.text "descripcion"
+    t.string "nombre", null: false
+    t.datetime "updated_at", null: false
+    t.index ["nombre"], name: "index_cuentas_financieras_on_nombre", unique: true
   end
 
   create_table "egresos", force: :cascade do |t|
     t.string "concepto", null: false
     t.datetime "confirmado_at"
     t.datetime "created_at", null: false
+    t.bigint "cuenta_financiera_id", null: false
     t.string "estado", default: "registrado", null: false
     t.string "evidencia_pdf_path"
     t.date "fecha_egreso", null: false
@@ -103,10 +115,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_06_020654) do
     t.text "observaciones"
     t.text "observaciones_evidencia"
     t.datetime "updated_at", null: false
+    t.index ["cuenta_financiera_id", "folio_np"], name: "idx_egresos_cuenta_folio_np", unique: true
+    t.index ["cuenta_financiera_id", "numero_np"], name: "idx_egresos_cuenta_numero_np", unique: true
+    t.index ["cuenta_financiera_id"], name: "index_egresos_on_cuenta_financiera_id"
     t.index ["estado"], name: "index_egresos_on_estado"
     t.index ["fecha_egreso"], name: "index_egresos_on_fecha_egreso"
-    t.index ["folio_np"], name: "index_egresos_on_folio_np", unique: true
-    t.index ["numero_np"], name: "index_egresos_on_numero_np", unique: true
   end
 
   create_table "historiales", force: :cascade do |t|
@@ -165,12 +178,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_06_020654) do
   create_table "usuarios", force: :cascade do |t|
     t.boolean "activo", default: true, null: false
     t.datetime "created_at", null: false
+    t.bigint "cuenta_financiera_id"
     t.string "nombre_usuario", null: false
     t.string "password_digest"
     t.string "rol_sistema", default: "finanzas", null: false
     t.bigint "trabajador_id"
     t.datetime "ultimo_acceso_at"
     t.datetime "updated_at", null: false
+    t.index ["cuenta_financiera_id"], name: "index_usuarios_on_cuenta_financiera_id"
     t.index ["nombre_usuario"], name: "index_usuarios_on_nombre_usuario", unique: true
     t.index ["trabajador_id"], name: "index_usuarios_on_trabajador_id", unique: true
   end
@@ -180,8 +195,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_06_020654) do
   add_foreign_key "cooperacion_condonados", "trabajadores"
   add_foreign_key "cooperacion_detalles_confirmados", "cooperaciones"
   add_foreign_key "cooperacion_detalles_confirmados", "trabajadores", on_delete: :nullify
+  add_foreign_key "cooperaciones", "cuentas_financieras", column: "cuenta_financiera_id"
   add_foreign_key "cooperaciones", "usuarios", column: "confirmada_por_id"
+  add_foreign_key "egresos", "cuentas_financieras", column: "cuenta_financiera_id"
   add_foreign_key "historiales", "usuarios", on_delete: :nullify
   add_foreign_key "trabajadores", "concepto07_niveles"
+  add_foreign_key "usuarios", "cuentas_financieras", column: "cuenta_financiera_id"
   add_foreign_key "usuarios", "trabajadores", on_delete: :restrict
 end

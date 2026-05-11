@@ -4,15 +4,17 @@ class UsuariosController < ApplicationController
   before_action -> { requiere_permiso!(:usuarios, :crear) }, only: %i[new create buscar_trabajadores]
   before_action -> { requiere_permiso!(:usuarios, :editar) }, only: %i[edit update]
   before_action :set_usuario, only: %i[edit update]
+  before_action :cargar_cuentas_financieras, only: %i[new create edit update]
 
   def index
-    @usuarios = Usuario.includes(:trabajador).order(:nombre_usuario)
+    @usuarios = Usuario.includes(:trabajador, :cuenta_financiera).order(:nombre_usuario)
   end
 
   def new
     @usuario = Usuario.new(
       activo: true,
-      rol_sistema: "finanzas"
+      rol_sistema: "finanzas",
+      cuenta_financiera: @cuentas_financieras.first
     )
   end
 
@@ -44,9 +46,10 @@ class UsuariosController < ApplicationController
 
   def update
     snapshot_antes = @usuario.snapshot_para_historial
-    cambio_password = usuario_params_para_actualizar[:password].present?
+    parametros_actualizacion = usuario_params_para_actualizar
+    cambio_password = parametros_actualizacion[:password].present?
 
-    if @usuario.update(usuario_params_para_actualizar)
+    if @usuario.update(parametros_actualizacion)
       snapshot_despues = @usuario.snapshot_para_historial
 
       if snapshot_antes != snapshot_despues || cambio_password
@@ -101,11 +104,16 @@ class UsuariosController < ApplicationController
     @usuario = Usuario.find(params[:id])
   end
 
+  def cargar_cuentas_financieras
+    @cuentas_financieras = CuentaFinanciera.activas
+  end
+
   def usuario_params_para_crear
     params.require(:usuario).permit(
       :trabajador_id,
       :nombre_usuario,
       :rol_sistema,
+      :cuenta_financiera_id,
       :activo,
       :password,
       :password_confirmation
@@ -116,6 +124,7 @@ class UsuariosController < ApplicationController
     permitidos = params.require(:usuario).permit(
       :nombre_usuario,
       :rol_sistema,
+      :cuenta_financiera_id,
       :activo,
       :password,
       :password_confirmation
@@ -143,6 +152,7 @@ class UsuariosController < ApplicationController
     cambios << "rol" if antes[:rol_sistema] != despues[:rol_sistema]
     cambios << "estado de la cuenta" if antes[:activo] != despues[:activo]
     cambios << "trabajador asociado" if antes[:trabajador_id] != despues[:trabajador_id]
+    cambios << "cuenta financiera" if antes[:cuenta_financiera_id] != despues[:cuenta_financiera_id]
     cambios << "contraseña" if cambio_password
 
     if cambios.empty?

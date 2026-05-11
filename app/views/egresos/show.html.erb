@@ -27,6 +27,12 @@
       </div>
 
       <div class="detalle-item">
+        <span class="detalle-item__label">Cuenta financiera</span>
+        <strong><%= @egreso.cuenta_financiera&.nombre || "-" %></strong>
+      </div>
+
+
+      <div class="detalle-item">
         <span class="detalle-item__label">Número N.P.</span>
         <strong><%= @egreso.numero_np %></strong>
       </div>

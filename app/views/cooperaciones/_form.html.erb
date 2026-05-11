@@ -24,6 +24,38 @@
     </div>
 
     <div class="form-grid form-grid--dos-columnas">
+      <% if admin_actual? %>
+        <div class="form-field">
+          <%= f.label :cuenta_financiera_id, "Cuenta financiera" %>
+          <%= f.select :cuenta_financiera_id,
+                       options_from_collection_for_select(
+                         @cuentas_financieras || [],
+                         :id,
+                         :nombre,
+                         cooperacion.cuenta_financiera_id
+                       ),
+                       { include_blank: "Selecciona una cuenta financiera" },
+                       class: "form-input #{'form-input--error' if cooperacion.errors[:cuenta_financiera].any? || cooperacion.errors[:cuenta_financiera_id].any?}" %>
+
+          <% if cooperacion.errors[:cuenta_financiera].any? %>
+            <small class="field-error"><%= cooperacion.errors[:cuenta_financiera].first %></small>
+          <% elsif cooperacion.errors[:cuenta_financiera_id].any? %>
+            <small class="field-error"><%= cooperacion.errors[:cuenta_financiera_id].first %></small>
+          <% else %>
+            <small class="helper-text">El admin puede asignar esta cooperación a una secretaría específica.</small>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="form-field">
+          <label>Cuenta financiera</label>
+          <input type="text"
+                 class="form-input"
+                 value="<%= @cuenta_financiera_actual&.nombre || cooperacion.cuenta_financiera&.nombre || '-' %>"
+                 disabled>
+          <small class="helper-text">Esta cooperación se registrará en tu cuenta financiera asignada.</small>
+        </div>
+      <% end %>
+
       <div class="form-field">
         <%= f.label :nombre, "Nombre de la cooperación" %>
         <%= f.text_field :nombre,
@@ -96,9 +128,9 @@
     <div class="form-section__header">
       <h4>Condonados</h4>
       <p>
-  Agrega trabajadores exentos para esta corrida de cooperación.
-  Los trabajadores marcados como condonados habituales se cargan automáticamente al crear una nueva cooperación.
-</p>
+        Agrega trabajadores exentos para esta corrida de cooperación.
+        Los trabajadores marcados como condonados habituales se cargan automáticamente al crear una nueva cooperación.
+      </p>
     </div>
 
     <div class="condonados-selector">

@@ -1,6 +1,8 @@
 <% content_for :title, "Control de cooperaciones" %>
 <% content_for :page_title, "Control de cooperaciones" %>
 
+<% cuenta_params = @cuenta_financiera_actual.present? ? { cuenta_financiera_id: @cuenta_financiera_actual.id } : {} %>
+
 <section class="catalogo-page">
   <div class="panel">
     <div class="panel__header">
@@ -12,12 +14,43 @@
       </div>
 
       <% if puede_realizar_accion?(:cooperaciones, :crear) %>
-        <%= link_to "Nueva cooperación", new_cooperacion_path, class: "button button--primary" %>
+        <%= link_to "Nueva cooperación",
+                    new_cooperacion_path(cuenta_params),
+                    class: "button button--primary" %>
+      <% end %>
+    </div>
+
+    <div class="detalle-bloque">
+      <span class="detalle-item__label">Cuenta financiera</span>
+
+      <% if admin_actual? %>
+        <p>
+          <strong><%= @cuenta_financiera_actual&.nombre || "Todas las cuentas financieras" %></strong>
+        </p>
+      <% else %>
+        <p>
+          <strong><%= @cuenta_financiera_actual&.nombre || "Sin cuenta financiera asignada" %></strong>
+        </p>
       <% end %>
     </div>
 
     <%= form_with url: cooperaciones_path, method: :get, local: true, class: "filtros-panel" do %>
       <div class="filtros-grid filtros-grid--cooperaciones">
+        <% if admin_actual? %>
+          <div class="form-field">
+            <label for="cuenta_financiera_id">Cuenta financiera</label>
+            <%= select_tag :cuenta_financiera_id,
+                           options_from_collection_for_select(
+                             @cuentas_financieras || [],
+                             :id,
+                             :nombre,
+                             @cuenta_financiera_actual&.id
+                           ),
+                           include_blank: "Todas las cuentas financieras",
+                           class: "form-input" %>
+          </div>
+        <% end %>
+
         <div class="form-field">
           <label for="q">Buscar por nombre</label>
           <%= text_field_tag :q,
@@ -66,6 +99,11 @@
           <thead>
             <tr>
               <th>Nombre</th>
+
+              <% if admin_actual? && @cuenta_financiera_actual.blank? %>
+                <th>Cuenta financiera</th>
+              <% end %>
+
               <th>Vigencia</th>
               <th>Conceptos</th>
               <th>Condonados</th>
@@ -80,6 +118,10 @@
               <tr>
                 <td><%= cooperacion.nombre %></td>
 
+                <% if admin_actual? && @cuenta_financiera_actual.blank? %>
+                  <td><%= cooperacion.cuenta_financiera&.nombre || "-" %></td>
+                <% end %>
+
                 <td>
                   <%= cooperacion.fecha_inicio_vigencia&.strftime("%d/%m/%Y") || "-" %>
                   -
@@ -87,9 +129,7 @@
                 </td>
 
                 <td><%= cooperacion.cantidad_conceptos %></td>
-
                 <td><%= cooperacion.cantidad_condonados %></td>
-
                 <td><%= number_to_currency(cooperacion.total_esperado) %></td>
 
                 <td>

@@ -31,6 +31,11 @@
       </div>
 
       <div class="detalle-item">
+        <span class="detalle-item__label">Cuenta financiera</span>
+        <strong><%= @cooperacion.cuenta_financiera&.nombre || "-" %></strong>
+      </div>
+
+      <div class="detalle-item">
         <span class="detalle-item__label">Fecha inicio</span>
         <strong><%= @cooperacion.fecha_inicio_vigencia&.strftime("%d/%m/%Y") || "-" %></strong>
       </div>

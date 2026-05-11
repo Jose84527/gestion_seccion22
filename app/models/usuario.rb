@@ -2,6 +2,7 @@ class Usuario < ApplicationRecord
   has_secure_password validations: false
 
   belongs_to :trabajador, optional: true
+  belongs_to :cuenta_financiera, optional: true
 
   ROLES_SISTEMA = %w[admin finanzas].freeze
 
@@ -44,6 +45,7 @@ class Usuario < ApplicationRecord
             if: :requiere_password?
 
   validate :trabajador_obligatorio_para_cuentas_nuevas, on: :create
+  validate :cuenta_financiera_obligatoria_para_finanzas
   validate :password_y_confirmacion_deben_coincidir, if: :requiere_password?
 
   def nombre_trabajador
@@ -59,7 +61,9 @@ class Usuario < ApplicationRecord
       trabajador_id: trabajador_id,
       trabajador_nombre: trabajador&.nombre_completo,
       trabajador_rfc: trabajador&.rfc,
-      trabajador_clave_cobro: trabajador&.clave_cobro
+      trabajador_clave_cobro: trabajador&.clave_cobro,
+      cuenta_financiera_id: cuenta_financiera_id,
+      cuenta_financiera_nombre: cuenta_financiera&.nombre
     }
   end
 
@@ -77,6 +81,13 @@ class Usuario < ApplicationRecord
     return if trabajador.present?
 
     errors.add(:trabajador, "es obligatorio")
+  end
+
+  def cuenta_financiera_obligatoria_para_finanzas
+    return unless finanzas?
+    return if cuenta_financiera.present?
+
+    errors.add(:cuenta_financiera, "es obligatoria para usuarios de finanzas")
   end
 
   def password_y_confirmacion_deben_coincidir

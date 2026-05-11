@@ -2,6 +2,8 @@ class EgresosController < ApplicationController
   EGRESOS_POR_PAGINA = 10
 
   before_action :autenticar_usuario
+  before_action :requiere_cuenta_financiera_para_finanzas!
+  before_action :cargar_contexto_financiero
 
   before_action -> { requiere_permiso!(:cooperaciones, :ver) },
                 only: %i[index show pdf ver_evidencia]
@@ -38,7 +40,8 @@ class EgresosController < ApplicationController
     @q = params[:q].to_s.strip
     @estado = params[:estado].to_s.strip
 
-    base = Egreso
+    base = egresos_visibles
+           .includes(:cuenta_financiera)
            .buscar_por_texto(@q)
            .filtrar_por_estado(@estado)
            .ordenados_por_folio
@@ -66,11 +69,17 @@ class EgresosController < ApplicationController
       fecha_egreso: Date.current,
       estado: "registrado"
     )
+
+    asignar_cuenta_financiera_a_registro(@egreso)
   end
 
   def create
-    @egreso = Egreso.new(egreso_params)
+    parametros = egreso_params
+
+    @egreso = Egreso.new(parametros)
     @egreso.estado = "registrado"
+
+    asignar_cuenta_financiera_a_registro(@egreso, parametros)
 
     if @egreso.save
       Historiales::Registrador.registrar!(
@@ -106,8 +115,9 @@ class EgresosController < ApplicationController
     end
 
     snapshot_antes = @egreso.snapshot_para_historial
+    parametros = egreso_params
 
-    if @egreso.update(egreso_params)
+    if @egreso.update(parametros)
       snapshot_despues = @egreso.snapshot_para_historial
 
       if snapshot_antes != snapshot_despues
@@ -322,17 +332,31 @@ class EgresosController < ApplicationController
 
   private
 
+  def egresos_visibles
+    aplicar_cuenta_financiera(Egreso.all)
+  end
+
   def set_egreso
-    @egreso = Egreso.find(params[:id])
+    @egreso = egresos_visibles.find(params[:id])
+  end
+
+  def cargar_contexto_financiero
+    @cuentas_financieras = cuentas_financieras_disponibles
+    @cuenta_financiera_actual = cuenta_financiera_contexto
   end
 
   def egreso_params
-    params.require(:egreso).permit(
+    permitidos = params.require(:egreso).permit(
       :monto,
       :concepto,
       :fecha_egreso,
-      :observaciones
+      :observaciones,
+      :cuenta_financiera_id
     )
+
+    permitidos.delete(:cuenta_financiera_id) unless admin_actual?
+
+    permitidos
   end
 
   def uploader_egresos

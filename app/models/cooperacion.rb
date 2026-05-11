@@ -3,6 +3,8 @@ class Cooperacion < ApplicationRecord
 
   ESTADOS = %w[activa completada cancelada].freeze
 
+  belongs_to :cuenta_financiera, optional: true
+
   belongs_to :confirmada_por,
              class_name: "Usuario",
              optional: true
@@ -19,8 +21,8 @@ class Cooperacion < ApplicationRecord
            source: :trabajador
 
   has_many :cooperacion_detalles_confirmados,
-         class_name: "CooperacionDetalleConfirmado",
-         dependent: :destroy
+           class_name: "CooperacionDetalleConfirmado",
+           dependent: :destroy
 
   accepts_nested_attributes_for :cooperacion_conceptos,
                                 allow_destroy: true
@@ -64,6 +66,12 @@ class Cooperacion < ApplicationRecord
     return all unless ESTADOS.include?(estado)
 
     where(estado: estado)
+  }
+
+  scope :filtrar_por_cuenta_financiera, lambda { |cuenta_financiera_id|
+    return all if cuenta_financiera_id.blank?
+
+    where(cuenta_financiera_id: cuenta_financiera_id)
   }
 
   def conceptos_validos
@@ -202,6 +210,8 @@ class Cooperacion < ApplicationRecord
       fecha_inicio_vigencia: fecha_inicio_vigencia,
       fecha_fin_vigencia: fecha_fin_vigencia,
       estado: estado,
+      cuenta_financiera_id: cuenta_financiera_id,
+      cuenta_financiera_nombre: cuenta_financiera&.nombre,
       total_esperado: total_esperado.to_s,
       total_confirmado_snapshot: total_confirmado_snapshot&.to_s,
       snapshot_generado_at: snapshot_generado_at,

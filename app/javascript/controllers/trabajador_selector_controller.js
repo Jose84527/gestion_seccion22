@@ -1,12 +1,25 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["query", "results", "hiddenInput", "selectedBox", "selectedText", "submit"]
+  static targets = [
+    "query",
+    "results",
+    "hiddenInput",
+    "selectedBox",
+    "selectedText",
+    "submit",
+    "roleSelect",
+    "cuentaField",
+    "cuentaSelect",
+    "cuentaHelper"
+  ]
+
   static values = { url: String }
 
   connect() {
     this.timeout = null
     this.updateSelectionState()
+    this.toggleCuentaFinanciera()
   }
 
   disconnect() {
@@ -14,6 +27,8 @@ export default class extends Controller {
   }
 
   search() {
+    if (!this.hasQueryTarget) return
+
     const term = this.queryTarget.value.trim()
 
     if (this.timeout) clearTimeout(this.timeout)
@@ -29,6 +44,8 @@ export default class extends Controller {
   }
 
   async performSearch(term) {
+    if (!this.hasUrlValue) return
+
     try {
       const response = await fetch(`${this.urlValue}?q=${encodeURIComponent(term)}`, {
         headers: { Accept: "application/json" }
@@ -46,6 +63,8 @@ export default class extends Controller {
   }
 
   renderResults(results) {
+    if (!this.hasResultsTarget) return
+
     this.resultsTarget.innerHTML = ""
 
     if (results.length === 0) {
@@ -87,32 +106,61 @@ export default class extends Controller {
     const id = button.dataset.id
     const label = button.dataset.label
 
-    this.hiddenInputTarget.value = id
-    this.selectedTextTarget.textContent = label
-    this.selectedBoxTarget.hidden = false
-    this.queryTarget.value = ""
+    if (this.hasHiddenInputTarget) {
+      this.hiddenInputTarget.value = id
+    }
+
+    if (this.hasSelectedTextTarget) {
+      this.selectedTextTarget.textContent = label
+    }
+
+    if (this.hasSelectedBoxTarget) {
+      this.selectedBoxTarget.hidden = false
+    }
+
+    if (this.hasQueryTarget) {
+      this.queryTarget.value = ""
+    }
 
     this.clearResults()
     this.updateSelectionState()
   }
 
   clearSelection() {
-    this.hiddenInputTarget.value = ""
-    this.selectedTextTarget.textContent = ""
-    this.selectedBoxTarget.hidden = true
-    this.queryTarget.value = ""
+    if (this.hasHiddenInputTarget) {
+      this.hiddenInputTarget.value = ""
+    }
+
+    if (this.hasSelectedTextTarget) {
+      this.selectedTextTarget.textContent = ""
+    }
+
+    if (this.hasSelectedBoxTarget) {
+      this.selectedBoxTarget.hidden = true
+    }
+
+    if (this.hasQueryTarget) {
+      this.queryTarget.value = ""
+    }
 
     this.clearResults()
     this.updateSelectionState()
-    this.queryTarget.focus()
+
+    if (this.hasQueryTarget) {
+      this.queryTarget.focus()
+    }
   }
 
   clearResults() {
+    if (!this.hasResultsTarget) return
+
     this.resultsTarget.innerHTML = ""
     this.resultsTarget.hidden = true
   }
 
   updateSelectionState() {
+    if (!this.hasHiddenInputTarget) return
+
     const hasSelection = this.hiddenInputTarget.value.trim() !== ""
 
     if (this.hasSelectedBoxTarget) {
@@ -121,6 +169,29 @@ export default class extends Controller {
 
     if (this.hasSubmitTarget) {
       this.submitTarget.disabled = !hasSelection
+    }
+  }
+
+  toggleCuentaFinanciera() {
+    if (!this.hasRoleSelectTarget || !this.hasCuentaSelectTarget) return
+
+    const rol = this.roleSelectTarget.value
+    const esFinanzas = rol === "finanzas"
+
+    this.cuentaSelectTarget.disabled = !esFinanzas
+
+    if (!esFinanzas) {
+      this.cuentaSelectTarget.value = ""
+    }
+
+    if (this.hasCuentaFieldTarget) {
+      this.cuentaFieldTarget.classList.toggle("is-disabled", !esFinanzas)
+    }
+
+    if (this.hasCuentaHelperTarget) {
+      this.cuentaHelperTarget.textContent = esFinanzas
+        ? "Obligatoria para usuarios con rol Finanzas."
+        : "No se requiere cuenta financiera para administradores."
     }
   }
 }

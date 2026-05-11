@@ -2,7 +2,19 @@ require "caxlsx"
 
 module Excel
   class ReporteFinancieroXlsx
-    def initialize(tipo:, fecha_inicio:, fecha_fin:, ingresos:, egresos:, total_ingresos:, total_egresos:, saldo_final:)
+    def initialize(
+      tipo:,
+      fecha_inicio:,
+      fecha_fin:,
+      ingresos:,
+      egresos:,
+      total_ingresos:,
+      total_egresos:,
+      saldo_final:,
+      cuenta_financiera: nil,
+      modo_global_por_cuentas: false,
+      reportes_por_cuenta: []
+    )
       @tipo = tipo
       @fecha_inicio = fecha_inicio
       @fecha_fin = fecha_fin
@@ -11,6 +23,9 @@ module Excel
       @total_ingresos = total_ingresos.to_d
       @total_egresos = total_egresos.to_d
       @saldo_final = saldo_final.to_d
+      @cuenta_financiera = cuenta_financiera
+      @modo_global_por_cuentas = modo_global_por_cuentas
+      @reportes_por_cuenta = reportes_por_cuenta
     end
 
     def render
@@ -18,14 +33,33 @@ module Excel
       @workbook = paquete.workbook
 
       definir_estilos
-      hoja_resumen
-      hoja_ingresos if @tipo.in?(%w[general ingresos])
-      hoja_egresos if @tipo.in?(%w[general egresos])
+
+      if @modo_global_por_cuentas
+        hoja_resumen_global
+
+        @reportes_por_cuenta.each_with_index do |reporte, index|
+          hoja_resumen_cuenta(reporte, index + 1)
+          hoja_ingresos(reporte[:ingresos], reporte[:total_ingresos], "Ingresos #{index + 1}", reporte[:cuenta]) if mostrar_ingresos?
+          hoja_egresos(reporte[:egresos], reporte[:total_egresos], "Egresos #{index + 1}", reporte[:cuenta]) if mostrar_egresos?
+        end
+      else
+        hoja_resumen_individual
+        hoja_ingresos(@ingresos, @total_ingresos, "Detalle ingresos", @cuenta_financiera) if mostrar_ingresos?
+        hoja_egresos(@egresos, @total_egresos, "Detalle egresos", @cuenta_financiera) if mostrar_egresos?
+      end
 
       paquete.to_stream.read
     end
 
     private
+
+    def mostrar_ingresos?
+      %w[general ingresos].include?(@tipo)
+    end
+
+    def mostrar_egresos?
+      %w[general egresos].include?(@tipo)
+    end
 
     def definir_estilos
       @styles = {}
@@ -41,17 +75,6 @@ module Excel
         b: true,
         sz: 12,
         fg_color: "6B4A3A"
-      )
-
-      @styles[:texto_normal] = @workbook.styles.add_style(
-        sz: 10,
-        fg_color: "2B2B2B"
-      )
-
-      @styles[:texto_centrado] = @workbook.styles.add_style(
-        sz: 10,
-        fg_color: "2B2B2B",
-        alignment: { horizontal: :center }
       )
 
       @styles[:texto_wrap] = @workbook.styles.add_style(
@@ -167,127 +190,103 @@ module Excel
       )
     end
 
-    def hoja_resumen
-      @workbook.add_worksheet(name: "Resumen") do |sheet|
+    def hoja_resumen_global
+      @workbook.add_worksheet(name: "Resumen general") do |sheet|
         sheet.add_row ["COMITÉ EJECUTIVO DELEGACIONAL D-II-11"]
         sheet.merge_cells "A1:F1"
         sheet["A1"].style = @styles[:titulo_principal]
 
-        sheet.add_row ["SECRETARÍA DE FINANZAS"]
+        sheet.add_row ["REPORTE FINANCIERO POR CUENTAS"]
         sheet.merge_cells "A2:F2"
         sheet["A2"].style = @styles[:subtitulo]
 
         sheet.add_row []
-        sheet.add_row ["Reporte financiero", nombre_tipo, "", "Periodo", periodo_texto, ""],
-                      style: [
-                        @styles[:encabezado_secundario],
-                        @styles[:celda],
-                        nil,
-                        @styles[:encabezado_secundario],
-                        @styles[:celda],
-                        nil
-                      ]
+        sheet.add_row ["Tipo de reporte", nombre_tipo, "", "Periodo", periodo_texto, ""],
+                      style: [@styles[:encabezado_secundario], @styles[:celda], nil, @styles[:encabezado_secundario], @styles[:celda], nil]
 
         sheet.add_row []
-        sheet.add_row ["Resumen general"], style: [@styles[:subtitulo]]
-        sheet.merge_cells "A6:F6"
+        sheet.add_row ["Cuenta financiera", "Ingresos confirmados", "Egresos confirmados", "Saldo final", "No. ingresos", "No. egresos"],
+                      style: Array.new(6, @styles[:encabezado])
 
-        sheet.add_row ["Indicador", "Valor", "", "Detalle", "Valor", ""],
-                      style: [
-                        @styles[:encabezado],
-                        @styles[:encabezado],
-                        nil,
-                        @styles[:encabezado],
-                        @styles[:encabezado],
-                        nil
-                      ]
+        @reportes_por_cuenta.each do |reporte|
+          sheet.add_row [
+            reporte[:cuenta].nombre,
+            reporte[:total_ingresos].to_d,
+            reporte[:total_egresos].to_d,
+            reporte[:saldo_final].to_d,
+            reporte[:ingresos].size,
+            reporte[:egresos].size
+          ], style: [
+            @styles[:celda_wrap],
+            @styles[:moneda],
+            @styles[:moneda],
+            reporte[:saldo_final].to_d.negative? ? @styles[:negativo] : @styles[:positivo],
+            @styles[:celda_centrada],
+            @styles[:celda_centrada]
+          ]
+        end
 
-        sheet.add_row [
-          "Ingresos confirmados",
-          @total_ingresos,
-          "",
-          "Número de ingresos",
-          @ingresos.size,
-          ""
-        ], style: [
-          @styles[:celda],
-          @styles[:moneda_resumen],
-          nil,
-          @styles[:celda],
-          @styles[:celda_centrada],
-          nil
-        ]
-
-        sheet.add_row [
-          "Egresos confirmados",
-          @total_egresos,
-          "",
-          "Número de egresos",
-          @egresos.size,
-          ""
-        ], style: [
-          @styles[:celda],
-          @styles[:moneda_resumen],
-          nil,
-          @styles[:celda],
-          @styles[:celda_centrada],
-          nil
-        ]
-
-        sheet.add_row [
-          "Saldo final",
-          @saldo_final,
-          "",
-          "Tipo de reporte",
-          nombre_tipo,
-          ""
-        ], style: [
-          @styles[:celda],
-          @saldo_final.negative? ? @styles[:negativo] : @styles[:positivo],
-          nil,
-          @styles[:celda],
-          @styles[:celda],
-          nil
-        ]
-
-        sheet.add_row []
-        sheet.add_row ["Interpretación"], style: [@styles[:subtitulo]]
-        sheet.merge_cells "A12:F12"
-
-        sheet.add_row [
-          "El saldo final se calcula restando los egresos confirmados a los ingresos confirmados. Solo se consideran movimientos confirmados dentro del periodo seleccionado."
-        ], style: [@styles[:texto_wrap]]
-        sheet.merge_cells "A13:F13"
-
-        sheet.add_row []
-        sheet.add_row ["Resumen para gráficas"], style: [@styles[:subtitulo]]
-        sheet.merge_cells "A15:F15"
-
-        sheet.add_row ["Concepto", "Monto"],
-                      style: [@styles[:encabezado], @styles[:encabezado]]
-
-        sheet.add_row ["Ingresos confirmados", @total_ingresos],
-                      style: [@styles[:celda], @styles[:moneda]]
-
-        sheet.add_row ["Egresos confirmados", @total_egresos],
-                      style: [@styles[:celda], @styles[:moneda]]
-
-        sheet.add_row ["Saldo final", @saldo_final],
-                      style: [@styles[:celda], @saldo_final.negative? ? @styles[:negativo] : @styles[:positivo]]
-
-        sheet.column_widths 28, 22, 4, 24, 28, 4
+        sheet.column_widths 34, 22, 22, 22, 15, 15
       end
     end
 
-    def hoja_ingresos
-      @workbook.add_worksheet(name: "Detalle ingresos") do |sheet|
+    def hoja_resumen_cuenta(reporte, numero)
+      nombre = nombre_hoja("Resumen #{numero}")
+
+      @workbook.add_worksheet(name: nombre) do |sheet|
+        sheet.add_row ["RESUMEN FINANCIERO"]
+        sheet.merge_cells "A1:F1"
+        sheet["A1"].style = @styles[:titulo_principal]
+
+        sheet.add_row [reporte[:cuenta].nombre]
+        sheet.merge_cells "A2:F2"
+        sheet["A2"].style = @styles[:subtitulo]
+
+        sheet.add_row []
+        sheet.add_row ["Tipo de reporte", nombre_tipo, "", "Periodo", periodo_texto, ""],
+                      style: [@styles[:encabezado_secundario], @styles[:celda], nil, @styles[:encabezado_secundario], @styles[:celda], nil]
+
+        sheet.add_row []
+        sheet.add_row ["Indicador", "Valor", "", "Detalle", "Valor", ""],
+                      style: [@styles[:encabezado], @styles[:encabezado], nil, @styles[:encabezado], @styles[:encabezado], nil]
+
+        sheet.add_row ["Ingresos confirmados", reporte[:total_ingresos].to_d, "", "Número de ingresos", reporte[:ingresos].size, ""],
+                      style: [@styles[:celda], @styles[:moneda_resumen], nil, @styles[:celda], @styles[:celda_centrada], nil]
+
+        sheet.add_row ["Egresos confirmados", reporte[:total_egresos].to_d, "", "Número de egresos", reporte[:egresos].size, ""],
+                      style: [@styles[:celda], @styles[:moneda_resumen], nil, @styles[:celda], @styles[:celda_centrada], nil]
+
+        sheet.add_row ["Saldo final", reporte[:saldo_final].to_d, "", "Cuenta financiera", reporte[:cuenta].nombre, ""],
+                      style: [@styles[:celda], reporte[:saldo_final].to_d.negative? ? @styles[:negativo] : @styles[:positivo], nil, @styles[:celda], @styles[:celda], nil]
+
+        sheet.column_widths 28, 22, 4, 24, 30, 4
+      end
+    end
+
+    def hoja_resumen_individual
+      reporte = {
+        cuenta: @cuenta_financiera,
+        ingresos: @ingresos,
+        egresos: @egresos,
+        total_ingresos: @total_ingresos,
+        total_egresos: @total_egresos,
+        saldo_final: @saldo_final
+      }
+
+      hoja_resumen_cuenta(reporte, 1)
+    end
+
+    def hoja_ingresos(ingresos, total_ingresos, nombre, cuenta)
+      @workbook.add_worksheet(name: nombre_hoja(nombre)) do |sheet|
         sheet.add_row ["DETALLE DE INGRESOS CONFIRMADOS"]
         sheet.merge_cells "A1:H1"
         sheet["A1"].style = @styles[:titulo_principal]
 
-        sheet.add_row ["Periodo", periodo_texto]
+        sheet.add_row ["Cuenta financiera", cuenta&.nombre || "Sin cuenta financiera", "", "Periodo", periodo_texto]
         sheet["A2"].style = @styles[:encabezado_secundario]
         sheet["B2"].style = @styles[:celda]
+        sheet["D2"].style = @styles[:encabezado_secundario]
+        sheet["E2"].style = @styles[:celda]
 
         sheet.add_row []
         sheet.add_row [
@@ -301,7 +300,7 @@ module Excel
           "Observaciones"
         ], style: Array.new(8, @styles[:encabezado])
 
-        @ingresos.each_with_index do |cooperacion, index|
+        ingresos.each_with_index do |cooperacion, index|
           sheet.add_row [
             index + 1,
             cooperacion.nombre,
@@ -324,46 +323,26 @@ module Excel
         end
 
         sheet.add_row []
-        sheet.add_row [
-          "",
-          "",
-          "",
-          "",
-          "Total ingresos",
-          @total_ingresos,
-          "",
-          ""
-        ], style: [
-          nil,
-          nil,
-          nil,
-          nil,
-          @styles[:total_label],
-          @styles[:total_monto],
-          nil,
-          nil
-        ]
+        sheet.add_row ["", "", "", "", "Total ingresos", total_ingresos.to_d, "", ""],
+                      style: [nil, nil, nil, nil, @styles[:total_label], @styles[:total_monto], nil, nil]
 
-        sheet.auto_filter = "A4:H#{[4 + @ingresos.size, 4].max}"
-        sheet.sheet_view.pane do |pane|
-          pane.top_left_cell = "A5"
-          pane.state = :frozen
-          pane.y_split = 4
-        end
-
+        sheet.auto_filter = "A4:H#{[4 + ingresos.size, 4].max}"
+        congelar_encabezado(sheet)
         sheet.column_widths 8, 36, 24, 14, 14, 18, 16, 45
       end
     end
 
-    def hoja_egresos
-      @workbook.add_worksheet(name: "Detalle egresos") do |sheet|
+    def hoja_egresos(egresos, total_egresos, nombre, cuenta)
+      @workbook.add_worksheet(name: nombre_hoja(nombre)) do |sheet|
         sheet.add_row ["DETALLE DE EGRESOS CONFIRMADOS"]
         sheet.merge_cells "A1:H1"
         sheet["A1"].style = @styles[:titulo_principal]
 
-        sheet.add_row ["Periodo", periodo_texto]
+        sheet.add_row ["Cuenta financiera", cuenta&.nombre || "Sin cuenta financiera", "", "Periodo", periodo_texto]
         sheet["A2"].style = @styles[:encabezado_secundario]
         sheet["B2"].style = @styles[:celda]
+        sheet["D2"].style = @styles[:encabezado_secundario]
+        sheet["E2"].style = @styles[:celda]
 
         sheet.add_row []
         sheet.add_row [
@@ -377,7 +356,7 @@ module Excel
           "Observaciones evidencia"
         ], style: Array.new(8, @styles[:encabezado])
 
-        @egresos.each_with_index do |egreso, index|
+        egresos.each_with_index do |egreso, index|
           sheet.add_row [
             index + 1,
             egreso.folio_np,
@@ -400,34 +379,20 @@ module Excel
         end
 
         sheet.add_row []
-        sheet.add_row [
-          "",
-          "",
-          "",
-          "",
-          "Total egresos",
-          @total_egresos,
-          "",
-          ""
-        ], style: [
-          nil,
-          nil,
-          nil,
-          nil,
-          @styles[:total_label],
-          @styles[:total_monto],
-          nil,
-          nil
-        ]
+        sheet.add_row ["", "", "", "", "Total egresos", total_egresos.to_d, "", ""],
+                      style: [nil, nil, nil, nil, @styles[:total_label], @styles[:total_monto], nil, nil]
 
-        sheet.auto_filter = "A4:H#{[4 + @egresos.size, 4].max}"
-        sheet.sheet_view.pane do |pane|
-          pane.top_left_cell = "A5"
-          pane.state = :frozen
-          pane.y_split = 4
-        end
-
+        sheet.auto_filter = "A4:H#{[4 + egresos.size, 4].max}"
+        congelar_encabezado(sheet)
         sheet.column_widths 8, 16, 18, 42, 24, 18, 16, 45
+      end
+    end
+
+    def congelar_encabezado(sheet)
+      sheet.sheet_view.pane do |pane|
+        pane.top_left_cell = "A5"
+        pane.state = :frozen
+        pane.y_split = 4
       end
     end
 
@@ -455,6 +420,10 @@ module Excel
       else
         "Reporte general"
       end
+    end
+
+    def nombre_hoja(nombre)
+      nombre.to_s.gsub(/[\\\/\?\*\[\]:]/, "-").first(31)
     end
 
     def borde_delgado

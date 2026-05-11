@@ -1,14 +1,10 @@
 <%= form_with model: usuario,
               class: "formulario-base",
-              data: (
-                usuario.persisted? ?
-                  { turbo: false } :
-                  {
-                    turbo: false,
-                    controller: "trabajador-selector",
-                    trabajador_selector_url_value: buscar_trabajadores_usuarios_path
-                  }
-              ),
+              data: {
+                turbo: false,
+                controller: "trabajador-selector",
+                trabajador_selector_url_value: buscar_trabajadores_usuarios_path
+              },
               novalidate: true do |f| %>
   <% if usuario.errors.any? %>
     <div class="form-errors">
@@ -86,12 +82,13 @@
                        class: "form-input #{'form-input--error' if usuario.errors[:nombre_usuario].any?}",
                        minlength: 3,
                        maxlength: 30,
-                       autocomplete: "username" %>
+                       autocomplete: "username",
+                       placeholder: "Ejemplo: finanzas2" %>
 
       <% if usuario.errors[:nombre_usuario].any? %>
         <small class="field-error"><%= usuario.errors[:nombre_usuario].first %></small>
       <% else %>
-        <small class="helper-text">Usa letras minúsculas, números, punto, guion o guion bajo.</small>
+        <small class="helper-text">Usa minúsculas, números, punto, guion o guion bajo. Ejemplo: finanzas2</small>
       <% end %>
     </div>
 
@@ -100,24 +97,65 @@
       <%= f.select :rol_sistema,
                    Usuario::ROLES_SISTEMA.map { |rol| [rol.humanize, rol] },
                    {},
-                   class: "form-input #{'form-input--error' if usuario.errors[:rol_sistema].any?}" %>
+                   class: "form-input #{'form-input--error' if usuario.errors[:rol_sistema].any?}",
+                   data: {
+                     trabajador_selector_target: "roleSelect",
+                     action: "change->trabajador-selector#toggleCuentaFinanciera"
+                   } %>
 
       <% if usuario.errors[:rol_sistema].any? %>
         <small class="field-error"><%= usuario.errors[:rol_sistema].first %></small>
       <% end %>
     </div>
 
-    <div class="form-field">
-      <%= f.label :activo, "Estado de la cuenta" %>
-      <%= f.select :activo,
-                   [["Activa", true], ["Inactiva", false]],
-                   {},
-                   class: "form-input #{'form-input--error' if usuario.errors[:activo].any?}" %>
+    <div class="form-field" data-trabajador-selector-target="cuentaField">
+      <%= f.label :cuenta_financiera_id, "Cuenta financiera" %>
+      <%= f.select :cuenta_financiera_id,
+                   options_from_collection_for_select(
+                     @cuentas_financieras || [],
+                     :id,
+                     :nombre,
+                     usuario.cuenta_financiera_id
+                   ),
+                   { include_blank: "Sin cuenta financiera" },
+                   class: "form-input #{'form-input--error' if usuario.errors[:cuenta_financiera].any? || usuario.errors[:cuenta_financiera_id].any?}",
+                   data: {
+                     trabajador_selector_target: "cuentaSelect"
+                   } %>
 
-      <% if usuario.errors[:activo].any? %>
-        <small class="field-error"><%= usuario.errors[:activo].first %></small>
+      <% if usuario.errors[:cuenta_financiera].any? %>
+        <small class="field-error"><%= usuario.errors[:cuenta_financiera].first %></small>
+      <% elsif usuario.errors[:cuenta_financiera_id].any? %>
+        <small class="field-error"><%= usuario.errors[:cuenta_financiera_id].first %></small>
+      <% else %>
+        <small class="helper-text" data-trabajador-selector-target="cuentaHelper">
+          Obligatoria para usuarios con rol Finanzas. Para administradores se desactiva.
+        </small>
       <% end %>
     </div>
+
+    <% if usuario.persisted? %>
+      <div class="form-field">
+        <%= f.label :activo, "Estado de la cuenta" %>
+        <%= f.select :activo,
+                     [["Activa", true], ["Inactiva", false]],
+                     {},
+                     class: "form-input #{'form-input--error' if usuario.errors[:activo].any?}" %>
+
+        <% if usuario.errors[:activo].any? %>
+          <small class="field-error"><%= usuario.errors[:activo].first %></small>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="form-field">
+        <label>Estado de la cuenta</label>
+        <div class="form-input" style="display: flex; align-items: center;">
+          Activa
+        </div>
+        <%= f.hidden_field :activo, value: true %>
+        <small class="helper-text">Todo usuario nuevo se crea activo por defecto.</small>
+      </div>
+    <% end %>
 
     <div class="form-field" data-controller="password-toggle">
       <%= f.label :password, usuario.persisted? ? "Nueva contraseña" : "Contraseña" %>
@@ -253,7 +291,7 @@
 
     <%= f.submit usuario.persisted? ? "Actualizar usuario" : "Guardar usuario",
                  class: "button button--primary",
-                 data: (usuario.persisted? ? {} : { trabajador_selector_target: "submit" }),
+                 data: { trabajador_selector_target: "submit" },
                  disabled: (!usuario.persisted? && usuario.trabajador.blank?) %>
   </div>
 <% end %>

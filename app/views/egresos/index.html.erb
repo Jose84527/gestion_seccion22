@@ -1,6 +1,8 @@
 <% content_for :title, "Egresos" %>
 <% content_for :page_title, "Egresos" %>
 
+<% cuenta_params = @cuenta_financiera_actual.present? ? { cuenta_financiera_id: @cuenta_financiera_actual.id } : {} %>
+
 <section class="catalogo-page">
   <div class="panel">
     <div class="panel__header">
@@ -12,12 +14,43 @@
       </div>
 
       <% if puede_realizar_accion?(:cooperaciones, :crear) %>
-        <%= link_to "Nuevo egreso", new_egreso_path, class: "button button--primary" %>
+        <%= link_to "Nuevo egreso",
+                    new_egreso_path(cuenta_params),
+                    class: "button button--primary" %>
+      <% end %>
+    </div>
+
+    <div class="detalle-bloque">
+      <span class="detalle-item__label">Cuenta financiera</span>
+
+      <% if admin_actual? %>
+        <p>
+          <strong><%= @cuenta_financiera_actual&.nombre || "Todas las cuentas financieras" %></strong>
+        </p>
+      <% else %>
+        <p>
+          <strong><%= @cuenta_financiera_actual&.nombre || "Sin cuenta financiera asignada" %></strong>
+        </p>
       <% end %>
     </div>
 
     <%= form_with url: egresos_path, method: :get, local: true, class: "filtros-panel" do %>
       <div class="filtros-grid filtros-grid--cooperaciones">
+        <% if admin_actual? %>
+          <div class="form-field">
+            <label for="cuenta_financiera_id">Cuenta financiera</label>
+            <%= select_tag :cuenta_financiera_id,
+                           options_from_collection_for_select(
+                             @cuentas_financieras || [],
+                             :id,
+                             :nombre,
+                             @cuenta_financiera_actual&.id
+                           ),
+                           include_blank: "Todas las cuentas financieras",
+                           class: "form-input" %>
+          </div>
+        <% end %>
+
         <div class="form-field">
           <label for="q">Buscar</label>
           <%= text_field_tag :q,
@@ -66,6 +99,11 @@
           <thead>
             <tr>
               <th>Folio</th>
+
+              <% if admin_actual? && @cuenta_financiera_actual.blank? %>
+                <th>Cuenta financiera</th>
+              <% end %>
+
               <th>Fecha</th>
               <th>Concepto</th>
               <th>Monto</th>
@@ -80,6 +118,10 @@
                 <td>
                   <strong><%= egreso.folio_np %></strong>
                 </td>
+
+                <% if admin_actual? && @cuenta_financiera_actual.blank? %>
+                  <td><%= egreso.cuenta_financiera&.nombre || "-" %></td>
+                <% end %>
 
                 <td>
                   <%= egreso.fecha_egreso&.strftime("%d/%m/%Y") || "-" %>
