@@ -22,34 +22,50 @@ Rails.application.routes.draw do
   end
 
   resources :cooperaciones do
-  collection do
-    get :buscar_trabajadores
+    collection do
+      get :buscar_trabajadores
+    end
+
+    member do
+      patch :cambiar_estado
+      get :pdf_lista_general
+      get :pdf_recibos
+      get :confirmacion
+      patch :confirmar
+      get :ver_lista_confirmacion
+
+      get :corregir_evidencia
+      patch :actualizar_evidencia
+    end
   end
 
-  member do
-    patch :cambiar_estado
-    get :pdf_lista_general
-    get :pdf_recibos
-    get :confirmacion
-    patch :confirmar
-    get :ver_lista_confirmacion
-
-    get :corregir_evidencia
-    patch :actualizar_evidencia
+  resources :egresos do
+    member do
+      patch :cancelar
+      get :pdf
+      get :confirmacion
+      patch :confirmar
+      get :ver_evidencia
+      get :corregir_evidencia
+      patch :actualizar_evidencia
+    end
   end
-end
 
-resources :egresos do
-  member do
-    patch :cancelar
-    get :pdf
-    get :confirmacion
-    patch :confirmar
-    get :ver_evidencia
-    get :corregir_evidencia
-    patch :actualizar_evidencia
+  get "eventos/dashboard", to: "eventos/dashboard#index", as: :eventos_dashboard
+
+  resources :eventos do
+    collection do
+      get :buscar_trabajadores
+    end
+
+    member do
+      patch :cancelar
+      get :confirmacion
+      patch :confirmar
+      get :ver_convocatoria
+      get :ver_lista_participacion
+    end
   end
-end
 
   get "home/index"
 

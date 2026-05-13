@@ -4,12 +4,13 @@ class Usuario < ApplicationRecord
   belongs_to :trabajador, optional: true
   belongs_to :cuenta_financiera, optional: true
 
-  ROLES_SISTEMA = %w[admin finanzas].freeze
+  ROLES_SISTEMA = %w[admin finanzas eventos].freeze
 
   enum :rol_sistema,
        {
          admin: "admin",
-         finanzas: "finanzas"
+         finanzas: "finanzas",
+         eventos: "eventos"
        },
        default: :finanzas
 

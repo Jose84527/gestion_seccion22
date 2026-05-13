@@ -10,9 +10,14 @@ module Autorizacion
         historial: :all,
         conceptos07: :all
       },
+
       finanzas: {
         trabajadores: %i[ver],
         cooperaciones: %i[ver crear editar]
+      },
+
+      eventos: {
+        eventos: %i[ver crear editar cancelar confirmar]
       }
     }.freeze
 

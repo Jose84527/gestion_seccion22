@@ -13,14 +13,12 @@ module NavigationHelper
 
     items.concat(finanzas_subitems) if finanzas_activa?
 
+    items << { clave: :eventos, modulo: :eventos, etiqueta: "Eventos", icono: "📅", ruta: eventos_path, tipo: :grupo }
+
+    items.concat(eventos_subitems) if eventos_activa?
+
     items.concat(
       [
-        { clave: :eventos, modulo: :eventos, etiqueta: "Eventos", icono: "📅", ruta: nil },
-        { clave: :detalle_evento, modulo: :eventos, etiqueta: "Detalle evento", icono: "📌", ruta: nil },
-        { clave: :registro_asistencia, modulo: :eventos, etiqueta: "Registro asistencia", icono: "📝", ruta: nil },
-        { clave: :reporte_participacion, modulo: :eventos, etiqueta: "Reporte participación", icono: "📊", ruta: nil },
-        { clave: :generar_constancia, modulo: :eventos, etiqueta: "Generar constancia", icono: "📄", ruta: nil },
-
         { clave: :usuarios, modulo: :usuarios, etiqueta: "Usuarios", icono: "⚙", ruta: usuarios_path },
         { clave: :historial, modulo: :historial, etiqueta: "Historial", icono: "🕘", ruta: historiales_path }
       ]
@@ -74,6 +72,35 @@ module NavigationHelper
     ]
   end
 
+  def eventos_subitems
+    [
+      {
+        clave: :eventos_dashboard,
+        modulo: :eventos,
+        etiqueta: "Dashboard de eventos",
+        icono: "↳",
+        ruta: eventos_dashboard_path,
+        tipo: :subitem
+      },
+      {
+        clave: :nuevo_evento,
+        modulo: :eventos,
+        etiqueta: "Nuevo evento",
+        icono: "↳",
+        ruta: new_evento_path,
+        tipo: :subitem
+      },
+      {
+        clave: :control_eventos,
+        modulo: :eventos,
+        etiqueta: "Control de eventos",
+        icono: "↳",
+        ruta: eventos_path,
+        tipo: :subitem
+      }
+    ]
+  end
+
   def finanzas_activa?
     rutas_finanzas = [
       finanzas_path,
@@ -87,6 +114,17 @@ module NavigationHelper
     end
   end
 
+  def eventos_activa?
+    rutas_eventos = [
+      eventos_dashboard_path,
+      eventos_path
+    ]
+
+    rutas_eventos.any? do |ruta|
+      request.path == ruta || request.path.start_with?("#{ruta}/")
+    end
+  end
+
   def clase_item_sidebar(item)
     clases = ["sidebar__item"]
 
@@ -96,6 +134,9 @@ module NavigationHelper
     if item[:clave] == :finanzas
       clases << "is-active" if finanzas_activa?
       clases << "is-open" if finanzas_activa?
+    elsif item[:clave] == :eventos
+      clases << "is-active" if eventos_activa?
+      clases << "is-open" if eventos_activa?
     elsif item[:ruta].present?
       clases << "is-active" if item_activo?(item)
     else
@@ -117,6 +158,16 @@ module NavigationHelper
       request.path.start_with?(egresos_path)
     when :reportes_financieros
       request.path.start_with?(finanzas_reportes_path)
+
+    when :eventos_dashboard
+      current_page?(eventos_dashboard_path)
+    when :nuevo_evento
+      current_page?(new_evento_path)
+    when :control_eventos
+      request.path.start_with?(eventos_path) &&
+        !current_page?(new_evento_path) &&
+        !request.path.start_with?(eventos_dashboard_path)
+
     else
       current_page?(item[:ruta])
     end

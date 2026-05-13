@@ -1,0 +1,137 @@
+<%= form_with model: evento,
+              class: "formulario-base",
+              multipart: true,
+              novalidate: true do |f| %>
+  <% if evento.errors.any? %>
+    <div class="form-errors">
+      <strong>No se pudo guardar el evento:</strong>
+      <ul>
+        <% evento.errors.full_messages.each do |mensaje| %>
+          <li><%= mensaje %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-section">
+    <div class="form-section__header">
+      <h4>Datos generales</h4>
+      <p>Información principal del evento.</p>
+    </div>
+
+    <div class="form-grid form-grid--dos-columnas">
+      <div class="form-field">
+        <%= f.label :nombre, "Nombre del evento" %>
+        <%= f.text_field :nombre,
+                         class: "form-input #{'form-input--error' if evento.errors[:nombre].any?}",
+                         minlength: 3,
+                         maxlength: 120,
+                         placeholder: "Ejemplo: Asamblea general" %>
+
+        <% if evento.errors[:nombre].any? %>
+          <small class="field-error"><%= evento.errors[:nombre].first %></small>
+        <% end %>
+      </div>
+
+      <div class="form-field">
+        <label>Estado</label>
+        <input type="text"
+               class="form-input"
+               value="<%= evento.estado.presence&.humanize || 'Programado' %>"
+               disabled>
+        <small class="helper-text">Al crear un evento queda programado por default.</small>
+      </div>
+
+      <div class="form-field">
+        <%= f.label :lugar, "Lugar del evento" %>
+        <%= f.text_field :lugar,
+                         class: "form-input #{'form-input--error' if evento.errors[:lugar].any?}",
+                         minlength: 3,
+                         maxlength: 180,
+                         placeholder: "Ejemplo: Auditorio sindical" %>
+
+        <% if evento.errors[:lugar].any? %>
+          <small class="field-error"><%= evento.errors[:lugar].first %></small>
+        <% end %>
+      </div>
+
+      <div class="form-field">
+        <%= f.label :puntaje, "Puntaje por participación" %>
+        <%= f.number_field :puntaje,
+                           class: "form-input #{'form-input--error' if evento.errors[:puntaje].any?}",
+                           min: 0,
+                           step: 1 %>
+
+        <% if evento.errors[:puntaje].any? %>
+          <small class="field-error"><%= evento.errors[:puntaje].first %></small>
+        <% else %>
+          <small class="helper-text">Puntos que recibirá cada trabajador asistente.</small>
+        <% end %>
+      </div>
+
+      <div class="form-field">
+        <%= f.label :fecha_inicio, "Fecha y hora de inicio" %>
+        <%= f.datetime_local_field :fecha_inicio,
+                                   class: "form-input #{'form-input--error' if evento.errors[:fecha_inicio].any?}" %>
+
+        <% if evento.errors[:fecha_inicio].any? %>
+          <small class="field-error"><%= evento.errors[:fecha_inicio].first %></small>
+        <% end %>
+      </div>
+
+      <div class="form-field">
+        <%= f.label :fecha_fin, "Fecha y hora de fin" %>
+        <%= f.datetime_local_field :fecha_fin,
+                                   class: "form-input #{'form-input--error' if evento.errors[:fecha_fin].any?}" %>
+
+        <% if evento.errors[:fecha_fin].any? %>
+          <small class="field-error"><%= evento.errors[:fecha_fin].first %></small>
+        <% end %>
+      </div>
+
+      <div class="form-field form-field--full">
+        <%= f.label :descripcion, "Descripción" %>
+        <%= f.text_area :descripcion,
+                        class: "form-input form-textarea #{'form-input--error' if evento.errors[:descripcion].any?}",
+                        rows: 4,
+                        maxlength: 1000,
+                        placeholder: "Descripción opcional del evento" %>
+
+        <% if evento.errors[:descripcion].any? %>
+          <small class="field-error"><%= evento.errors[:descripcion].first %></small>
+        <% end %>
+      </div>
+
+      <div class="form-field form-field--full">
+        <label for="convocatoria_pdf">Convocatoria PDF</label>
+
+        <% if evento.persisted? %>
+          <input type="text"
+                 class="form-input"
+                 value="<%= evento.convocatoria_pdf_path.presence || 'Sin convocatoria' %>"
+                 disabled>
+          <small class="helper-text">La convocatoria se adjuntó al crear el evento.</small>
+        <% else %>
+          <%= file_field_tag :convocatoria_pdf,
+                             accept: "application/pdf",
+                             class: "form-input #{'form-input--error' if evento.errors[:convocatoria_pdf_path].any?}" %>
+
+          <% if evento.errors[:convocatoria_pdf_path].any? %>
+            <small class="field-error"><%= evento.errors[:convocatoria_pdf_path].first %></small>
+          <% else %>
+            <small class="helper-text">Campo obligatorio. Sube la convocatoria oficial en formato PDF.</small>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <%= link_to "Cancelar",
+                evento.persisted? ? evento_path(evento) : eventos_path,
+                class: "button button--ghost" %>
+
+    <%= f.submit evento.persisted? ? "Actualizar evento" : "Guardar evento",
+                 class: "button button--primary" %>
+  </div>
+<% end %>

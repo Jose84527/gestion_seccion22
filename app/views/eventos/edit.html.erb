@@ -1,0 +1,19 @@
+<% content_for :title, "Editar evento" %>
+<% content_for :page_title, "Editar evento" %>
+
+<section class="catalogo-page">
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Editar evento</h3>
+        <p class="panel__description">
+          Solo se pueden editar eventos programados.
+        </p>
+      </div>
+
+      <%= link_to "Volver", evento_path(@evento), class: "button button--ghost" %>
+    </div>
+
+    <%= render "form", evento: @evento %>
+  </div>
+</section>

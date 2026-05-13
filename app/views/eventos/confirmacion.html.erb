@@ -1,0 +1,196 @@
+<% content_for :title, "Confirmar evento" %>
+<% content_for :page_title, "Confirmar evento" %>
+
+<section class="catalogo-page">
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Confirmar evento</h3>
+        <p class="panel__description">
+          Sube la lista oficial escaneada y marca los trabajadores que asistieron al evento.
+        </p>
+      </div>
+
+      <%= link_to "Volver", evento_path(@evento), class: "button button--ghost" %>
+    </div>
+
+    <div class="detalle-grid">
+      <div class="detalle-item">
+        <span class="detalle-item__label">Evento</span>
+        <strong><%= @evento.nombre %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Lugar</span>
+        <strong><%= @evento.lugar %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Fecha inicio</span>
+        <strong><%= @evento.fecha_inicio&.strftime("%d/%m/%Y %H:%M") || "-" %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Puntaje por asistente</span>
+        <strong><%= @evento.puntaje %></strong>
+      </div>
+    </div>
+
+    <%= form_with url: confirmar_evento_path(@evento),
+                  method: :patch,
+                  local: true,
+                  multipart: true,
+                  class: "formulario-base",
+                  data: {
+                    controller: "evento-asistentes-selector",
+                    "evento-asistentes-selector-url-value": buscar_trabajadores_eventos_path
+                  },
+                  novalidate: true do %>
+
+      <div class="form-section">
+        <div class="form-section__header">
+          <h4>Lista oficial de participación</h4>
+          <p>Sube el PDF escaneado de la lista firmada o sellada del evento.</p>
+        </div>
+
+        <div class="form-grid form-grid--dos-columnas">
+          <div class="form-field form-field--full">
+            <label for="lista_participacion_pdf">Lista de participación PDF</label>
+            <%= file_field_tag :lista_participacion_pdf,
+                               accept: "application/pdf",
+                               class: "form-input" %>
+            <small class="helper-text">Campo obligatorio. Solo PDF.</small>
+          </div>
+
+          <div class="form-field form-field--full">
+            <label for="observaciones_confirmacion">Observaciones</label>
+            <%= text_area_tag :observaciones_confirmacion,
+                              params[:observaciones_confirmacion],
+                              class: "form-input form-textarea",
+                              rows: 4,
+                              maxlength: 1500,
+                              placeholder: "Opcional" %>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section__header">
+          <h4>Trabajadores asistentes</h4>
+          <p>
+            Marca los trabajadores que asistieron. Cada asistente recibirá
+            <strong><%= @evento.puntaje %></strong> puntos.
+          </p>
+        </div>
+
+        <div class="filtros-panel">
+          <div class="filtros-grid filtros-grid--cooperaciones">
+            <div class="form-field">
+              <label for="buscar_asistente_query">Buscar trabajador</label>
+              <input type="text"
+                     id="buscar_asistente_query"
+                     class="form-input"
+                     placeholder="Nombre, apellido, RFC o clave de cobro"
+                     autocomplete="off"
+                     data-action="input->evento-asistentes-selector#search"
+                     data-evento-asistentes-selector-target="query">
+              <small class="helper-text">Puedes buscar por nombre parcial, RFC o clave de cobro.</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="listado-meta">
+          <span data-evento-asistentes-selector-target="meta">
+            Cargando trabajadores...
+          </span>
+        </div>
+
+        <div class="tabla-wrapper">
+          <table class="tabla-base">
+            <thead>
+              <tr>
+                <th>Asistió</th>
+                <th>Trabajador</th>
+                <th>RFC</th>
+                <th>Clave de cobro</th>
+                <th>Tipo</th>
+              </tr>
+            </thead>
+
+            <tbody data-evento-asistentes-selector-target="tableBody">
+              <tr>
+                <td colspan="5">Cargando trabajadores...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination" data-evento-asistentes-selector-target="pagination"></div>
+
+        <div class="panel__subsection">
+          <h4>Trabajadores seleccionados</h4>
+        </div>
+
+        <div class="empty-state"
+             data-evento-asistentes-selector-target="emptySelected">
+          Todavía no has seleccionado asistentes.
+        </div>
+
+        <div class="condonados-list"
+             data-evento-asistentes-selector-target="selectedList">
+          <% Array(@asistentes_seleccionados).each do |trabajador| %>
+            <div class="condonado-item"
+                 data-evento-asistentes-selector-target="selectedItem"
+                 data-trabajador-id="<%= trabajador.id %>"
+                 data-nombre="<%= trabajador.nombre_completo %>"
+                 data-meta="<%= trabajador.rfc %> · <%= trabajador.clave_cobro %>">
+              <input type="hidden" name="asistentes_ids[]" value="<%= trabajador.id %>">
+
+              <span>
+                <strong><%= trabajador.nombre_completo %></strong>
+                <small><%= trabajador.rfc %> · <%= trabajador.clave_cobro %></small>
+              </span>
+
+              <button type="button"
+                      class="button button--ghost"
+                      data-action="click->evento-asistentes-selector#removeSelected">
+                Quitar
+              </button>
+            </div>
+          <% end %>
+        </div>
+
+        <template data-evento-asistentes-selector-target="selectedTemplate">
+          <div class="condonado-item"
+               data-evento-asistentes-selector-target="selectedItem"
+               data-trabajador-id="TRABAJADOR_ID"
+               data-nombre="TRABAJADOR_NOMBRE"
+               data-meta="TRABAJADOR_META">
+            <input type="hidden" name="asistentes_ids[]" value="TRABAJADOR_ID">
+
+            <span>
+              <strong>TRABAJADOR_NOMBRE</strong>
+              <small>TRABAJADOR_META</small>
+            </span>
+
+            <button type="button"
+                    class="button button--ghost"
+                    data-action="click->evento-asistentes-selector#removeSelected">
+              Quitar
+            </button>
+          </div>
+        </template>
+      </div>
+
+      <div class="form-actions">
+        <%= link_to "Cancelar", evento_path(@evento), class: "button button--ghost" %>
+
+        <%= submit_tag "Confirmar evento",
+                       class: "button button--primary",
+                       data: {
+                         turbo_confirm: "¿Confirmar este evento y asignar puntos a los asistentes seleccionados?"
+                       } %>
+      </div>
+    <% end %>
+  </div>
+</section>

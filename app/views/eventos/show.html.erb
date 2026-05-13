@@ -1,0 +1,187 @@
+<% content_for :title, "Detalle de evento" %>
+<% content_for :page_title, "Detalle de evento" %>
+
+<section class="catalogo-page">
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3><%= @evento.nombre %></h3>
+        <p class="panel__description">
+          Detalle general del evento y su participación registrada.
+        </p>
+      </div>
+
+      <div class="acciones-grupo">
+        <%= link_to "Volver", eventos_path, class: "button button--ghost" %>
+
+        <% if puede_realizar_accion?(:eventos, :editar) && @evento.programado? %>
+          <%= link_to "Editar", edit_evento_path(@evento), class: "button button--primary" %>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="detalle-grid">
+      <div class="detalle-item">
+        <span class="detalle-item__label">ID evento</span>
+        <strong><%= @evento.id %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Estado</span>
+        <strong>
+          <span class="estado-badge estado-badge--<%= @evento.estado %>">
+            <%= @evento.estado.humanize %>
+          </span>
+        </strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Lugar</span>
+        <strong><%= @evento.lugar %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Puntaje</span>
+        <strong><%= @evento.puntaje %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Fecha inicio</span>
+        <strong><%= @evento.fecha_inicio&.strftime("%d/%m/%Y %H:%M") || "-" %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Fecha fin</span>
+        <strong><%= @evento.fecha_fin&.strftime("%d/%m/%Y %H:%M") || "-" %></strong>
+      </div>
+
+      <% if @evento.confirmado? %>
+        <div class="detalle-item">
+          <span class="detalle-item__label">Confirmado el</span>
+          <strong><%= @evento.confirmado_at&.strftime("%d/%m/%Y %H:%M") || "-" %></strong>
+        </div>
+
+        <div class="detalle-item">
+          <span class="detalle-item__label">Confirmado por</span>
+          <strong><%= @evento.confirmado_por&.nombre_usuario || "-" %></strong>
+        </div>
+
+        <div class="detalle-item">
+          <span class="detalle-item__label">Asistentes</span>
+          <strong><%= @total_asistentes %></strong>
+        </div>
+
+        <div class="detalle-item">
+          <span class="detalle-item__label">Puntos asignados</span>
+          <strong><%= @total_puntos_asignados %></strong>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="detalle-bloque">
+      <span class="detalle-item__label">Descripción</span>
+      <p><%= @evento.descripcion.presence || "-" %></p>
+    </div>
+
+    <div class="detalle-bloque">
+      <span class="detalle-item__label">Documentos</span>
+
+      <div class="finanzas-actions">
+        <%= link_to "Ver convocatoria",
+                    ver_convocatoria_evento_path(@evento),
+                    class: "button button--ghost",
+                    target: "_blank",
+                    rel: "noopener" %>
+
+        <% if @evento.lista_participacion_pdf_path.present? %>
+          <%= link_to "Ver lista de participación",
+                      ver_lista_participacion_evento_path(@evento),
+                      class: "button button--primary",
+                      target: "_blank",
+                      rel: "noopener" %>
+        <% end %>
+      </div>
+    </div>
+
+    <% if @evento.observaciones_confirmacion.present? %>
+      <div class="detalle-bloque">
+        <span class="detalle-item__label">Observaciones de confirmación</span>
+        <div class="observaciones-confirmacion">
+          <%= simple_format(@evento.observaciones_confirmacion) %>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="finanzas-actions">
+      <% if @evento.programado? && puede_realizar_accion?(:eventos, :confirmar) %>
+        <%= link_to "Confirmar evento",
+                    confirmacion_evento_path(@evento),
+                    class: "button button--primary" %>
+      <% end %>
+
+      <% if @evento.programado? && puede_realizar_accion?(:eventos, :cancelar) %>
+        <%= button_to "Cancelar evento",
+                      cancelar_evento_path(@evento),
+                      method: :patch,
+                      class: "button button--ghost",
+                      data: {
+                        turbo_confirm: "¿Seguro que deseas cancelar este evento?"
+                      } %>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @evento.confirmado? %>
+    <div class="panel">
+      <div class="panel__header">
+        <div>
+          <h3>Asistentes registrados</h3>
+          <p class="panel__description">
+            Trabajadores a quienes se les asignaron puntos por participar en este evento.
+          </p>
+        </div>
+      </div>
+
+      <% if @asistencias.any? %>
+        <div class="tabla-wrapper">
+          <table class="tabla-base">
+            <thead>
+              <tr>
+                <th>Trabajador</th>
+                <th>RFC</th>
+                <th>Clave de cobro</th>
+                <th>Tipo</th>
+                <th>Puntos asignados</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <% @asistencias.each do |asistencia| %>
+                <% trabajador = asistencia.trabajador %>
+
+                <tr>
+                  <td><strong><%= trabajador&.nombre_completo || "-" %></strong></td>
+                  <td><%= trabajador&.rfc || "-" %></td>
+                  <td><%= trabajador&.clave_cobro || "-" %></td>
+                  <td><%= trabajador&.tipo_trabajador&.humanize || "-" %></td>
+                  <td><strong><%= asistencia.puntaje_asignado %></strong></td>
+                </tr>
+              <% end %>
+            </tbody>
+
+            <tfoot>
+              <tr>
+                <td colspan="4" class="tabla-total-label">Total de puntos asignados</td>
+                <td><strong><%= @total_puntos_asignados %></strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      <% else %>
+        <div class="empty-state">
+          No hay asistentes registrados para este evento.
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</section>

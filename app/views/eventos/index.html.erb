@@ -1,0 +1,151 @@
+<% content_for :title, "Control de eventos" %>
+<% content_for :page_title, "Control de eventos" %>
+
+<section class="catalogo-page">
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Control de eventos</h3>
+        <p class="panel__description">
+          Registro y seguimiento de asambleas, reuniones, marchas y participaciones sindicales.
+        </p>
+      </div>
+
+      <% if puede_realizar_accion?(:eventos, :crear) %>
+        <%= link_to "Nuevo evento", new_evento_path, class: "button button--primary" %>
+      <% end %>
+    </div>
+
+    <%= form_with url: eventos_path, method: :get, local: true, class: "filtros-panel" do %>
+      <div class="filtros-grid filtros-grid--cooperaciones">
+        <div class="form-field">
+          <label for="q">Buscar</label>
+          <%= text_field_tag :q,
+                             @q,
+                             class: "form-input",
+                             placeholder: "Nombre, lugar o descripción" %>
+        </div>
+
+        <div class="form-field">
+          <label for="estado">Estado</label>
+          <%= select_tag :estado,
+                         options_for_select(
+                           [
+                             ["Todos", ""],
+                             ["Programado", "programado"],
+                             ["Confirmado", "confirmado"],
+                             ["Cancelado", "cancelado"]
+                           ],
+                           @estado
+                         ),
+                         class: "form-input" %>
+        </div>
+      </div>
+
+      <div class="filtros-actions">
+        <%= submit_tag "Filtrar", class: "button button--primary" %>
+        <%= link_to "Limpiar", eventos_path, class: "button button--ghost" %>
+      </div>
+    <% end %>
+
+    <% if @eventos.any? %>
+      <div class="listado-meta">
+        <span>
+          Mostrando <strong><%= @eventos.size %></strong> de
+          <strong><%= @total_registros %></strong> eventos
+        </span>
+
+        <span>
+          Página <strong><%= @pagina_actual %></strong> de
+          <strong><%= @total_paginas %></strong>
+        </span>
+      </div>
+
+      <div class="tabla-wrapper">
+        <table class="tabla-base">
+          <thead>
+            <tr>
+              <th>ID evento</th>
+              <th>Nombre</th>
+              <th>Lugar</th>
+              <th>Fecha inicio</th>
+              <th>Fecha fin</th>
+              <th>Puntaje</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <% @eventos.each do |evento| %>
+              <tr>
+                <td><strong><%= evento.id %></strong></td>
+                <td><%= evento.nombre %></td>
+                <td><%= evento.lugar %></td>
+                <td><%= evento.fecha_inicio&.strftime("%d/%m/%Y %H:%M") || "-" %></td>
+                <td><%= evento.fecha_fin&.strftime("%d/%m/%Y %H:%M") || "-" %></td>
+                <td><%= evento.puntaje %></td>
+
+                <td>
+                  <span class="estado-badge estado-badge--<%= evento.estado %>">
+                    <%= evento.estado.humanize %>
+                  </span>
+                </td>
+
+                <td class="tabla-base__acciones">
+                  <div class="acciones-grupo">
+                    <%= link_to "Ver", evento_path(evento), class: "button button--ghost" %>
+
+                    <% if puede_realizar_accion?(:eventos, :editar) && evento.programado? %>
+                      <%= link_to "Editar", edit_evento_path(evento), class: "button button--ghost" %>
+                    <% end %>
+
+                    <% if puede_realizar_accion?(:eventos, :confirmar) && evento.programado? %>
+                      <%= link_to "Confirmar", confirmacion_evento_path(evento), class: "button button--primary" %>
+                    <% end %>
+
+                    <% if puede_realizar_accion?(:eventos, :cancelar) && evento.programado? %>
+                      <%= button_to "Cancelar",
+                                    cancelar_evento_path(evento),
+                                    method: :patch,
+                                    class: "button button--ghost",
+                                    data: {
+                                      turbo_confirm: "¿Seguro que deseas cancelar este evento?"
+                                    } %>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <% if @total_paginas.to_i > 1 %>
+        <div class="pagination">
+          <% if @pagina_actual > 1 %>
+            <%= link_to "← Anterior",
+                        eventos_path(request.query_parameters.merge(page: @pagina_actual - 1)),
+                        class: "button button--ghost" %>
+          <% end %>
+
+          <% (1..@total_paginas).each do |pagina| %>
+            <%= link_to pagina,
+                        eventos_path(request.query_parameters.merge(page: pagina)),
+                        class: "pagination__link #{'is-active' if pagina == @pagina_actual}" %>
+          <% end %>
+
+          <% if @pagina_actual < @total_paginas %>
+            <%= link_to "Siguiente →",
+                        eventos_path(request.query_parameters.merge(page: @pagina_actual + 1)),
+                        class: "button button--ghost" %>
+          <% end %>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="empty-state">
+        No se encontraron eventos con los filtros seleccionados.
+      </div>
+    <% end %>
+  </div>
+</section>

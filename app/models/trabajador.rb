@@ -12,6 +12,13 @@ class Trabajador < ApplicationRecord
            through: :cooperacion_condonados,
            source: :cooperacion
 
+  has_many :evento_asistencias,
+          dependent: :restrict_with_exception
+
+  has_many :eventos_asistidos,
+          through: :evento_asistencias,
+          source: :evento
+  
   enum :sexo,
        {
          hombre: "h",

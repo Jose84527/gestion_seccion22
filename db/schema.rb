@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_11_195212) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_13_184930) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -122,6 +122,39 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_195212) do
     t.index ["fecha_egreso"], name: "index_egresos_on_fecha_egreso"
   end
 
+  create_table "evento_asistencias", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "evento_id", null: false
+    t.integer "puntaje_asignado", default: 0, null: false
+    t.bigint "trabajador_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["evento_id", "trabajador_id"], name: "idx_evento_asistencias_evento_trabajador", unique: true
+    t.index ["evento_id"], name: "index_evento_asistencias_on_evento_id"
+    t.index ["trabajador_id"], name: "index_evento_asistencias_on_trabajador_id"
+  end
+
+  create_table "eventos", force: :cascade do |t|
+    t.datetime "confirmado_at"
+    t.bigint "confirmado_por_id"
+    t.string "convocatoria_pdf_path", null: false
+    t.datetime "created_at", null: false
+    t.text "descripcion"
+    t.string "estado", default: "programado", null: false
+    t.datetime "fecha_fin", null: false
+    t.datetime "fecha_inicio", null: false
+    t.string "lista_participacion_pdf_path"
+    t.string "lugar", null: false
+    t.string "nombre", null: false
+    t.text "observaciones_confirmacion"
+    t.integer "puntaje", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["confirmado_por_id"], name: "index_eventos_on_confirmado_por_id"
+    t.index ["estado"], name: "index_eventos_on_estado"
+    t.index ["fecha_fin"], name: "index_eventos_on_fecha_fin"
+    t.index ["fecha_inicio"], name: "index_eventos_on_fecha_inicio"
+    t.index ["nombre"], name: "index_eventos_on_nombre"
+  end
+
   create_table "historiales", force: :cascade do |t|
     t.string "accion", null: false
     t.jsonb "antes_json"
@@ -198,6 +231,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_195212) do
   add_foreign_key "cooperaciones", "cuentas_financieras", column: "cuenta_financiera_id"
   add_foreign_key "cooperaciones", "usuarios", column: "confirmada_por_id"
   add_foreign_key "egresos", "cuentas_financieras", column: "cuenta_financiera_id"
+  add_foreign_key "evento_asistencias", "eventos"
+  add_foreign_key "evento_asistencias", "trabajadores"
+  add_foreign_key "eventos", "usuarios", column: "confirmado_por_id"
   add_foreign_key "historiales", "usuarios", on_delete: :nullify
   add_foreign_key "trabajadores", "concepto07_niveles"
   add_foreign_key "usuarios", "cuentas_financieras", column: "cuenta_financiera_id"

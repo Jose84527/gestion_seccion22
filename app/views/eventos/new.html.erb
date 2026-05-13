@@ -1,0 +1,19 @@
+<% content_for :title, "Nuevo evento" %>
+<% content_for :page_title, "Nuevo evento" %>
+
+<section class="catalogo-page">
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Registrar evento</h3>
+        <p class="panel__description">
+          Captura los datos del evento y adjunta la convocatoria oficial en PDF.
+        </p>
+      </div>
+
+      <%= link_to "Volver", eventos_path, class: "button button--ghost" %>
+    </div>
+
+    <%= render "form", evento: @evento %>
+  </div>
+</section>

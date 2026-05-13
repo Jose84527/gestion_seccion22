@@ -8,6 +8,7 @@ class ApplicationController < ActionController::Base
                 :sesion_iniciada?,
                 :admin_actual?,
                 :finanzas_actual?,
+                :eventos_actual?,
                 :cuenta_financiera_contexto,
                 :cuentas_financieras_disponibles
 
@@ -34,6 +35,10 @@ class ApplicationController < ActionController::Base
 
   def finanzas_actual?
     usuario_actual&.finanzas?
+  end
+
+  def eventos_actual?
+    usuario_actual&.eventos?
   end
 
   def autenticar_usuario
