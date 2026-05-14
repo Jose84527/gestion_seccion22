@@ -1,6 +1,8 @@
 class SesionesController < ApplicationController
   def new
-    redirect_to menu_path if sesion_iniciada?
+    if sesion_iniciada?
+      return redirect_to(ruta_inicial_para(usuario_actual))
+    end
   end
 
   def create
@@ -24,7 +26,7 @@ class SesionesController < ApplicationController
       session[:usuario_id] = usuario.id
       usuario.update_column(:ultimo_acceso_at, Time.current)
 
-      redirect_to menu_path, notice: "Bienvenido #{usuario.nombre_usuario}"
+      redirect_to ruta_inicial_para(usuario), notice: "Bienvenido #{usuario.nombre_usuario}"
     else
       flash.now[:alert] = "Usuario o contraseña incorrectos"
       render :new, status: :unprocessable_entity
@@ -34,5 +36,13 @@ class SesionesController < ApplicationController
   def destroy
     reset_session
     redirect_to login_path, notice: "Sesión cerrada correctamente"
+  end
+
+  private
+
+  def ruta_inicial_para(usuario)
+    return menu_path if usuario&.admin?
+
+    root_path
   end
 end

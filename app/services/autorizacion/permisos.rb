@@ -17,6 +17,7 @@ module Autorizacion
       },
 
       eventos: {
+        trabajadores: %i[ver],
         eventos: %i[ver crear editar cancelar confirmar]
       }
     }.freeze

@@ -10,6 +10,7 @@ class EventosController < ApplicationController
                   show
                   buscar_trabajadores
                   ver_convocatoria
+                  ver_acta
                   ver_lista_participacion
                 ]
 
@@ -34,6 +35,7 @@ class EventosController < ApplicationController
                   confirmacion
                   confirmar
                   ver_convocatoria
+                  ver_acta
                   ver_lista_participacion
                 ]
 
@@ -84,17 +86,10 @@ class EventosController < ApplicationController
     @evento = Evento.new(evento_params)
     @evento.estado = "programado"
 
-    archivo = params[:convocatoria_pdf]
+    archivo_convocatoria = params[:convocatoria_pdf]
+    archivo_acta = params[:acta_pdf]
 
-    if archivo.blank?
-      @evento.valid?
-      @evento.errors.add(:convocatoria_pdf_path, "es obligatoria")
-      flash.now[:alert] = "Debes subir el PDF de la convocatoria"
-      return render :new, status: :unprocessable_entity
-    end
-
-    @evento.valid?
-    @evento.errors.delete(:convocatoria_pdf_path)
+    validar_evento_y_documentos_para_creacion(archivo_convocatoria, archivo_acta)
 
     if @evento.errors.any?
       flash.now[:alert] = "No se pudo crear el evento. Revisa los campos marcados."
@@ -102,13 +97,20 @@ class EventosController < ApplicationController
     end
 
     begin
-      ruta_pdf = uploader_eventos.upload_pdf!(
-        uploaded_file: archivo,
+      ruta_convocatoria = uploader_eventos.upload_pdf!(
+        uploaded_file: archivo_convocatoria,
         folder: "eventos/convocatorias",
         filename: nombre_archivo_evento("convocatoria", @evento.nombre)
       )
 
-      @evento.convocatoria_pdf_path = ruta_pdf
+      ruta_acta = uploader_eventos.upload_pdf!(
+        uploaded_file: archivo_acta,
+        folder: "eventos/actas",
+        filename: nombre_archivo_evento("acta", @evento.nombre)
+      )
+
+      @evento.convocatoria_pdf_path = ruta_convocatoria
+      @evento.acta_pdf_path = ruta_acta
       @evento.save!
 
       Historiales::Registrador.registrar!(
@@ -307,6 +309,22 @@ class EventosController < ApplicationController
     redirect_to evento_path(@evento), alert: e.message
   end
 
+  def ver_acta
+    if @evento.acta_pdf_path.blank?
+      return redirect_to evento_path(@evento),
+                         alert: "Este evento no tiene acta registrada"
+    end
+
+    url = uploader_eventos.signed_url!(
+      object_path: @evento.acta_pdf_path,
+      expires_in: 3600
+    )
+
+    redirect_to url, allow_other_host: true
+  rescue Supabase::StorageUploader::Error => e
+    redirect_to evento_path(@evento), alert: e.message
+  end
+
   def ver_lista_participacion
     if @evento.lista_participacion_pdf_path.blank?
       return redirect_to evento_path(@evento),
@@ -395,6 +413,21 @@ class EventosController < ApplicationController
       else
         []
       end
+  end
+
+  def validar_evento_y_documentos_para_creacion(archivo_convocatoria, archivo_acta)
+    @evento.valid?
+
+    @evento.errors.delete(:convocatoria_pdf_path)
+    @evento.errors.delete(:acta_pdf_path)
+
+    if archivo_convocatoria.blank?
+      @evento.errors.add(:convocatoria_pdf_path, "es obligatoria")
+    end
+
+    if archivo_acta.blank?
+      @evento.errors.add(:acta_pdf_path, "es obligatoria")
+    end
   end
 
   def uploader_eventos

@@ -1,13 +1,116 @@
-<div class="container">
-  <!-- Logo -->
-  <div class="text-center">
-    <%= image_tag "logo.png", width: 120 if File.exist?(Rails.root.join("app/assets/images/logo.png")) %>
+<% content_for :title, "Bienvenida" %>
+<% content_for :page_title, "Bienvenida al sistema" %>
+
+<% if finanzas_actual? %>
+  <% titulo_bienvenida = "Bienvenido al módulo financiero" %>
+  <% descripcion_bienvenida = "Desde esta sección podrás consultar y administrar la información financiera que corresponde a tu cuenta asignada." %>
+  <% modulo_principal = "Finanzas" %>
+  <% ruta_principal = finanzas_path %>
+  <% texto_principal = "Ir al dashboard financiero" %>
+  <% acciones = [
+    ["Control de cooperaciones", cooperaciones_path],
+    ["Egresos", egresos_path],
+    ["Reportes financieros", finanzas_reportes_path],
+    ["Trabajadores", trabajadores_path]
+  ] %>
+<% elsif eventos_actual? %>
+  <% titulo_bienvenida = "Bienvenido al módulo de eventos" %>
+  <% descripcion_bienvenida = "Desde esta sección podrás registrar eventos, confirmar asistencias y consultar la participación de los trabajadores." %>
+  <% modulo_principal = "Eventos" %>
+  <% ruta_principal = eventos_dashboard_path %>
+  <% texto_principal = "Ir al dashboard de eventos" %>
+  <% acciones = [
+    ["Nuevo evento", new_evento_path],
+    ["Control de eventos", eventos_path],
+    ["Trabajadores", trabajadores_path]
+  ] %>
+<% else %>
+  <% titulo_bienvenida = "Bienvenido al Sistema de Gestión Sindical" %>
+  <% descripcion_bienvenida = "Selecciona una sección del menú lateral para comenzar a trabajar." %>
+  <% modulo_principal = "Sistema" %>
+  <% ruta_principal = menu_path %>
+  <% texto_principal = "Ir al panel principal" %>
+  <% acciones = [] %>
+<% end %>
+
+<section class="dashboard-page">
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3><%= titulo_bienvenida %></h3>
+        <p class="panel__description">
+          <%= descripcion_bienvenida %>
+        </p>
+      </div>
+    </div>
+
+    <div class="detalle-grid">
+      <div class="detalle-item">
+        <span class="detalle-item__label">Usuario</span>
+        <strong><%= usuario_actual&.nombre_usuario || "Usuario" %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Rol asignado</span>
+        <strong><%= usuario_actual&.rol_sistema.to_s.humanize.presence || "Sin rol" %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Módulo principal</span>
+        <strong><%= modulo_principal %></strong>
+      </div>
+
+      <div class="detalle-item">
+        <span class="detalle-item__label">Último acceso</span>
+        <strong><%= usuario_actual&.ultimo_acceso_at&.strftime("%d/%m/%Y %H:%M") || "Primer acceso" %></strong>
+      </div>
+    </div>
+
+    <div class="detalle-bloque">
+      <span class="detalle-item__label">Indicaciones</span>
+
+      <% if finanzas_actual? %>
+        <p>
+          Tu acceso está limitado al área financiera asignada. Podrás trabajar con cooperaciones,
+          egresos, reportes y consultar información de trabajadores en modo lectura.
+        </p>
+      <% elsif eventos_actual? %>
+        <p>
+          Tu acceso está orientado al control de eventos. Podrás dar de alta eventos,
+          cancelar eventos programados, confirmar asistencias y consultar trabajadores en modo lectura.
+        </p>
+      <% else %>
+        <p>
+          Usa el menú lateral para acceder a las secciones disponibles según tu rol.
+        </p>
+      <% end %>
+    </div>
+
+    <div class="finanzas-actions">
+      <%= link_to texto_principal, ruta_principal, class: "button button--primary" %>
+    </div>
   </div>
 
-  <h1>Bienvenid@ al Sistema de Gestión Sindical de la Sección 22</h1>
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Accesos rápidos</h3>
+        <p class="panel__description">
+          Opciones disponibles para tu rol dentro del sistema.
+        </p>
+      </div>
+    </div>
 
-  <div class="text-center">
-    <%= link_to "Iniciar Sesión", login_path, class: "btn" %>
-    <%= link_to "Crear Cuenta", new_usuario_path, class: "btn-outline" %>
+    <% if acciones.any? %>
+      <div class="finanzas-actions">
+        <% acciones.each do |texto, ruta| %>
+          <%= link_to texto, ruta, class: "button button--ghost" %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        No hay accesos rápidos disponibles para este rol.
+      </div>
+    <% end %>
   </div>
-</div>
+</section>

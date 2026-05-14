@@ -4,7 +4,6 @@ module NavigationHelper
       { clave: :dashboard, modulo: :dashboard, etiqueta: "Dashboard SG", icono: "⌂", ruta: menu_path },
 
       { clave: :trabajadores, modulo: :trabajadores, etiqueta: "Trabajadores", icono: "👥", ruta: trabajadores_path },
-      { clave: :detalle_trabajador, modulo: :trabajadores, etiqueta: "Detalle trabajador", icono: "🪪", ruta: nil },
 
       { clave: :conceptos07, modulo: :conceptos07, etiqueta: "Categorías", icono: "🏷", ruta: concepto07_niveles_path },
 
@@ -13,7 +12,14 @@ module NavigationHelper
 
     items.concat(finanzas_subitems) if finanzas_activa?
 
-    items << { clave: :eventos, modulo: :eventos, etiqueta: "Eventos", icono: "📅", ruta: eventos_path, tipo: :grupo }
+    items << {
+      clave: :eventos,
+      modulo: :eventos,
+      etiqueta: "Eventos",
+      icono: "📅",
+      ruta: eventos_dashboard_path,
+      tipo: :grupo
+    }
 
     items.concat(eventos_subitems) if eventos_activa?
 

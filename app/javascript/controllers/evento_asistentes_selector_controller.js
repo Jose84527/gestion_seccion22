@@ -18,10 +18,15 @@ export default class extends Controller {
     this.timeout = null
     this.currentPage = 1
     this.currentQuery = ""
+    this.lastMeta = {
+      pagina_actual: 1,
+      total_paginas: 1,
+      total_registros: 0
+    }
 
     this.loadSelectedFromDom()
-    this.loadPage(1)
     this.updateSelectedState()
+    this.loadPage(1)
   }
 
   disconnect() {
@@ -64,9 +69,16 @@ export default class extends Controller {
 
       const data = await response.json()
 
+      this.lastMeta = {
+        pagina_actual: data.pagina_actual || 1,
+        total_paginas: data.total_paginas || 1,
+        total_registros: data.total_registros || 0
+      }
+
       this.renderTable(data.trabajadores || [])
-      this.renderPagination(data.pagina_actual || 1, data.total_paginas || 1)
-      this.renderMeta(data)
+      this.renderPagination(this.lastMeta.pagina_actual, this.lastMeta.total_paginas)
+      this.renderMeta()
+      this.updateSelectedState()
     } catch (_error) {
       this.renderError()
     }
@@ -78,8 +90,8 @@ export default class extends Controller {
     if (!this.hasSelectedItemTarget) return
 
     this.selectedItemTargets.forEach((item) => {
-      this.selected.set(item.dataset.trabajadorId, {
-        id: item.dataset.trabajadorId,
+      this.selected.set(String(item.dataset.trabajadorId), {
+        id: String(item.dataset.trabajadorId),
         nombre: item.dataset.nombre,
         meta: item.dataset.meta
       })
@@ -119,7 +131,8 @@ export default class extends Controller {
     }
 
     trabajadores.forEach((trabajador) => {
-      const checked = this.selected.has(String(trabajador.id)) ? "checked" : ""
+      const id = String(trabajador.id)
+      const checked = this.selected.has(id) ? "checked" : ""
 
       const row = document.createElement("tr")
 
@@ -129,7 +142,7 @@ export default class extends Controller {
             type="checkbox"
             ${checked}
             data-action="change->evento-asistentes-selector#toggle"
-            data-id="${trabajador.id}"
+            data-id="${this.escapeHtml(id)}"
             data-nombre="${this.escapeHtml(trabajador.nombre)}"
             data-meta="${this.escapeHtml(`${trabajador.rfc} · ${trabajador.clave_cobro}`)}"
           >
@@ -159,6 +172,7 @@ export default class extends Controller {
 
     for (let page = 1; page <= totalPages; page += 1) {
       const button = this.paginationButton(String(page), page)
+
       if (page === currentPage) {
         button.classList.add("is-active")
       }
@@ -179,15 +193,16 @@ export default class extends Controller {
     button.className = "pagination__link"
     button.textContent = label
     button.addEventListener("click", () => this.loadPage(page))
+
     return button
   }
 
-  renderMeta(data) {
+  renderMeta() {
     if (!this.hasMetaTarget) return
 
-    const total = data.total_registros || 0
-    const page = data.pagina_actual || 1
-    const totalPages = data.total_paginas || 1
+    const total = this.lastMeta.total_registros || 0
+    const page = this.lastMeta.pagina_actual || 1
+    const totalPages = this.lastMeta.total_paginas || 1
     const selectedCount = this.selected.size
 
     this.metaTarget.textContent =
@@ -223,20 +238,16 @@ export default class extends Controller {
     }
 
     this.updateSelectedState()
-    this.renderMeta({
-      pagina_actual: this.currentPage,
-      total_paginas: null,
-      total_registros: null
-    })
+    this.renderMeta()
   }
 
   addSelected(trabajador) {
-    if (this.selected.has(trabajador.id)) return
+    if (this.selected.has(String(trabajador.id))) return
 
-    this.selected.set(trabajador.id, trabajador)
+    this.selected.set(String(trabajador.id), trabajador)
 
     const html = this.selectedTemplateTarget.innerHTML
-      .replaceAll("TRABAJADOR_ID", trabajador.id)
+      .replaceAll("TRABAJADOR_ID", this.escapeHtml(trabajador.id))
       .replaceAll("TRABAJADOR_NOMBRE", this.escapeHtml(trabajador.nombre))
       .replaceAll("TRABAJADOR_META", this.escapeHtml(trabajador.meta))
 
@@ -250,25 +261,33 @@ export default class extends Controller {
     this.removeById(item.dataset.trabajadorId)
     this.updateSelectedState()
     this.syncCheckboxes()
+    this.renderMeta()
   }
 
   removeById(id) {
-    this.selected.delete(String(id))
+    const idString = String(id)
+
+    this.selected.delete(idString)
 
     const item = this.selectedItemTargets.find((selectedItem) => {
-      return selectedItem.dataset.trabajadorId === String(id)
+      return selectedItem.dataset.trabajadorId === idString
     })
 
     if (item) item.remove()
   }
 
   updateSelectedState() {
-    if (this.hasEmptySelectedTarget) {
-      this.emptySelectedTarget.hidden = this.selected.size > 0
-    }
+    if (!this.hasEmptySelectedTarget) return
+
+    const haySeleccionados = this.selected.size > 0
+
+    this.emptySelectedTarget.hidden = haySeleccionados
+    this.emptySelectedTarget.style.display = haySeleccionados ? "none" : ""
   }
 
   syncCheckboxes() {
+    if (!this.hasTableBodyTarget) return
+
     const checkboxes = this.tableBodyTarget.querySelectorAll("input[type='checkbox']")
 
     checkboxes.forEach((checkbox) => {

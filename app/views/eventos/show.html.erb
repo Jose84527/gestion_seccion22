@@ -87,11 +87,25 @@
       <span class="detalle-item__label">Documentos</span>
 
       <div class="finanzas-actions">
-        <%= link_to "Ver convocatoria",
-                    ver_convocatoria_evento_path(@evento),
-                    class: "button button--ghost",
-                    target: "_blank",
-                    rel: "noopener" %>
+        <% if @evento.convocatoria_pdf_path.present? %>
+          <%= link_to "Ver convocatoria",
+                      ver_convocatoria_evento_path(@evento),
+                      class: "button button--ghost",
+                      target: "_blank",
+                      rel: "noopener" %>
+        <% else %>
+          <span class="button button--ghost is-disabled">Convocatoria no disponible</span>
+        <% end %>
+
+        <% if @evento.acta_pdf_path.present? %>
+          <%= link_to "Ver acta",
+                      ver_acta_evento_path(@evento),
+                      class: "button button--ghost",
+                      target: "_blank",
+                      rel: "noopener" %>
+        <% else %>
+          <span class="button button--ghost is-disabled">Acta no disponible</span>
+        <% end %>
 
         <% if @evento.lista_participacion_pdf_path.present? %>
           <%= link_to "Ver lista de participación",

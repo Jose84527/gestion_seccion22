@@ -53,6 +53,10 @@ Rails.application.routes.draw do
 
   get "eventos/dashboard", to: "eventos/dashboard#index", as: :eventos_dashboard
 
+  get "eventos/dashboard/reporte_participacion_pdf",
+    to: "eventos/dashboard#reporte_participacion_pdf",
+    as: :eventos_reporte_participacion_pdf
+    
   resources :eventos do
     collection do
       get :buscar_trabajadores
@@ -63,6 +67,7 @@ Rails.application.routes.draw do
       get :confirmacion
       patch :confirmar
       get :ver_convocatoria
+      get :ver_acta
       get :ver_lista_participacion
     end
   end

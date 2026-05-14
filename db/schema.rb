@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_13_184930) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_14_195131) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -134,6 +134,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_13_184930) do
   end
 
   create_table "eventos", force: :cascade do |t|
+    t.string "acta_pdf_path"
     t.datetime "confirmado_at"
     t.bigint "confirmado_por_id"
     t.string "convocatoria_pdf_path", null: false

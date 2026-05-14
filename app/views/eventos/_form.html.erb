@@ -123,6 +123,28 @@
           <% end %>
         <% end %>
       </div>
+
+      <div class="form-field form-field--full">
+        <label for="acta_pdf">Acta PDF</label>
+
+        <% if evento.persisted? %>
+          <input type="text"
+                 class="form-input"
+                 value="<%= evento.acta_pdf_path.presence || 'Sin acta registrada' %>"
+                 disabled>
+          <small class="helper-text">El acta se adjuntó al crear el evento.</small>
+        <% else %>
+          <%= file_field_tag :acta_pdf,
+                             accept: "application/pdf",
+                             class: "form-input #{'form-input--error' if evento.errors[:acta_pdf_path].any?}" %>
+
+          <% if evento.errors[:acta_pdf_path].any? %>
+            <small class="field-error"><%= evento.errors[:acta_pdf_path].first %></small>
+          <% else %>
+            <small class="helper-text">Campo obligatorio. Sube el acta oficial en formato PDF.</small>
+          <% end %>
+        <% end %>
+      </div>
     </div>
   </div>
 

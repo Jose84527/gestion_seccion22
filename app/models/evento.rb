@@ -57,6 +57,10 @@ class Evento < ApplicationRecord
   validates :convocatoria_pdf_path,
             presence: { message: "es obligatoria" }
 
+  validates :acta_pdf_path,
+            presence: { message: "es obligatoria" },
+            if: :acta_pdf_obligatoria?
+
   validates :observaciones_confirmacion,
             length: { maximum: 1500, message: "no puede superar 1500 caracteres" },
             allow_blank: true
@@ -117,6 +121,7 @@ class Evento < ApplicationRecord
       puntaje: puntaje,
       estado: estado,
       convocatoria_pdf_path: convocatoria_pdf_path,
+      acta_pdf_path: acta_pdf_path,
       lista_participacion_pdf_path: lista_participacion_pdf_path,
       confirmado_at: confirmado_at,
       confirmado_por_id: confirmado_por_id,
@@ -141,5 +146,9 @@ class Evento < ApplicationRecord
     return unless fecha_fin < fecha_inicio
 
     errors.add(:fecha_fin, "no puede ser menor a la fecha de inicio")
+  end
+
+  def acta_pdf_obligatoria?
+    new_record? || acta_pdf_path.present?
   end
 end

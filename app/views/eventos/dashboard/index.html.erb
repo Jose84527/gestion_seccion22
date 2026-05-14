@@ -1,0 +1,232 @@
+<% content_for :title, "Dashboard de eventos" %>
+<% content_for :page_title, "Dashboard de eventos" %>
+
+<section class="finanzas-page">
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Dashboard de eventos</h3>
+        <p class="panel__description">
+          Resumen general de eventos, participación registrada y puntos acumulados por los trabajadores.
+        </p>
+      </div>
+
+      <div class="acciones-grupo">
+        <%= link_to "Reporte PDF",
+                    eventos_reporte_participacion_pdf_path,
+                    class: "button button--primary",
+                    target: "_blank",
+                    rel: "noopener" %>
+
+        <%= link_to "Nuevo evento",
+                    new_evento_path,
+                    class: "button button--primary" %>
+
+        <%= link_to "Control de eventos",
+                    eventos_path,
+                    class: "button button--ghost" %>
+      </div>
+    </div>
+
+    <div class="finanzas-grid">
+      <div class="finanzas-card">
+        <span class="finanzas-card__label">Eventos registrados</span>
+        <strong class="finanzas-card__value"><%= @total_eventos || 0 %></strong>
+      </div>
+
+      <div class="finanzas-card">
+        <span class="finanzas-card__label">Programados</span>
+        <strong class="finanzas-card__value"><%= @eventos_programados || 0 %></strong>
+      </div>
+
+      <div class="finanzas-card">
+        <span class="finanzas-card__label">Confirmados</span>
+        <strong class="finanzas-card__value"><%= @eventos_confirmados || 0 %></strong>
+      </div>
+
+      <div class="finanzas-card">
+        <span class="finanzas-card__label">Cancelados</span>
+        <strong class="finanzas-card__value"><%= @eventos_cancelados || 0 %></strong>
+      </div>
+
+      <div class="finanzas-card">
+        <span class="finanzas-card__label">Puntos acumulados</span>
+        <strong class="finanzas-card__value"><%= @puntos_acumulados || 0 %></strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Participación acumulada</h3>
+        <p class="panel__description">
+          Porcentaje calculado con base en los puntos obtenidos contra los puntos máximos posibles.
+        </p>
+      </div>
+    </div>
+
+    <div class="finanzas-grid">
+      <div class="finanzas-card">
+        <span class="finanzas-card__label">Participación general</span>
+        <strong class="finanzas-card__value">
+          <%= number_to_percentage(@porcentaje_participacion_general || 0, precision: 1) %>
+        </strong>
+      </div>
+
+      <div class="finanzas-card">
+        <span class="finanzas-card__label">Trabajadores activos</span>
+        <strong class="finanzas-card__value"><%= @trabajadores_activos || 0 %></strong>
+      </div>
+
+      <div class="finanzas-card">
+        <span class="finanzas-card__label">Puntos posibles por trabajador</span>
+        <strong class="finanzas-card__value"><%= @puntos_posibles_por_trabajador || 0 %></strong>
+      </div>
+
+      <div class="finanzas-card">
+        <span class="finanzas-card__label">Puntos posibles generales</span>
+        <strong class="finanzas-card__value"><%= @puntos_posibles_generales || 0 %></strong>
+      </div>
+    </div>
+
+    <div class="empty-state">
+      Fórmula usada:
+      puntos acumulados de todos los trabajadores /
+      puntos máximos posibles de todos los trabajadores activos.
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Próximos eventos</h3>
+        <p class="panel__description">
+          Se muestran únicamente los 5 eventos programados más próximos según su fecha de inicio.
+        </p>
+      </div>
+    </div>
+
+    <% if @proximos_eventos.present? && @proximos_eventos.any? %>
+      <div class="tabla-wrapper">
+        <table class="tabla-base">
+          <thead>
+            <tr>
+              <th>Evento</th>
+              <th>Lugar</th>
+              <th>Fecha inicio</th>
+              <th>Fecha fin</th>
+              <th>Puntaje</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <% @proximos_eventos.each do |evento| %>
+              <tr>
+                <td><strong><%= evento.nombre %></strong></td>
+                <td><%= evento.lugar %></td>
+                <td><%= evento.fecha_inicio&.strftime("%d/%m/%Y %H:%M") || "-" %></td>
+                <td><%= evento.fecha_fin&.strftime("%d/%m/%Y %H:%M") || "-" %></td>
+                <td><%= evento.puntaje %></td>
+
+                <td class="tabla-base__acciones">
+                  <%= link_to "Ver",
+                              evento_path(evento),
+                              class: "button button--ghost" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        No hay eventos programados próximos.
+      </div>
+    <% end %>
+  </div>
+
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Top 10 trabajadores con más puntos</h3>
+        <p class="panel__description">
+          Ranking calculado con base en los puntos acumulados por participación en eventos confirmados.
+          Los primeros tres lugares se destacan como trabajadores con mayor participación.
+        </p>
+      </div>
+    </div>
+
+    <% if @ranking_trabajadores.present? && @ranking_trabajadores.any? %>
+      <div class="tabla-wrapper">
+        <table class="tabla-base">
+          <thead>
+            <tr>
+              <th>Top</th>
+              <th>Trabajador</th>
+              <th>Tipo</th>
+              <th>Sexo</th>
+              <th>RFC</th>
+              <th>Clave de cobro</th>
+              <th>Eventos asistidos</th>
+              <th>Puntos</th>
+              <th>Porcentaje</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <% @ranking_trabajadores.each_with_index do |trabajador, index| %>
+              <% puntos = trabajador.puntos_acumulados.to_i %>
+              <% puntos_posibles = @puntos_posibles_por_trabajador.to_i %>
+              <% porcentaje = puntos_posibles.positive? ? (puntos.to_d / puntos_posibles.to_d) * 100 : 0 %>
+
+              <% etiqueta_top =
+                   case index
+                   when 0 then "🥇 #1"
+                   when 1 then "🥈 #2"
+                   when 2 then "🥉 #3"
+                   else "##{index + 1}"
+                   end
+              %>
+
+              <tr>
+                <td>
+                  <% if index < 3 %>
+                    <span class="estado-badge estado-badge--confirmado">
+                      <%= etiqueta_top %>
+                    </span>
+                  <% else %>
+                    <strong><%= etiqueta_top %></strong>
+                  <% end %>
+                </td>
+
+                <td>
+                  <strong><%= trabajador.nombre_completo %></strong>
+                </td>
+
+                <td><%= trabajador.tipo_trabajador&.humanize || "-" %></td>
+                <td><%= trabajador.sexo&.humanize || "-" %></td>
+                <td><%= trabajador.rfc %></td>
+                <td><%= trabajador.clave_cobro %></td>
+                <td><%= trabajador.eventos_asistidos_count.to_i %></td>
+
+                <td>
+                  <strong><%= puntos %> / <%= puntos_posibles %></strong>
+                </td>
+
+                <td>
+                  <strong><%= number_to_percentage(porcentaje, precision: 1) %></strong>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        Todavía no hay participaciones registradas en eventos confirmados.
+      </div>
+    <% end %>
+  </div>
+</section>

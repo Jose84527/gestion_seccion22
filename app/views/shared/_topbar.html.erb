@@ -13,14 +13,16 @@
       </div>
 
       <div class="topbar__user-meta">
-        <strong><%= usuario_actual.nombre_usuario %></strong>
-        <span><%= usuario_actual.rol_sistema.humanize %></span>
+        <strong><%= usuario_actual&.nombre_usuario.presence || "Usuario" %></strong>
+        <span><%= usuario_actual&.rol_sistema.to_s.presence&.humanize || "Sin rol asignado" %></span>
       </div>
     </div>
 
-    <%= button_to "Cerrar sesión",
-                  logout_path,
-                  method: :delete,
-                  class: "button button--ghost" %>
+    <% if sesion_iniciada? %>
+      <%= button_to "Cerrar sesión",
+                    logout_path,
+                    method: :delete,
+                    class: "button button--ghost" %>
+    <% end %>
   </div>
 </header>
