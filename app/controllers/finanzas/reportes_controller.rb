@@ -20,7 +20,10 @@ module Finanzas
         egresos: @egresos,
         total_ingresos: @total_ingresos,
         total_egresos: @total_egresos,
-        saldo_final: @saldo_final
+        saldo_final: @saldo_final,
+        cuenta_financiera: @cuenta_financiera_actual,
+        modo_global_por_cuentas: modo_global_por_cuentas?,
+        reportes_por_cuenta: @bloques_cuentas
       ).render
 
       send_data archivo,
@@ -71,6 +74,7 @@ module Finanzas
       @saldo_final = @total_ingresos - @total_egresos
 
       @bloques_cuentas = construir_bloques_por_cuenta
+      @reportes_por_cuenta = @bloques_cuentas
     end
 
     def cooperaciones_base
@@ -116,10 +120,7 @@ module Finanzas
       return [usuario_actual.cuenta_financiera].compact if finanzas_actual?
 
       cuentas = CuentaFinanciera.order(:nombre).to_a
-
-      if existen_movimientos_sin_cuenta?
-        cuentas << nil
-      end
+      cuentas << nil if existen_movimientos_sin_cuenta?
 
       cuentas
     end
@@ -186,6 +187,10 @@ module Finanzas
       Date.parse(valor.to_s)
     rescue ArgumentError
       nil
+    end
+
+    def modo_global_por_cuentas?
+      admin_actual? && @cuenta_financiera_actual.blank?
     end
 
     def nombre_archivo_excel
