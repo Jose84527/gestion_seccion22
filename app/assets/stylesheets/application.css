@@ -1543,3 +1543,111 @@ button {
   background: #eee4de;
   color: #75665f;
 }
+
+.dashboard-grid--dos-columnas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 10px;
+}
+
+/* ===== Dashboard admin ===== */
+
+.dashboard-admin .admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+  width: 100%;
+  margin: 28px 0 34px;
+}
+
+.dashboard-admin .admin-kpi-card {
+  background: #d98b4a;
+  border-radius: 18px;
+  padding: 22px 20px;
+  min-height: 138px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(127, 72, 37, 0.16);
+}
+
+.dashboard-admin .admin-kpi-card__label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff7ef;
+  margin-bottom: 10px;
+}
+
+.dashboard-admin .admin-kpi-card__value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #ffffff;
+  margin-bottom: 10px;
+}
+
+.dashboard-admin .admin-kpi-card small {
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: #fff7ef;
+}
+
+/* Grid exclusivo para los paneles del dashboard admin */
+.dashboard-admin .dashboard-grid--dos-columnas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 10px;
+}
+
+/* Quita el borde superior naranja de los paneles grandes */
+.dashboard-admin .panel--accent-orange {
+  border-top: none;
+}
+
+/* Conserva el toque naranja solo en las tablas del dashboard admin */
+.dashboard-admin .tabla-wrapper--accent {
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid #ead8ca;
+  background: #ffffff;
+}
+
+.dashboard-admin .tabla-base--accent thead {
+  background: #eed9c9;
+}
+
+.dashboard-admin .tabla-base--accent thead th {
+  color: #74452e;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dashboard-admin .tabla-base--accent tbody tr:hover {
+  background: #fff7f1;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-admin .admin-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .dashboard-admin .dashboard-grid--dos-columnas {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-admin .admin-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}

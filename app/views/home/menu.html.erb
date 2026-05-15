@@ -1,108 +1,287 @@
 <% content_for :title, "Dashboard SG" %>
 <% content_for :page_title, "Dashboard Secretario General" %>
 
-<section class="dashboard">
-  <div class="dashboard__hero">
-    <div>
-      <p class="dashboard__eyebrow">Vista preliminar</p>
-      <h2 class="dashboard__headline">Base visual del sistema interno</h2>
-      <p class="dashboard__description">
-        Esta pantalla ya usa el layout autenticado que se repetirá en los módulos
-        de trabajadores, usuarios, finanzas, actividades e historial.
-      </p>
+<section class="dashboard-page dashboard-admin">
+  <div class="admin-kpi-grid">
+    <div class="admin-kpi-card">
+      <span class="admin-kpi-card__label">Total trabajadores activos</span>
+      <strong class="admin-kpi-card__value"><%= @total_trabajadores_activos || 0 %></strong>
+      <small>Personal actualmente activo en la delegación</small>
+    </div>
+
+    <div class="admin-kpi-card">
+      <span class="admin-kpi-card__label">Recaudación de 6 meses</span>
+      <strong class="admin-kpi-card__value">
+        <%= number_to_currency(@recaudacion_6_meses || 0) %>
+      </strong>
+      <small>Cooperaciones completadas en los últimos 6 meses</small>
+    </div>
+
+    <div class="admin-kpi-card">
+      <span class="admin-kpi-card__label">Próximos eventos</span>
+      <strong class="admin-kpi-card__value"><%= @proximos_eventos_count || 0 %></strong>
+      <small>Eventos programados por realizarse</small>
+    </div>
+
+    <div class="admin-kpi-card">
+      <span class="admin-kpi-card__label">Porcentaje de participación</span>
+      <strong class="admin-kpi-card__value">
+        <%= number_to_percentage(@porcentaje_participacion_general || 0, precision: 1) %>
+      </strong>
+      <small>Participación acumulada en eventos confirmados</small>
     </div>
   </div>
 
-  <section class="stats-grid">
-    <article class="stat-card">
-      <span class="stat-card__label">Total trabajadores</span>
-      <strong class="stat-card__value">0</strong>
-      <small class="stat-card__note">Sin datos cargados</small>
-    </article>
+  <div class="dashboard-grid dashboard-grid--dos-columnas">
+    <div class="panel panel--accent-orange">
+      <div class="panel__header panel__header--accent">
+        <div>
+          <h3>Últimas cooperaciones</h3>
+          <p class="panel__description">
+            Corridas de cooperación registradas recientemente.
+          </p>
+        </div>
 
-    <article class="stat-card">
-      <span class="stat-card__label">Recaudación de 6 meses</span>
-      <strong class="stat-card__value">$0.00</strong>
-      <small class="stat-card__note">Pendiente de integrar finanzas</small>
-    </article>
-
-    <article class="stat-card">
-      <span class="stat-card__label">Próximos eventos</span>
-      <strong class="stat-card__value">0</strong>
-      <small class="stat-card__note">Pendiente de integrar actividades</small>
-    </article>
-
-    <article class="stat-card">
-      <span class="stat-card__label">Porcentaje de participación</span>
-      <strong class="stat-card__value">0%</strong>
-      <small class="stat-card__note">Sin registros de asistencia</small>
-    </article>
-  </section>
-
-  <section class="dashboard__grid">
-    <article class="panel">
-      <div class="panel__header">
-        <h3>Participación por tipo de evento</h3>
-        <span class="panel__tag">Demo visual</span>
+        <%= link_to "Ver control", cooperaciones_path, class: "button button--ghost" %>
       </div>
 
-      <% [
-        ["Marcha", 55],
-        ["Plantón", 75],
-        ["Asamblea", 45],
-        ["Otros", 65]
-      ].each do |nombre, valor| %>
-        <div class="metric-row">
-          <div class="metric-row__top">
-            <span><%= nombre %></span>
-            <strong><%= valor %>%</strong>
-          </div>
+      <% if @ultimas_cooperaciones.present? && @ultimas_cooperaciones.any? %>
+        <div class="tabla-wrapper tabla-wrapper--accent">
+          <table class="tabla-base tabla-base--accent">
+            <thead>
+              <tr>
+                <th>Cooperación</th>
+                <th>Estado</th>
+                <th>Total</th>
+                <th></th>
+              </tr>
+            </thead>
 
-          <div class="metric-row__track">
-            <div class="metric-row__fill" style="width: <%= valor %>%"></div>
-          </div>
+            <tbody>
+              <% @ultimas_cooperaciones.each do |cooperacion| %>
+                <tr>
+                  <td>
+                    <strong><%= cooperacion.nombre %></strong>
+                    <br>
+                    <small>
+                      <%= cooperacion.fecha_inicio_vigencia&.strftime("%d/%m/%Y") || "-" %>
+                      -
+                      <%= cooperacion.fecha_fin_vigencia&.strftime("%d/%m/%Y") || "-" %>
+                    </small>
+                  </td>
+
+                  <td>
+                    <span class="estado-badge estado-badge--<%= cooperacion.estado %>">
+                      <%= cooperacion.estado.humanize %>
+                    </span>
+                  </td>
+
+                  <td>
+                    <strong><%= number_to_currency(cooperacion.total_esperado || 0) %></strong>
+                  </td>
+
+                  <td class="tabla-base__acciones">
+                    <%= link_to "Ver", cooperacion_path(cooperacion), class: "button button--ghost" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="empty-state">
+          Aún no hay cooperaciones registradas.
         </div>
       <% end %>
-    </article>
+    </div>
 
-    <article class="panel">
-      <div class="panel__header">
-        <h3>Accesos directos</h3>
-        <span class="panel__tag">Base inicial</span>
+    <div class="panel panel--accent-orange">
+      <div class="panel__header panel__header--accent">
+        <div>
+          <h3>Últimos egresos</h3>
+          <p class="panel__description">
+            Salidas de dinero registradas recientemente.
+          </p>
+        </div>
+
+        <%= link_to "Ver egresos", egresos_path, class: "button button--ghost" %>
       </div>
 
-      <div class="quick-links">
-        <span class="quick-link quick-link--active">Dashboard</span>
-        <span class="quick-link">Trabajadores</span>
-        <span class="quick-link">Cooperaciones</span>
-        <span class="quick-link">Eventos</span>
-        <span class="quick-link">Usuarios</span>
-        <span class="quick-link">Historial</span>
-      </div>
-    </article>
+      <% if @ultimos_egresos.present? && @ultimos_egresos.any? %>
+        <div class="tabla-wrapper tabla-wrapper--accent">
+          <table class="tabla-base tabla-base--accent">
+            <thead>
+              <tr>
+                <th>Folio</th>
+                <th>Concepto</th>
+                <th>Monto</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
 
-    <article class="panel">
-      <div class="panel__header">
-        <h3>Últimas cooperaciones</h3>
-        <span class="panel__tag">Próximamente</span>
+            <tbody>
+              <% @ultimos_egresos.each do |egreso| %>
+                <tr>
+                  <td>
+                    <strong><%= egreso.folio_np %></strong>
+                    <br>
+                    <small><%= egreso.fecha_egreso&.strftime("%d/%m/%Y") || "-" %></small>
+                  </td>
+
+                  <td><%= egreso.concepto %></td>
+
+                  <td>
+                    <strong><%= number_to_currency(egreso.monto || 0) %></strong>
+                  </td>
+
+                  <td>
+                    <span class="estado-badge estado-badge--<%= egreso.estado %>">
+                      <%= egreso.estado.humanize %>
+                    </span>
+                  </td>
+
+                  <td class="tabla-base__acciones">
+                    <%= link_to "Ver", egreso_path(egreso), class: "button button--ghost" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="empty-state">
+          Aún no hay egresos registrados.
+        </div>
+      <% end %>
+    </div>
+
+    <div class="panel panel--accent-orange">
+      <div class="panel__header panel__header--accent">
+        <div>
+          <h3>Próximos eventos por realizarse</h3>
+          <p class="panel__description">
+            Se muestran los 5 eventos programados más cercanos.
+          </p>
+        </div>
+
+        <%= link_to "Ver eventos", eventos_path, class: "button button--ghost" %>
       </div>
 
-      <div class="empty-state">
-        El módulo de finanzas todavía no está conectado. Aquí después mostraremos
-        los movimientos más recientes de cooperaciones.
-      </div>
-    </article>
+      <% if @proximos_eventos.present? && @proximos_eventos.any? %>
+        <div class="tabla-wrapper tabla-wrapper--accent">
+          <table class="tabla-base tabla-base--accent">
+            <thead>
+              <tr>
+                <th>Evento</th>
+                <th>Lugar</th>
+                <th>Fecha inicio</th>
+                <th>Puntaje</th>
+                <th></th>
+              </tr>
+            </thead>
 
-    <article class="panel">
-      <div class="panel__header">
-        <h3>Últimos eventos</h3>
-        <span class="panel__tag">Próximamente</span>
+            <tbody>
+              <% @proximos_eventos.each do |evento| %>
+                <tr>
+                  <td><strong><%= evento.nombre %></strong></td>
+                  <td><%= evento.lugar %></td>
+                  <td><%= evento.fecha_inicio&.strftime("%d/%m/%Y %H:%M") || "-" %></td>
+                  <td><%= evento.puntaje %></td>
+
+                  <td class="tabla-base__acciones">
+                    <%= link_to "Ver", evento_path(evento), class: "button button--ghost" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="empty-state">
+          No hay eventos próximos programados.
+        </div>
+      <% end %>
+    </div>
+
+    <div class="panel panel--accent-orange">
+      <div class="panel__header panel__header--accent">
+        <div>
+          <h3>Top 5 trabajadores con más puntos</h3>
+          <p class="panel__description">
+            Ranking general de participación en eventos confirmados.
+          </p>
+        </div>
+
+        <%= link_to "Dashboard eventos", eventos_dashboard_path, class: "button button--ghost" %>
       </div>
 
-      <div class="empty-state">
-        El módulo de actividades todavía no está conectado. Aquí después mostraremos
-        actividades recientes y registros de asistencia.
-      </div>
-    </article>
-  </section>
+      <% if @top_trabajadores_participacion.present? && @top_trabajadores_participacion.any? %>
+        <div class="tabla-wrapper tabla-wrapper--accent">
+          <table class="tabla-base tabla-base--accent">
+            <thead>
+              <tr>
+                <th>Top</th>
+                <th>Trabajador</th>
+                <th>Tipo</th>
+                <th>Puntos</th>
+                <th>%</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <% @top_trabajadores_participacion.each_with_index do |trabajador, index| %>
+                <% puntos = trabajador.puntos_acumulados.to_i %>
+                <% puntos_posibles = @puntos_posibles_por_trabajador.to_i %>
+                <% porcentaje = puntos_posibles.positive? ? (puntos.to_d / puntos_posibles.to_d) * 100 : 0 %>
+
+                <% etiqueta_top =
+                     case index
+                     when 0 then "🥇 #1"
+                     when 1 then "🥈 #2"
+                     when 2 then "🥉 #3"
+                     else "##{index + 1}"
+                     end
+                %>
+
+                <tr>
+                  <td>
+                    <% if index < 3 %>
+                      <span class="estado-badge estado-badge--confirmado">
+                        <%= etiqueta_top %>
+                      </span>
+                    <% else %>
+                      <strong><%= etiqueta_top %></strong>
+                    <% end %>
+                  </td>
+
+                  <td>
+                    <strong><%= trabajador.nombre_completo %></strong>
+                    <br>
+                    <small><%= trabajador.rfc %> · <%= trabajador.clave_cobro %></small>
+                  </td>
+
+                  <td><%= trabajador.tipo_trabajador&.humanize || "-" %></td>
+
+                  <td>
+                    <strong><%= puntos %> / <%= puntos_posibles %></strong>
+                    <br>
+                    <small><%= trabajador.eventos_asistidos_count.to_i %> eventos</small>
+                  </td>
+
+                  <td>
+                    <strong><%= number_to_percentage(porcentaje, precision: 1) %></strong>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="empty-state">
+          Todavía no hay participación registrada en eventos confirmados.
+        </div>
+      <% end %>
+    </div>
+  </div>
 </section>
