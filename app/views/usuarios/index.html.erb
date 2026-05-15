@@ -16,6 +16,7 @@
               <th>Usuario</th>
               <th>Trabajador asociado</th>
               <th>Rol</th>
+              <th>Cuenta financiera</th>
               <th>Estado</th>
               <th></th>
             </tr>
@@ -24,18 +25,40 @@
           <tbody>
             <% @usuarios.each do |usuario| %>
               <tr>
-                <td><%= usuario.nombre_usuario %></td>
-                <td><%= usuario.trabajador&.nombre_completo || "-" %></td>
+                <td>
+                  <%= usuario.nombre_usuario %>
+                </td>
+
+                <td>
+                  <%= usuario.trabajador&.nombre_completo || "-" %>
+                </td>
+
                 <td>
                   <span class="rol-badge rol-badge--<%= usuario.rol_sistema %>">
                     <%= usuario.rol_sistema.humanize %>
                   </span>
                 </td>
+
+                <td>
+                  <% if usuario.finanzas? %>
+                    <% if usuario.cuenta_financiera.present? %>
+                      <strong><%= usuario.cuenta_financiera.nombre %></strong>
+                    <% else %>
+                      <span class="estado-badge estado-badge--cancelado">
+                        SIN CUENTA
+                      </span>
+                    <% end %>
+                  <% else %>
+                    <span class="helper-text">No aplica</span>
+                  <% end %>
+                </td>
+
                 <td>
                   <span class="estado-badge <%= usuario.activo? ? 'estado-badge--activo' : 'estado-badge--inactivo' %>">
                     <%= usuario.activo? ? "Activa" : "Inactiva" %>
                   </span>
                 </td>
+
                 <td class="tabla-base__acciones">
                   <%= link_to "Editar", edit_usuario_path(usuario), class: "button button--ghost" %>
                 </td>
