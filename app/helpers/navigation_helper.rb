@@ -7,6 +7,8 @@ module NavigationHelper
 
       { clave: :conceptos07, modulo: :conceptos07, etiqueta: "Categorías", icono: "🏷", ruta: concepto07_niveles_path },
 
+      { clave: :cuentas_financieras, modulo: :cuentas_financieras, etiqueta: "Cuentas financieras", icono: "💳", ruta: cuenta_financieras_path },
+
       { clave: :finanzas, modulo: :cooperaciones, etiqueta: "Finanzas", icono: "💼", ruta: finanzas_path, tipo: :grupo }
     ]
 

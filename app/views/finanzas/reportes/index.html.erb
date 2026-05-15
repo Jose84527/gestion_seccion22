@@ -2,6 +2,17 @@
 <% content_for :page_title, "Reportes financieros" %>
 
 <% modo_global = admin_actual? && @cuenta_financiera_actual.blank? %>
+<% reportes_por_cuenta = @reportes_por_cuenta.presence || @bloques_cuentas || [] %>
+
+<% parametros_reporte = {
+     tipo: @tipo,
+     fecha_inicio: @fecha_inicio,
+     fecha_fin: @fecha_fin
+   } %>
+
+<% if @cuenta_financiera_actual.present? %>
+  <% parametros_reporte[:cuenta_financiera_id] = @cuenta_financiera_actual.id %>
+<% end %>
 
 <section class="finanzas-page">
   <div class="panel">
@@ -10,7 +21,6 @@
         <h3>Reportes financieros</h3>
         <p class="panel__description">
           Consulta ingresos confirmados, egresos confirmados y saldo financiero por periodo.
-          Si el admin selecciona todas las cuentas, los datos se muestran separados por secretaría.
         </p>
       </div>
 
@@ -24,6 +34,7 @@
         <% if admin_actual? %>
           <div class="form-field">
             <label for="cuenta_financiera_id">Cuenta financiera</label>
+
             <%= select_tag :cuenta_financiera_id,
                            options_from_collection_for_select(
                              @cuentas_financieras || [],
@@ -37,6 +48,7 @@
         <% else %>
           <div class="form-field">
             <label>Cuenta financiera</label>
+
             <input type="text"
                    class="form-input"
                    value="<%= @cuenta_financiera_actual&.nombre || 'Sin cuenta financiera asignada' %>"
@@ -46,6 +58,7 @@
 
         <div class="form-field">
           <label for="tipo">Tipo de reporte</label>
+
           <%= select_tag :tipo,
                          options_for_select(
                            [
@@ -60,12 +73,18 @@
 
         <div class="form-field">
           <label for="fecha_inicio">Fecha inicio</label>
-          <%= date_field_tag :fecha_inicio, @fecha_inicio, class: "form-input" %>
+
+          <%= date_field_tag :fecha_inicio,
+                             @fecha_inicio,
+                             class: "form-input" %>
         </div>
 
         <div class="form-field">
           <label for="fecha_fin">Fecha fin</label>
-          <%= date_field_tag :fecha_fin, @fecha_fin, class: "form-input" %>
+
+          <%= date_field_tag :fecha_fin,
+                             @fecha_fin,
+                             class: "form-input" %>
         </div>
       </div>
 
@@ -73,13 +92,14 @@
         <%= submit_tag "Generar reporte", class: "button button--primary" %>
 
         <%= link_to "Exportar Excel",
-                    finanzas_reportes_excel_path(
-                      tipo: @tipo,
-                      fecha_inicio: @fecha_inicio,
-                      fecha_fin: @fecha_fin,
-                      cuenta_financiera_id: @cuenta_financiera_actual&.id
-                    ),
+                    finanzas_reportes_excel_path(parametros_reporte),
                     class: "button button--ghost" %>
+
+        <%= link_to "Exportar PDF",
+                    finanzas_reportes_pdf_path(parametros_reporte),
+                    class: "button button--ghost",
+                    target: "_blank",
+                    rel: "noopener" %>
 
         <%= link_to "Limpiar", finanzas_reportes_path, class: "button button--ghost" %>
       </div>
@@ -92,12 +112,12 @@
         <div>
           <h3>Resumen por cuentas financieras</h3>
           <p class="panel__description">
-            Vista global del administrador. Los datos se separan por cuenta y no se mezclan en un solo total.
+            Vista global del administrador. Los datos se separan por cuenta financiera.
           </p>
         </div>
       </div>
 
-      <% if @reportes_por_cuenta.present? && @reportes_por_cuenta.any? %>
+      <% if reportes_por_cuenta.present? && reportes_por_cuenta.any? %>
         <div class="tabla-wrapper">
           <table class="tabla-base">
             <thead>
@@ -112,14 +132,17 @@
             </thead>
 
             <tbody>
-              <% @reportes_por_cuenta.each do |reporte| %>
+              <% reportes_por_cuenta.each do |reporte| %>
+                <% cuenta = reporte[:cuenta] %>
+                <% nombre_cuenta = reporte[:nombre_cuenta].presence || cuenta&.nombre || "Sin cuenta financiera" %>
+
                 <tr>
-                  <td><strong><%= reporte[:cuenta].nombre %></strong></td>
-                  <td><%= number_to_currency(reporte[:total_ingresos]) %></td>
-                  <td><%= number_to_currency(reporte[:total_egresos]) %></td>
-                  <td><strong><%= number_to_currency(reporte[:saldo_final]) %></strong></td>
-                  <td><%= reporte[:ingresos].size %></td>
-                  <td><%= reporte[:egresos].size %></td>
+                  <td><strong><%= nombre_cuenta %></strong></td>
+                  <td><%= number_to_currency(reporte[:total_ingresos] || 0) %></td>
+                  <td><%= number_to_currency(reporte[:total_egresos] || 0) %></td>
+                  <td><strong><%= number_to_currency(reporte[:saldo_final] || 0) %></strong></td>
+                  <td><%= Array(reporte[:ingresos]).size %></td>
+                  <td><%= Array(reporte[:egresos]).size %></td>
                 </tr>
               <% end %>
             </tbody>
@@ -132,51 +155,56 @@
       <% end %>
     </div>
 
-    <% @reportes_por_cuenta.each do |reporte| %>
+    <% reportes_por_cuenta.each do |reporte| %>
+      <% cuenta = reporte[:cuenta] %>
+      <% nombre_cuenta = reporte[:nombre_cuenta].presence || cuenta&.nombre || "Sin cuenta financiera" %>
+
       <div class="panel">
         <div class="panel__header">
           <div>
-            <h3><%= reporte[:cuenta].nombre %></h3>
+            <h3><%= nombre_cuenta %></h3>
             <p class="panel__description">
               Reporte exclusivo de esta cuenta financiera.
             </p>
           </div>
 
-          <div class="acciones-grupo">
-            <%= link_to "Ver dashboard",
-                        finanzas_path(cuenta_financiera_id: reporte[:cuenta].id),
-                        class: "button button--ghost" %>
+          <% if cuenta.present? %>
+            <div class="acciones-grupo">
+              <%= link_to "Ver dashboard",
+                          finanzas_path(cuenta_financiera_id: cuenta.id),
+                          class: "button button--ghost" %>
 
-            <%= link_to "Ver reportes de esta cuenta",
-                        finanzas_reportes_path(
-                          tipo: @tipo,
-                          fecha_inicio: @fecha_inicio,
-                          fecha_fin: @fecha_fin,
-                          cuenta_financiera_id: reporte[:cuenta].id
-                        ),
-                        class: "button button--primary" %>
-          </div>
+              <%= link_to "Ver reportes de esta cuenta",
+                          finanzas_reportes_path(
+                            tipo: @tipo,
+                            fecha_inicio: @fecha_inicio,
+                            fecha_fin: @fecha_fin,
+                            cuenta_financiera_id: cuenta.id
+                          ),
+                          class: "button button--primary" %>
+            </div>
+          <% end %>
         </div>
 
         <div class="finanzas-grid">
           <div class="finanzas-card">
             <span class="finanzas-card__label">Ingresos confirmados</span>
             <strong class="finanzas-card__value">
-              <%= number_to_currency(reporte[:total_ingresos]) %>
+              <%= number_to_currency(reporte[:total_ingresos] || 0) %>
             </strong>
           </div>
 
           <div class="finanzas-card">
             <span class="finanzas-card__label">Egresos confirmados</span>
             <strong class="finanzas-card__value">
-              <%= number_to_currency(reporte[:total_egresos]) %>
+              <%= number_to_currency(reporte[:total_egresos] || 0) %>
             </strong>
           </div>
 
           <div class="finanzas-card">
             <span class="finanzas-card__label">Saldo final</span>
             <strong class="finanzas-card__value">
-              <%= number_to_currency(reporte[:saldo_final]) %>
+              <%= number_to_currency(reporte[:saldo_final] || 0) %>
             </strong>
           </div>
         </div>
@@ -186,7 +214,7 @@
             <h4>Detalle de ingresos</h4>
           </div>
 
-          <% if reporte[:ingresos].any? %>
+          <% if Array(reporte[:ingresos]).any? %>
             <div class="tabla-wrapper">
               <table class="tabla-base">
                 <thead>
@@ -201,15 +229,18 @@
                 </thead>
 
                 <tbody>
-                  <% reporte[:ingresos].each do |cooperacion| %>
+                  <% Array(reporte[:ingresos]).each do |cooperacion| %>
                     <tr>
                       <td><strong><%= cooperacion.nombre %></strong></td>
                       <td><%= cooperacion.confirmada_at&.strftime("%d/%m/%Y %H:%M") || "-" %></td>
                       <td><%= cooperacion.cantidad_conceptos %></td>
                       <td><%= cooperacion.cantidad_condonados %></td>
                       <td><strong><%= number_to_currency(cooperacion.total_esperado) %></strong></td>
+
                       <td class="tabla-base__acciones">
-                        <%= link_to "Ver", cooperacion_path(cooperacion), class: "button button--ghost" %>
+                        <%= link_to "Ver",
+                                    cooperacion_path(cooperacion),
+                                    class: "button button--ghost" %>
                       </td>
                     </tr>
                   <% end %>
@@ -219,7 +250,7 @@
                   <tr>
                     <td colspan="4" class="tabla-total-label">Total de ingresos</td>
                     <td colspan="2">
-                      <strong><%= number_to_currency(reporte[:total_ingresos]) %></strong>
+                      <strong><%= number_to_currency(reporte[:total_ingresos] || 0) %></strong>
                     </td>
                   </tr>
                 </tfoot>
@@ -237,7 +268,7 @@
             <h4>Detalle de egresos</h4>
           </div>
 
-          <% if reporte[:egresos].any? %>
+          <% if Array(reporte[:egresos]).any? %>
             <div class="tabla-wrapper">
               <table class="tabla-base">
                 <thead>
@@ -252,15 +283,21 @@
                 </thead>
 
                 <tbody>
-                  <% reporte[:egresos].each do |egreso| %>
+                  <% Array(reporte[:egresos]).each do |egreso| %>
                     <tr>
                       <td><strong><%= egreso.folio_np %></strong></td>
                       <td><%= egreso.fecha_egreso&.strftime("%d/%m/%Y") || "-" %></td>
                       <td><%= egreso.concepto %></td>
                       <td><%= egreso.confirmado_at&.strftime("%d/%m/%Y %H:%M") || "-" %></td>
-                      <td><strong><%= number_to_currency(egreso.monto) %></strong></td>
+
+                      <td>
+                        <strong><%= number_to_currency(egreso.monto) %></strong>
+                      </td>
+
                       <td class="tabla-base__acciones">
-                        <%= link_to "Ver", egreso_path(egreso), class: "button button--ghost" %>
+                        <%= link_to "Ver",
+                                    egreso_path(egreso),
+                                    class: "button button--ghost" %>
                       </td>
                     </tr>
                   <% end %>
@@ -270,7 +307,7 @@
                   <tr>
                     <td colspan="4" class="tabla-total-label">Total de egresos</td>
                     <td colspan="2">
-                      <strong><%= number_to_currency(reporte[:total_egresos]) %></strong>
+                      <strong><%= number_to_currency(reporte[:total_egresos] || 0) %></strong>
                     </td>
                   </tr>
                 </tfoot>
@@ -290,10 +327,6 @@
         <div>
           <h3>Resumen del periodo</h3>
           <p class="panel__description">
-            Cuenta financiera:
-            <strong><%= @cuenta_financiera_actual&.nombre || "Sin cuenta financiera" %></strong>
-            <br>
-
             <% if @fecha_inicio.present? || @fecha_fin.present? %>
               Periodo consultado:
               <strong><%= @fecha_inicio&.strftime("%d/%m/%Y") || "inicio" %></strong>
@@ -359,12 +392,23 @@
                 <% @ingresos.each do |cooperacion| %>
                   <tr>
                     <td><strong><%= cooperacion.nombre %></strong></td>
-                    <td><%= cooperacion.confirmada_at&.strftime("%d/%m/%Y %H:%M") || "-" %></td>
+
+                    <td>
+                      <%= cooperacion.confirmada_at&.strftime("%d/%m/%Y %H:%M") || "-" %>
+                    </td>
+
                     <td><%= cooperacion.cantidad_conceptos %></td>
+
                     <td><%= cooperacion.cantidad_condonados %></td>
-                    <td><strong><%= number_to_currency(cooperacion.total_esperado) %></strong></td>
+
+                    <td>
+                      <strong><%= number_to_currency(cooperacion.total_esperado) %></strong>
+                    </td>
+
                     <td class="tabla-base__acciones">
-                      <%= link_to "Ver", cooperacion_path(cooperacion), class: "button button--ghost" %>
+                      <%= link_to "Ver",
+                                  cooperacion_path(cooperacion),
+                                  class: "button button--ghost" %>
                     </td>
                   </tr>
                 <% end %>
@@ -417,12 +461,25 @@
                 <% @egresos.each do |egreso| %>
                   <tr>
                     <td><strong><%= egreso.folio_np %></strong></td>
-                    <td><%= egreso.fecha_egreso&.strftime("%d/%m/%Y") || "-" %></td>
+
+                    <td>
+                      <%= egreso.fecha_egreso&.strftime("%d/%m/%Y") || "-" %>
+                    </td>
+
                     <td><%= egreso.concepto %></td>
-                    <td><%= egreso.confirmado_at&.strftime("%d/%m/%Y %H:%M") || "-" %></td>
-                    <td><strong><%= number_to_currency(egreso.monto) %></strong></td>
+
+                    <td>
+                      <%= egreso.confirmado_at&.strftime("%d/%m/%Y %H:%M") || "-" %>
+                    </td>
+
+                    <td>
+                      <strong><%= number_to_currency(egreso.monto) %></strong>
+                    </td>
+
                     <td class="tabla-base__acciones">
-                      <%= link_to "Ver", egreso_path(egreso), class: "button button--ghost" %>
+                      <%= link_to "Ver",
+                                  egreso_path(egreso),
+                                  class: "button button--ghost" %>
                     </td>
                   </tr>
                 <% end %>

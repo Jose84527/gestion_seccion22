@@ -16,20 +16,38 @@ module Finanzas
         tipo: @tipo,
         fecha_inicio: @fecha_inicio,
         fecha_fin: @fecha_fin,
-        ingresos: @ingresos || [],
-        egresos: @egresos || [],
-        total_ingresos: @total_ingresos || 0,
-        total_egresos: @total_egresos || 0,
-        saldo_final: @saldo_final || 0,
-        cuenta_financiera: @cuenta_financiera_actual,
-        modo_global_por_cuentas: reporte_global_por_cuentas?,
-        reportes_por_cuenta: @reportes_por_cuenta || []
+        ingresos: @ingresos,
+        egresos: @egresos,
+        total_ingresos: @total_ingresos,
+        total_egresos: @total_egresos,
+        saldo_final: @saldo_final
       ).render
 
       send_data archivo,
                 filename: nombre_archivo_excel,
                 type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 disposition: "attachment"
+    end
+
+    def pdf
+      cargar_reporte
+
+      archivo = Pdf::ReporteFinancieroPdf.new(
+        tipo: @tipo,
+        fecha_inicio: @fecha_inicio,
+        fecha_fin: @fecha_fin,
+        cuenta_financiera_actual: @cuenta_financiera_actual,
+        bloques_cuentas: @bloques_cuentas,
+        total_ingresos: @total_ingresos,
+        total_egresos: @total_egresos,
+        saldo_final: @saldo_final,
+        generado_por: usuario_actual
+      ).render
+
+      send_data archivo,
+                filename: nombre_archivo_pdf,
+                type: "application/pdf",
+                disposition: "inline"
     end
 
     private
@@ -41,96 +59,111 @@ module Finanzas
 
     def cargar_reporte
       @tipo = params[:tipo].presence_in(%w[general ingresos egresos]) || "general"
+
       @fecha_inicio = parsear_fecha(params[:fecha_inicio])
       @fecha_fin = parsear_fecha(params[:fecha_fin])
 
-      if reporte_global_por_cuentas?
-        @reportes_por_cuenta = cuentas_financieras_para_reporte.map do |cuenta|
-          construir_reporte_para_cuenta(cuenta)
-        end
-      else
-        @ingresos = ingresos_confirmados
-        @egresos = egresos_confirmados
+      @ingresos = ingresos_confirmados(cooperaciones_base).to_a
+      @egresos = egresos_confirmados(egresos_base).to_a
 
-        @total_ingresos = @ingresos.sum { |cooperacion| cooperacion.total_esperado.to_d }
-        @total_egresos = @egresos.sum { |egreso| egreso.monto.to_d }
-        @saldo_final = @total_ingresos - @total_egresos
+      @total_ingresos = @ingresos.sum { |cooperacion| cooperacion.total_esperado.to_d }
+      @total_egresos = @egresos.sum { |egreso| egreso.monto.to_d }
+      @saldo_final = @total_ingresos - @total_egresos
+
+      @bloques_cuentas = construir_bloques_por_cuenta
+    end
+
+    def cooperaciones_base
+      aplicar_filtro_cuenta(Cooperacion.all)
+    end
+
+    def egresos_base
+      aplicar_filtro_cuenta(Egreso.all)
+    end
+
+    def aplicar_filtro_cuenta(scope)
+      if @cuenta_financiera_actual.present?
+        scope.where(cuenta_financiera_id: @cuenta_financiera_actual.id)
+      elsif finanzas_actual?
+        scope.where(cuenta_financiera_id: usuario_actual.cuenta_financiera_id)
+      else
+        scope
       end
     end
 
-    def reporte_global_por_cuentas?
-      admin_actual? && @cuenta_financiera_actual.blank?
-    end
+    def construir_bloques_por_cuenta
+      cuentas_para_reporte.map do |cuenta|
+        ingresos = ingresos_confirmados(scope_cooperaciones_para(cuenta)).to_a
+        egresos = egresos_confirmados(scope_egresos_para(cuenta)).to_a
 
-    def cuentas_financieras_para_reporte
-      if admin_actual?
-        CuentaFinanciera.activas
-      elsif finanzas_actual? && usuario_actual.cuenta_financiera.present?
-        CuentaFinanciera.where(id: usuario_actual.cuenta_financiera_id)
-      else
-        CuentaFinanciera.none
+        total_ingresos = ingresos.sum { |cooperacion| cooperacion.total_esperado.to_d }
+        total_egresos = egresos.sum { |egreso| egreso.monto.to_d }
+
+        {
+          cuenta: cuenta,
+          nombre_cuenta: cuenta&.nombre || "Sin cuenta financiera",
+          ingresos: ingresos,
+          egresos: egresos,
+          total_ingresos: total_ingresos,
+          total_egresos: total_egresos,
+          saldo_final: total_ingresos - total_egresos
+        }
       end
     end
 
-    def construir_reporte_para_cuenta(cuenta)
-      ingresos = ingresos_confirmados_por_cuenta(cuenta)
-      egresos = egresos_confirmados_por_cuenta(cuenta)
+    def cuentas_para_reporte
+      return [@cuenta_financiera_actual] if @cuenta_financiera_actual.present?
+      return [usuario_actual.cuenta_financiera].compact if finanzas_actual?
 
-      total_ingresos = ingresos.sum { |cooperacion| cooperacion.total_esperado.to_d }
-      total_egresos = egresos.sum { |egreso| egreso.monto.to_d }
+      cuentas = CuentaFinanciera.order(:nombre).to_a
 
-      {
-        cuenta: cuenta,
-        ingresos: ingresos,
-        egresos: egresos,
-        total_ingresos: total_ingresos,
-        total_egresos: total_egresos,
-        saldo_final: total_ingresos - total_egresos
-      }
+      if existen_movimientos_sin_cuenta?
+        cuentas << nil
+      end
+
+      cuentas
     end
 
-    def ingresos_confirmados
-      base = aplicar_cuenta_financiera(
-        Cooperacion.includes(:cuenta_financiera).where(estado: "completada")
-      )
+    def existen_movimientos_sin_cuenta?
+      Cooperacion.where(cuenta_financiera_id: nil).exists? ||
+        Egreso.where(cuenta_financiera_id: nil).exists?
+    end
 
-      aplicar_rango_confirmacion(base).order(confirmada_at: :desc)
+    def scope_cooperaciones_para(cuenta)
+      if cuenta.present?
+        Cooperacion.where(cuenta_financiera_id: cuenta.id)
+      else
+        Cooperacion.where(cuenta_financiera_id: nil)
+      end
+    end
+
+    def scope_egresos_para(cuenta)
+      if cuenta.present?
+        Egreso.where(cuenta_financiera_id: cuenta.id)
+      else
+        Egreso.where(cuenta_financiera_id: nil)
+      end
+    end
+
+    def ingresos_confirmados(scope)
+      base = scope.includes(:cuenta_financiera).where(estado: "completada")
+
+      if Cooperacion.column_names.include?("confirmada_at")
+        base = aplicar_rango_datetime(base, :confirmada_at)
+        base.order(confirmada_at: :desc)
+      else
+        base.order(created_at: :desc)
+      end
     rescue StandardError
       Cooperacion.none
     end
 
-    def egresos_confirmados
-      base = aplicar_cuenta_financiera(
-        Egreso.includes(:cuenta_financiera).where(estado: "confirmado")
-      )
-
-      aplicar_rango_date(base, :fecha_egreso).ordenados_por_folio
+    def egresos_confirmados(scope)
+      base = scope.includes(:cuenta_financiera).where(estado: "confirmado")
+      base = aplicar_rango_date(base, :fecha_egreso)
+      base.ordenados_por_folio
     rescue StandardError
       Egreso.none
-    end
-
-    def ingresos_confirmados_por_cuenta(cuenta)
-      base = Cooperacion.includes(:cuenta_financiera)
-                         .where(estado: "completada", cuenta_financiera_id: cuenta.id)
-
-      aplicar_rango_confirmacion(base).order(confirmada_at: :desc)
-    rescue StandardError
-      Cooperacion.none
-    end
-
-    def egresos_confirmados_por_cuenta(cuenta)
-      base = Egreso.includes(:cuenta_financiera)
-                   .where(estado: "confirmado", cuenta_financiera_id: cuenta.id)
-
-      aplicar_rango_date(base, :fecha_egreso).ordenados_por_folio
-    rescue StandardError
-      Egreso.none
-    end
-
-    def aplicar_rango_confirmacion(scope)
-      return scope unless Cooperacion.column_names.include?("confirmada_at")
-
-      aplicar_rango_datetime(scope, :confirmada_at)
     end
 
     def aplicar_rango_datetime(scope, columna)
@@ -157,9 +190,12 @@ module Finanzas
 
     def nombre_archivo_excel
       fecha = Time.current.strftime("%Y%m%d_%H%M%S")
-      cuenta = @cuenta_financiera_actual&.nombre&.parameterize(separator: "_") || "cuentas_separadas"
+      "reporte_financiero_#{@tipo}_#{fecha}.xlsx"
+    end
 
-      "reporte_financiero_#{@tipo}_#{cuenta}_#{fecha}.xlsx"
+    def nombre_archivo_pdf
+      fecha = Time.current.strftime("%Y%m%d_%H%M%S")
+      "reporte_financiero_#{@tipo}_#{fecha}.pdf"
     end
   end
 end

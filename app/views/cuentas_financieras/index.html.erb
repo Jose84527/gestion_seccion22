@@ -1,0 +1,77 @@
+<% content_for :title, "Cuentas financieras" %>
+<% content_for :page_title, "Cuentas financieras" %>
+
+<section class="catalogo-page">
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Cuentas financieras</h3>
+        <p class="panel__description">
+          Administra las cuentas financieras y los responsables que aparecerán en los documentos emitidos.
+        </p>
+      </div>
+
+      <%= link_to "Nueva cuenta financiera",
+                  new_cuenta_financiera_path,
+                  class: "button button--primary" %>
+    </div>
+
+    <% if @cuentas_financieras.any? %>
+      <div class="tabla-wrapper">
+        <table class="tabla-base">
+          <thead>
+            <tr>
+              <th>Cuenta financiera</th>
+              <th>Responsable</th>
+              <th>Puesto</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <% @cuentas_financieras.each do |cuenta| %>
+              <tr>
+                <td>
+                  <strong><%= cuenta.nombre %></strong>
+                </td>
+
+                <td>
+                  <%= cuenta.responsable_nombre.presence || "-" %>
+                </td>
+
+                <td>
+                  <%= cuenta.responsable_puesto.presence || "-" %>
+                </td>
+
+                <td>
+                  <span class="estado-badge <%= cuenta.activa? ? 'estado-badge--activo' : 'estado-badge--inactivo' %>">
+                    <%= cuenta.activa? ? "Activa" : "Inactiva" %>
+                  </span>
+                </td>
+
+                <td class="tabla-base__acciones">
+                  <%= link_to "Editar",
+                              edit_cuenta_financiera_path(cuenta),
+                              class: "button button--ghost" %>
+
+                  <%= button_to cuenta.activa? ? "Desactivar" : "Activar",
+                                cambiar_estado_cuenta_financiera_path(cuenta),
+                                method: :patch,
+                                class: "button button--ghost",
+                                data: {
+                                  turbo_confirm: cuenta.activa? ? "¿Deseas desactivar esta cuenta financiera?" : "¿Deseas activar esta cuenta financiera?"
+                                } %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        Aún no hay cuentas financieras registradas.
+      </div>
+    <% end %>
+  </div>
+</section>

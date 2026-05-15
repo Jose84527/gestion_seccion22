@@ -17,8 +17,13 @@ module Pdf
       12 => "Diciembre"
     }.freeze
 
+    RESPONSABLE_DEFAULT = "RESPONSABLE NO ASIGNADO".freeze
+    PUESTO_DEFAULT = "PUESTO NO ASIGNADO".freeze
+    CUENTA_DEFAULT = "SECRETARÍA DE FINANZAS".freeze
+
     def initialize(egreso)
       @egreso = egreso
+      @cuenta_financiera = egreso.cuenta_financiera
     end
 
     def render
@@ -44,7 +49,7 @@ module Pdf
       )
 
       texto_centrado(
-        "SECRETARÍA DE FINANZAS",
+        nombre_cuenta_documento.upcase,
         y: 640,
         size: 16,
         style: :bold
@@ -129,22 +134,26 @@ module Pdf
       )
 
       @pdf.text_box(
-        "Alberto Sánchez López",
+        responsable_documento,
         at: [330, 212],
         width: 180,
         height: 18,
         size: 10,
         style: :bold,
-        align: :center
+        align: :center,
+        overflow: :shrink_to_fit,
+        min_font_size: 7
       )
 
       @pdf.text_box(
-        "Secretaría de Finanzas",
+        puesto_documento,
         at: [330, 196],
         width: 180,
         height: 18,
         size: 10,
-        align: :center
+        align: :center,
+        overflow: :shrink_to_fit,
+        min_font_size: 7
       )
     end
 
@@ -214,6 +223,26 @@ module Pdf
       return "____" if @egreso.fecha_egreso.blank?
 
       @egreso.fecha_egreso.year
+    end
+
+    def nombre_cuenta_documento
+      @cuenta_financiera&.nombre.to_s.presence || CUENTA_DEFAULT
+    end
+
+    def responsable_documento
+      if @cuenta_financiera.respond_to?(:responsable_para_documento)
+        @cuenta_financiera.responsable_para_documento
+      else
+        @cuenta_financiera&.responsable_nombre.to_s.presence || RESPONSABLE_DEFAULT
+      end
+    end
+
+    def puesto_documento
+      if @cuenta_financiera.respond_to?(:puesto_para_documento)
+        @cuenta_financiera.puesto_para_documento
+      else
+        @cuenta_financiera&.responsable_puesto.to_s.presence || PUESTO_DEFAULT
+      end
     end
 
     def limpiar(texto)

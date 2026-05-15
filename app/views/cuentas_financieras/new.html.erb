@@ -1,0 +1,21 @@
+<% content_for :title, "Nueva cuenta financiera" %>
+<% content_for :page_title, "Nueva cuenta financiera" %>
+
+<section class="catalogo-page">
+  <div class="panel">
+    <div class="panel__header">
+      <div>
+        <h3>Registrar cuenta financiera</h3>
+        <p class="panel__description">
+          Agrega una nueva cuenta financiera y define la persona responsable de firmar documentos.
+        </p>
+      </div>
+
+      <%= link_to "Volver",
+                  cuenta_financieras_path,
+                  class: "button button--ghost" %>
+    </div>
+
+    <%= render "form", cuenta_financiera: @cuenta_financiera %>
+  </div>
+</section>

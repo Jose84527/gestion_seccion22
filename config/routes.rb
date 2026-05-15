@@ -8,6 +8,7 @@ Rails.application.routes.draw do
   get "finanzas", to: "finanzas/dashboard#index", as: :finanzas
   get "finanzas/reportes", to: "finanzas/reportes#index", as: :finanzas_reportes
   get "finanzas/reportes/excel", to: "finanzas/reportes#excel", as: :finanzas_reportes_excel
+  get "finanzas/reportes/pdf", to: "finanzas/reportes#pdf", as: :finanzas_reportes_pdf
 
   resources :historiales, only: %i[index show]
 
@@ -18,6 +19,13 @@ Rails.application.routes.draw do
   end
 
   resources :concepto07_niveles, only: %i[index new create edit update] do
+    patch :cambiar_estado, on: :member
+  end
+
+  resources :cuenta_financieras,
+            path: "cuentas_financieras",
+            controller: "cuentas_financieras",
+            only: %i[index new create edit update] do
     patch :cambiar_estado, on: :member
   end
 
@@ -33,7 +41,6 @@ Rails.application.routes.draw do
       get :confirmacion
       patch :confirmar
       get :ver_lista_confirmacion
-
       get :corregir_evidencia
       patch :actualizar_evidencia
     end
@@ -54,9 +61,9 @@ Rails.application.routes.draw do
   get "eventos/dashboard", to: "eventos/dashboard#index", as: :eventos_dashboard
 
   get "eventos/dashboard/reporte_participacion_pdf",
-    to: "eventos/dashboard#reporte_participacion_pdf",
-    as: :eventos_reporte_participacion_pdf
-    
+      to: "eventos/dashboard#reporte_participacion_pdf",
+      as: :eventos_reporte_participacion_pdf
+
   resources :eventos do
     collection do
       get :buscar_trabajadores

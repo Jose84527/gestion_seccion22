@@ -8,7 +8,8 @@ module Autorizacion
         eventos: :all,
         usuarios: :all,
         historial: :all,
-        conceptos07: :all
+        conceptos07: :all,
+        cuentas_financieras: :all
       },
 
       finanzas: {

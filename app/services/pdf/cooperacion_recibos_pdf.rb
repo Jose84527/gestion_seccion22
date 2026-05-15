@@ -6,6 +6,9 @@ module Pdf
     LOGO_DERECHO = Rails.root.join("app/assets/images/LogoITO.png").to_s
     ARIAL_FONT = Rails.root.join("app/assets/fonts/arial.ttf").to_s
 
+    RESPONSABLE_DEFAULT = "RESPONSABLE NO ASIGNADO".freeze
+    PUESTO_DEFAULT = "PUESTO NO ASIGNADO".freeze
+
     MESES = {
       1 => "ENERO",
       2 => "FEBRERO",
@@ -23,6 +26,7 @@ module Pdf
 
     def initialize(cooperacion)
       @cooperacion = cooperacion
+      @cuenta_financiera = cooperacion.cuenta_financiera
       @desglose = cooperacion.desglose_por_trabajador
     end
 
@@ -40,10 +44,7 @@ module Pdf
             fila = normalizar_fila(fila_original)
             folio = index + 1
 
-            # Recibo superior
             dibujar_recibo(fila, folio, top_y: 740)
-
-            # Recibo inferior
             dibujar_recibo(fila, folio, top_y: 375)
           end
         end
@@ -240,7 +241,7 @@ module Pdf
       linea(x1: 55, x2: 245, y: top_y - 330)
 
       texto(
-        "C. MARÍA TELMA RUIZ REYES",
+        responsable_documento.upcase,
         x: 55,
         y: top_y - 340,
         width: 230,
@@ -249,7 +250,7 @@ module Pdf
       )
 
       texto(
-        "SECRETARIA DE FINANZAS",
+        puesto_documento.upcase,
         x: 55,
         y: top_y - 352,
         width: 230,
@@ -333,6 +334,22 @@ module Pdf
       fecha = Date.current
 
       "OAXACA DE JUÁREZ, OAX., #{MESES[fecha.month]} DE #{fecha.year}"
+    end
+
+    def responsable_documento
+      if @cuenta_financiera.respond_to?(:responsable_para_documento)
+        @cuenta_financiera.responsable_para_documento
+      else
+        @cuenta_financiera&.responsable_nombre.to_s.presence || RESPONSABLE_DEFAULT
+      end
+    end
+
+    def puesto_documento
+      if @cuenta_financiera.respond_to?(:puesto_para_documento)
+        @cuenta_financiera.puesto_para_documento
+      else
+        @cuenta_financiera&.responsable_puesto.to_s.presence || PUESTO_DEFAULT
+      end
     end
 
     def limpiar(texto)

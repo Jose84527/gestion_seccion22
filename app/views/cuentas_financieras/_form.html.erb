@@ -1,0 +1,114 @@
+<%= form_with model: cuenta_financiera,
+              class: "formulario-base",
+              novalidate: true do |f| %>
+  <% if cuenta_financiera.errors.any? %>
+    <div class="form-errors">
+      <strong>No se pudo guardar la cuenta financiera:</strong>
+      <ul>
+        <% cuenta_financiera.errors.full_messages.each do |mensaje| %>
+          <li><%= mensaje %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-section">
+    <div class="form-section__header">
+      <h4>Datos de la cuenta</h4>
+      <p>Información general de la cuenta financiera.</p>
+    </div>
+
+    <div class="form-grid form-grid--dos-columnas">
+      <div class="form-field">
+        <%= f.label :nombre, "Nombre de la cuenta financiera" %>
+
+        <%= f.text_field :nombre,
+                         class: "form-input #{'form-input--error' if cuenta_financiera.errors[:nombre].any?}",
+                         minlength: 3,
+                         maxlength: 100,
+                         placeholder: "Ejemplo: Secretaría de Finanzas" %>
+
+        <% if cuenta_financiera.errors[:nombre].any? %>
+          <small class="field-error"><%= cuenta_financiera.errors[:nombre].first %></small>
+        <% else %>
+          <small class="helper-text">
+            Nombre con el que se identificará esta cuenta dentro del sistema.
+          </small>
+        <% end %>
+      </div>
+
+      <div class="form-field">
+        <%= f.label :activa, "Estado" %>
+
+        <%= f.select :activa,
+                     [["Activa", true], ["Inactiva", false]],
+                     {},
+                     class: "form-input #{'form-input--error' if cuenta_financiera.errors[:activa].any?}" %>
+
+        <% if cuenta_financiera.errors[:activa].any? %>
+          <small class="field-error"><%= cuenta_financiera.errors[:activa].first %></small>
+        <% else %>
+          <small class="helper-text">
+            Solo las cuentas activas estarán disponibles para nuevos registros.
+          </small>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="form-section__header">
+      <h4>Responsable de documentos</h4>
+      <p>
+        Estos datos aparecerán en recibos, egresos y documentos emitidos por esta cuenta financiera.
+      </p>
+    </div>
+
+    <div class="form-grid form-grid--dos-columnas">
+      <div class="form-field">
+        <%= f.label :responsable_nombre, "Nombre del responsable" %>
+
+        <%= f.text_field :responsable_nombre,
+                         class: "form-input #{'form-input--error' if cuenta_financiera.errors[:responsable_nombre].any?}",
+                         minlength: 3,
+                         maxlength: 120,
+                         placeholder: "Ejemplo: C. MARÍA TELMA RUIZ REYES" %>
+
+        <% if cuenta_financiera.errors[:responsable_nombre].any? %>
+          <small class="field-error"><%= cuenta_financiera.errors[:responsable_nombre].first %></small>
+        <% else %>
+          <small class="helper-text">
+            Escribe el nombre tal como debe aparecer en los documentos.
+          </small>
+        <% end %>
+      </div>
+
+      <div class="form-field">
+        <%= f.label :responsable_puesto, "Puesto del responsable" %>
+
+        <%= f.text_field :responsable_puesto,
+                         class: "form-input #{'form-input--error' if cuenta_financiera.errors[:responsable_puesto].any?}",
+                         minlength: 3,
+                         maxlength: 120,
+                         placeholder: "Ejemplo: SECRETARIA DE FINANZAS" %>
+
+        <% if cuenta_financiera.errors[:responsable_puesto].any? %>
+          <small class="field-error"><%= cuenta_financiera.errors[:responsable_puesto].first %></small>
+        <% else %>
+          <small class="helper-text">
+            Puesto o cargo que aparecerá debajo del nombre del responsable.
+          </small>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <%= link_to "Cancelar",
+                cuenta_financieras_path,
+                class: "button button--ghost" %>
+
+    <%= f.submit cuenta_financiera.persisted? ? "Actualizar cuenta" : "Guardar cuenta",
+                 class: "button button--primary" %>
+  </div>
+<% end %>
