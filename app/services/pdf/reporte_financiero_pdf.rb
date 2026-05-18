@@ -2,12 +2,37 @@ require "prawn"
 
 module Pdf
   class ReporteFinancieroPdf
-    COLOR_TITULO = "000000".freeze
-    COLOR_SUBTITULO = "5B4636".freeze
-    COLOR_LINEA = "B8A89B".freeze
-    COLOR_ENCABEZADO_TABLA = "EED9C9".freeze
-    COLOR_BORDE = "D8C8BB".freeze
-    COLOR_FONDO_RESUMEN = "F8F3EF".freeze
+    LOGO_SECCION_22 = Rails.root.join("app/assets/images/LogoSeccion22.png").to_s
+
+    RESPONSABLE_ADMIN = "Esteban López Vázquez".freeze
+    PUESTO_ADMIN = "Secretario General".freeze
+
+    RESPONSABLE_DEFAULT = "RESPONSABLE NO ASIGNADO".freeze
+    PUESTO_DEFAULT = "PUESTO NO ASIGNADO".freeze
+
+    SEPARACION_COLUMNAS = 14
+
+    ALTO_BLOQUE_SUPERIOR = 150
+    ALTO_TITULO_TABLA = 20
+    ALTO_ENCABEZADO_TABLA = 18
+    ALTO_FILA = 28
+
+    MAX_FILAS_POR_PAGINA = 11
+
+    MESES = {
+      1 => "enero",
+      2 => "febrero",
+      3 => "marzo",
+      4 => "abril",
+      5 => "mayo",
+      6 => "junio",
+      7 => "julio",
+      8 => "agosto",
+      9 => "septiembre",
+      10 => "octubre",
+      11 => "noviembre",
+      12 => "diciembre"
+    }.freeze
 
     def initialize(
       tipo:,
@@ -32,413 +57,540 @@ module Pdf
     end
 
     def render
-      Prawn::Document.new(page_size: "LETTER", page_layout: :landscape, margin: 30) do |pdf|
+      Prawn::Document.new(page_size: "LETTER", page_layout: :portrait, margin: 24) do |pdf|
         @pdf = pdf
         @pdf.font "Helvetica"
 
-        encabezado
-        resumen_ejecutivo
-        detalle_por_cuenta
+        bloques_para_render.each_with_index do |bloque, index|
+          @pdf.start_new_page unless index.zero?
+          dibujar_cuenta_financiera(bloque)
+        end
+
         pie_de_pagina
       end.render
     end
 
     private
 
-    def encabezado
-      @pdf.fill_color COLOR_TITULO
+    def bloques_para_render
+      return @bloques_cuentas if @bloques_cuentas.present?
 
-      @pdf.text limpiar("DELEGACIÓN SINDICAL D-II-11"),
+      [
+        {
+          cuenta: @cuenta_financiera_actual,
+          nombre_cuenta: cuenta_texto,
+          ingresos: [],
+          egresos: [],
+          total_ingresos: @total_ingresos,
+          total_egresos: @total_egresos,
+          saldo_final: @saldo_final
+        }
+      ]
+    end
+
+    def dibujar_cuenta_financiera(bloque)
+      ingresos = mostrar_ingresos? ? filas_ingresos(bloque) : []
+      egresos = mostrar_egresos? ? filas_egresos(bloque) : []
+
+      total_filas = [
+        mostrar_ingresos? ? ingresos.size : 1,
+        mostrar_egresos? ? egresos.size : 1,
+        1
+      ].max
+
+      paginas_necesarias = (total_filas.to_f / MAX_FILAS_POR_PAGINA).ceil
+      paginas_necesarias = 1 if paginas_necesarias.zero?
+
+      paginas_necesarias.times do |pagina|
+        @pdf.start_new_page if pagina.positive?
+
+        offset = pagina * MAX_FILAS_POR_PAGINA
+
+        ingresos_pagina = ingresos.slice(offset, MAX_FILAS_POR_PAGINA) || []
+        egresos_pagina = egresos.slice(offset, MAX_FILAS_POR_PAGINA) || []
+
+        ultima_pagina = pagina == paginas_necesarias - 1
+
+        encabezado_principal(
+          bloque,
+          pagina: pagina + 1,
+          total_paginas_cuenta: paginas_necesarias
+        )
+
+        bloque_superior(bloque)
+
+        tablas_financieras(
+          ingresos: ingresos_pagina,
+          egresos: egresos_pagina,
+          ingresos_vacios: ingresos.blank?,
+          egresos_vacios: egresos.blank?,
+          offset: offset
+        )
+
+        if ultima_pagina
+          totales_finales(bloque)
+          firma_responsable(bloque)
+          lugar_y_fecha
+        else
+          texto_continuacion
+        end
+      end
+    end
+
+    def encabezado_principal(bloque, pagina:, total_paginas_cuenta:)
+      @pdf.text limpiar("SECCIÓN 22 - SISTEMA DE GESTIÓN SINDICAL"),
                 size: 12,
                 style: :bold,
                 align: :center
 
-      @pdf.text limpiar("INSTITUTO TECNOLÓGICO DE OAXACA"),
-                size: 10,
+      @pdf.move_down 7
+
+      @pdf.text limpiar(nombre_cuenta(bloque).upcase),
+                size: 12,
                 style: :bold,
                 align: :center
-
-      @pdf.move_down 8
 
       @pdf.text limpiar("CONCENTRADO FINANCIERO"),
-                size: 16,
+                size: 11,
                 style: :bold,
                 align: :center
 
-      @pdf.move_down 4
-
-      @pdf.text limpiar("Resumen ejecutivo de ingresos y egresos"),
-                size: 9,
-                align: :center
-
-      @pdf.move_down 8
-
-      @pdf.stroke_color COLOR_LINEA
-      @pdf.stroke_horizontal_rule
-      @pdf.stroke_color "000000"
-
-      @pdf.move_down 12
-    end
-
-    def resumen_ejecutivo
-      @pdf.text limpiar("I. Datos generales del reporte"),
-                size: 10,
-                style: :bold,
-                color: COLOR_SUBTITULO
-
-      @pdf.move_down 6
-
-      filas = [
-        ["Tipo de reporte", nombre_tipo],
-        ["Periodo consultado", periodo_texto],
-        ["Cuenta financiera", cuenta_texto],
-        ["Generado por", @generado_por&.nombre_usuario.to_s.presence || "Usuario"],
-        ["Fecha de emisión", Time.current.strftime("%d/%m/%Y %H:%M")]
-      ]
-
-      dibujar_tabla_simple(
-        filas: filas,
-        columnas: [
-          { label: "Campo", width: 160, align: :left },
-          { label: "Valor", width: 520, align: :left }
-        ],
-        mostrar_encabezado: false
-      )
-
-      @pdf.move_down 12
-
-      @pdf.text limpiar("II. Resumen ejecutivo"),
-                size: 10,
-                style: :bold,
-                color: COLOR_SUBTITULO
-
-      @pdf.move_down 6
-
-      dibujar_resumen_financiero
+      if total_paginas_cuenta > 1
+        @pdf.move_down 3
+        @pdf.text limpiar("Página #{pagina} de #{total_paginas_cuenta} de esta cuenta"),
+                  size: 9,
+                  align: :center
+      end
 
       @pdf.move_down 10
-
-      @pdf.text limpiar(
-        "El presente concentrado muestra los movimientos financieros confirmados dentro del periodo seleccionado. " \
-        "Cuando se visualizan todas las cuentas financieras, la información se presenta separada por cuenta para evitar mezclar ingresos, egresos y saldos."
-      ),
-                size: 8,
-                leading: 2,
-                align: :justify
-
-      @pdf.move_down 14
     end
 
-    def dibujar_resumen_financiero
-      datos = [
-        ["Ingresos confirmados", moneda(@total_ingresos)],
-        ["Egresos confirmados", moneda(@total_egresos)],
-        ["Saldo final", moneda(@saldo_final)]
-      ]
+    def bloque_superior(bloque)
+      ancho_total = @pdf.bounds.width
+      ancho_logo = 238
+      ancho_resumen = ancho_total - ancho_logo - SEPARACION_COLUMNAS
 
-      ancho_card = 220
-      alto_card = 48
-      espacio = 14
-      x_inicial = @pdf.bounds.left
       y = @pdf.cursor
 
-      datos.each_with_index do |(etiqueta, valor), index|
-        x = x_inicial + (index * (ancho_card + espacio))
+      dibujar_logo(
+        x: 0,
+        y: y,
+        width: ancho_logo,
+        height: ALTO_BLOQUE_SUPERIOR
+      )
 
-        @pdf.fill_color COLOR_FONDO_RESUMEN
-        @pdf.fill_rectangle [x, y], ancho_card, alto_card
+      dibujar_resumen(
+        bloque: bloque,
+        x: ancho_logo + SEPARACION_COLUMNAS,
+        y: y,
+        width: ancho_resumen,
+        height: ALTO_BLOQUE_SUPERIOR
+      )
 
-        @pdf.stroke_color COLOR_BORDE
-        @pdf.stroke_rectangle [x, y], ancho_card, alto_card
-
-        @pdf.fill_color COLOR_SUBTITULO
-        @pdf.text_box limpiar(etiqueta),
-                      at: [x + 10, y - 9],
-                      width: ancho_card - 20,
-                      height: 14,
-                      size: 8,
-                      style: :bold
-
-        @pdf.fill_color "000000"
-        @pdf.text_box limpiar(valor),
-                      at: [x + 10, y - 26],
-                      width: ancho_card - 20,
-                      height: 18,
-                      size: 13,
-                      style: :bold
-      end
-
-      @pdf.fill_color "000000"
-      @pdf.stroke_color "000000"
-      @pdf.move_down alto_card + 4
+      @pdf.move_cursor_to(y - ALTO_BLOQUE_SUPERIOR - 14)
     end
 
-    def detalle_por_cuenta
-      @pdf.text limpiar("III. Concentrado por cuenta financiera"),
-                size: 10,
-                style: :bold,
-                color: COLOR_SUBTITULO
+    def dibujar_logo(x:, y:, width:, height:)
+      if File.exist?(LOGO_SECCION_22)
+        @pdf.bounding_box([x, y], width: width, height: height) do
+          @pdf.move_down 14
 
-      @pdf.move_down 8
-
-      if @bloques_cuentas.blank?
-        @pdf.text limpiar("No hay información financiera para el periodo seleccionado."), size: 9
-        return
+          @pdf.image LOGO_SECCION_22,
+                     fit: [width - 76, height - 38],
+                     position: :center,
+                     vposition: :center
+        end
+      else
+        @pdf.text_box limpiar("Logo Sección 22"),
+                      at: [x + 10, y - 55],
+                      width: width - 20,
+                      height: 30,
+                      size: 12,
+                      style: :bold,
+                      align: :center
       end
-
-      @bloques_cuentas.each_with_index do |bloque, index|
-        nueva_pagina_si_es_necesario(150) unless index.zero?
-
-        seccion_cuenta(bloque)
-      end
+    rescue StandardError
+      @pdf.text_box limpiar("Logo Sección 22"),
+                    at: [x + 10, y - 55],
+                    width: width - 20,
+                    height: 30,
+                    size: 12,
+                    style: :bold,
+                    align: :center
     end
 
-    def seccion_cuenta(bloque)
-      @pdf.move_down 6
+    def dibujar_resumen(bloque:, x:, y:, width:, height:)
 
-      @pdf.text limpiar(bloque[:nombre_cuenta].to_s),
+      @pdf.text_box limpiar("RESUMEN"),
+                    at: [x + 8, y - 10],
+                    width: width - 16,
+                    height: 18,
+                    size: 15,
+                    style: :bold,
+                    align: :center
+
+      margen_x = x + 10
+      ancho_contenido = width - 20
+
+      y_base = y - 40
+      alto_linea = 40
+
+      dibujar_linea_resumen(
+        x: margen_x,
+        y: y_base,
+        width: ancho_contenido,
+        etiqueta: "TOTAL DE INGRESOS #{periodo_resumen}",
+        valor: mostrar_ingresos? ? moneda(bloque[:total_ingresos]) : "NO INCLUIDO"
+      )
+
+      dibujar_linea_resumen(
+        x: margen_x,
+        y: y_base - alto_linea,
+        width: ancho_contenido,
+        etiqueta: "TOTAL DE EGRESOS #{periodo_resumen}",
+        valor: mostrar_egresos? ? moneda(bloque[:total_egresos]) : "NO INCLUIDO"
+      )
+
+      dibujar_linea_resumen(
+        x: margen_x,
+        y: y_base - (alto_linea * 2),
+        width: ancho_contenido,
+        etiqueta: "SALDO",
+        valor: mostrar_ingresos? && mostrar_egresos? ? moneda(bloque[:saldo_final]) : "NO APLICA"
+      )
+    end
+
+    def dibujar_linea_resumen(x:, y:, width:, etiqueta:, valor:)
+      @pdf.text_box limpiar(etiqueta),
+                    at: [x, y],
+                    width: width,
+                    height: 9,
+                    size: 8.2,
+                    style: :bold,
+                    overflow: :shrink_to_fit,
+                    min_font_size: 7
+
+      @pdf.stroke_line [x, y - 11], [x + width, y - 11]
+
+      @pdf.text_box limpiar(valor),
+                    at: [x, y - 15],
+                    width: width,
+                    height: 13,
+                    size: 13,
+                    style: :bold,
+                    overflow: :shrink_to_fit,
+                    min_font_size: 10
+    end
+
+    def tablas_financieras(ingresos:, egresos:, ingresos_vacios:, egresos_vacios:, offset:)
+  ancho_columna = (@pdf.bounds.width - SEPARACION_COLUMNAS) / 2.0
+  y = @pdf.cursor
+
+  # Línea continua superior para separar el bloque de arriba
+  linea_horizontal(x: 0, y: y, width: @pdf.bounds.width)
+
+  y_contenido = y - 6
+
+  altura_ingresos = dibujar_tabla_columna(
+    titulo: "INGRESOS",
+    filas: ingresos,
+    x: 0,
+    y: y_contenido,
+    width: ancho_columna,
+    mensaje_vacio: mensaje_ingresos_vacio(ingresos_vacios),
+    offset: offset,
+    dibujar_linea_superior: false
+  )
+
+  altura_egresos = dibujar_tabla_columna(
+    titulo: "GASTOS",
+    filas: egresos,
+    x: ancho_columna + SEPARACION_COLUMNAS,
+    y: y_contenido,
+    width: ancho_columna,
+    mensaje_vacio: mensaje_egresos_vacio(egresos_vacios),
+    offset: offset,
+    dibujar_linea_superior: false
+  )
+
+  altura_usada = [altura_ingresos, altura_egresos].max
+
+  @pdf.move_cursor_to(y_contenido - altura_usada - 12)
+end
+
+    def dibujar_tabla_columna(titulo:, filas:, x:, y:, width:, mensaje_vacio:, offset:, dibujar_linea_superior: true)
+  altura_total = ALTO_TITULO_TABLA + ALTO_ENCABEZADO_TABLA
+
+  linea_horizontal(x: x, y: y, width: width) if dibujar_linea_superior
+  linea_horizontal(x: x, y: y - ALTO_TITULO_TABLA, width: width)
+
+  @pdf.text_box limpiar(titulo),
+                at: [x + 6, y - 6],
+                width: width - 12,
+                height: ALTO_TITULO_TABLA,
                 size: 11,
                 style: :bold
 
-      @pdf.move_down 4
+  y_actual = y - ALTO_TITULO_TABLA
 
-      filas_resumen = [
-        ["Ingresos confirmados", moneda(bloque[:total_ingresos])],
-        ["Egresos confirmados", moneda(bloque[:total_egresos])],
-        ["Saldo financiero", moneda(bloque[:saldo_final])]
-      ]
+  linea_horizontal(x: x, y: y_actual - ALTO_ENCABEZADO_TABLA, width: width)
 
-      dibujar_tabla_simple(
-        filas: filas_resumen,
-        columnas: [
-          { label: "Indicador", width: 180, align: :left },
-          { label: "Monto", width: 130, align: :right }
-        ],
-        mostrar_encabezado: false,
-        ancho_total: 310
-      )
+  columnas = columnas_para(width)
+  x_columna = x
 
-      @pdf.move_down 8
+  columnas.each do |columna|
+    @pdf.text_box limpiar(columna[:label]),
+                  at: [x_columna + 3, y_actual - 6],
+                  width: columna[:width] - 6,
+                  height: ALTO_ENCABEZADO_TABLA,
+                  size: 7.7,
+                  style: :bold,
+                  align: columna[:align],
+                  overflow: :shrink_to_fit,
+                  min_font_size: 6.8
 
-      dibujar_ingresos(bloque) if mostrar_ingresos?
-      dibujar_egresos(bloque) if mostrar_egresos?
+    x_columna += columna[:width]
+  end
 
-      @pdf.move_down 12
-    end
+  y_actual -= ALTO_ENCABEZADO_TABLA
 
-    def dibujar_ingresos(bloque)
-      @pdf.text limpiar("Ingresos confirmados"),
-                size: 9,
-                style: :bold,
-                color: COLOR_SUBTITULO
+  if mensaje_vacio.present?
+    @pdf.text_box limpiar(mensaje_vacio),
+                  at: [x + 6, y_actual - 8],
+                  width: width - 12,
+                  height: ALTO_FILA - 4,
+                  size: 8.5,
+                  style: :bold
 
-      @pdf.move_down 4
+    linea_horizontal(x: x, y: y_actual - ALTO_FILA, width: width)
 
-      ingresos = Array(bloque[:ingresos])
+    return altura_total + ALTO_FILA
+  end
 
-      if ingresos.blank?
-        @pdf.text limpiar("No hay ingresos confirmados en este periodo."), size: 8
-        @pdf.move_down 8
-        return
-      end
+  filas.each_with_index do |fila, index|
+    dibujar_fila_financiera(
+      fila: fila,
+      columnas: columnas,
+      x: x,
+      y: y_actual,
+      width: width,
+      numero: offset + index + 1
+    )
 
-      columnas = [
-        { label: "Fecha", width: 92, align: :center },
-        { label: "Cooperación", width: 310, align: :left },
-        { label: "Conceptos", width: 70, align: :center },
-        { label: "Condonados", width: 75, align: :center },
-        { label: "Total", width: 110, align: :right }
-      ]
+    y_actual -= ALTO_FILA
+    altura_total += ALTO_FILA
+  end
 
-      filas = ingresos.map do |cooperacion|
-        [
-          fecha_hora(cooperacion.confirmada_at),
-          cooperacion.nombre,
-          cooperacion.cantidad_conceptos.to_s,
-          cooperacion.cantidad_condonados.to_s,
-          moneda(cooperacion.total_esperado)
-        ]
-      end
+  altura_total
+end
 
-      dibujar_tabla_detalle(columnas: columnas, filas: filas)
-      @pdf.move_down 8
-    end
-
-    def dibujar_egresos(bloque)
-      @pdf.text limpiar("Egresos confirmados"),
-                size: 9,
-                style: :bold,
-                color: COLOR_SUBTITULO
-
-      @pdf.move_down 4
-
-      egresos = Array(bloque[:egresos])
-
-      if egresos.blank?
-        @pdf.text limpiar("No hay egresos confirmados en este periodo."), size: 8
-        @pdf.move_down 8
-        return
-      end
-
-      columnas = [
-        { label: "Folio", width: 80, align: :center },
-        { label: "Fecha", width: 82, align: :center },
-        { label: "Concepto", width: 360, align: :left },
-        { label: "Monto", width: 110, align: :right },
-        { label: "Estado", width: 70, align: :center }
-      ]
-
-      filas = egresos.map do |egreso|
-        [
-          egreso.folio_np,
-          fecha(egreso.fecha_egreso),
-          egreso.concepto,
-          moneda(egreso.monto),
-          egreso.estado.to_s.humanize
-        ]
-      end
-
-      dibujar_tabla_detalle(columnas: columnas, filas: filas)
-      @pdf.move_down 8
-    end
-
-    def dibujar_tabla_simple(filas:, columnas:, mostrar_encabezado: true, ancho_total: nil)
-      ancho_total ||= columnas.sum { |columna| columna[:width] }
-
-      dibujar_encabezado_tabla(columnas, ancho_total) if mostrar_encabezado
-
-      filas.each do |fila|
-        nueva_pagina_si_es_necesario(24)
-        dibujar_fila_tabla(columnas, fila, 22, false, ancho_total)
-      end
-    end
-
-    def dibujar_tabla_detalle(columnas:, filas:)
-      ancho_total = columnas.sum { |columna| columna[:width] }
-
-      dibujar_encabezado_tabla(columnas, ancho_total)
-
-      filas.each do |fila|
-        nueva_pagina_si_es_necesario(28)
-        dibujar_fila_tabla(columnas, fila, 26, false, ancho_total)
-      end
-    end
-
-    def dibujar_encabezado_tabla(columnas, ancho_total)
-      nueva_pagina_si_es_necesario(30)
-
-      altura = 22
-      x = @pdf.bounds.left
-      y = @pdf.cursor
-
-      @pdf.fill_color COLOR_ENCABEZADO_TABLA
-      @pdf.fill_rectangle [x, y], ancho_total, altura
-
-      @pdf.stroke_color COLOR_BORDE
-      @pdf.stroke_rectangle [x, y], ancho_total, altura
-
-      @pdf.fill_color "000000"
+    def dibujar_fila_financiera(fila:, columnas:, x:, y:, width:, numero:)
+      valores = {
+        concepto: "#{numero}. #{fila[:concepto]}",
+        recibo: fila[:recibo],
+        cantidad: fila[:cantidad]
+      }
 
       x_actual = x
 
       columnas.each do |columna|
-        @pdf.text_box limpiar(columna[:label]),
-                      at: [x_actual + 4, y - 6],
-                      width: columna[:width] - 8,
-                      height: altura,
-                      size: 7.5,
-                      style: :bold,
-                      align: columna[:align]
-
-        x_actual += columna[:width]
-      end
-
-      @pdf.move_down altura
-      @pdf.fill_color "000000"
-      @pdf.stroke_color "000000"
-    end
-
-    def dibujar_fila_tabla(columnas, fila, altura, encabezado, ancho_total)
-      x = @pdf.bounds.left
-      y = @pdf.cursor
-
-      @pdf.fill_color "FFFFFF"
-      @pdf.fill_rectangle [x, y], ancho_total, altura
-
-      @pdf.stroke_color COLOR_BORDE
-      @pdf.stroke_rectangle [x, y], ancho_total, altura
-
-      @pdf.fill_color "000000"
-
-      x_actual = x
-
-      columnas.each_with_index do |columna, index|
-        valor = fila[index].to_s
-
-        @pdf.text_box limpiar(valor),
-                      at: [x_actual + 4, y - 7],
-                      width: columna[:width] - 8,
-                      height: altura - 4,
-                      size: encabezado ? 7.5 : 7,
-                      style: encabezado ? :bold : :normal,
+        @pdf.text_box limpiar(valores[columna[:key]].to_s),
+                      at: [x_actual + 3, y - 6],
+                      width: columna[:width] - 6,
+                      height: ALTO_FILA - 4,
+                      size: 7.7,
                       align: columna[:align],
                       overflow: :shrink_to_fit,
-                      min_font_size: 5
+                      min_font_size: 6.5
 
         x_actual += columna[:width]
       end
 
-      @pdf.move_down altura
-      @pdf.fill_color "000000"
-      @pdf.stroke_color "000000"
+      linea_horizontal(x: x, y: y - ALTO_FILA, width: width)
     end
 
-    def nueva_pagina_si_es_necesario(altura_necesaria)
-      return unless @pdf.cursor < altura_necesaria + 45
+    def columnas_para(width)
+      concepto_width = (width * 0.50).round(2)
+      recibo_width = (width * 0.25).round(2)
+      cantidad_width = (width - concepto_width - recibo_width).round(2)
 
-      @pdf.start_new_page
-      encabezado_continuacion
+      [
+        {
+          key: :concepto,
+          label: "CONCEPTO",
+          width: concepto_width,
+          align: :left
+        },
+        {
+          key: :recibo,
+          label: "RECIBO No.",
+          width: recibo_width,
+          align: :center
+        },
+        {
+          key: :cantidad,
+          label: "CANTIDAD",
+          width: cantidad_width,
+          align: :right
+        }
+      ]
     end
 
-    def encabezado_continuacion
-      @pdf.text limpiar("CONCENTRADO FINANCIERO"),
-                size: 11,
-                style: :bold,
-                align: :center
+    def totales_finales(bloque)
+      ancho_columna = (@pdf.bounds.width - SEPARACION_COLUMNAS) / 2.0
+      y = @pdf.cursor
 
-      @pdf.text limpiar("Continuación"),
-                size: 8,
-                align: :center
-
-      @pdf.move_down 10
-    end
-
-    def pie_de_pagina
-      total_paginas = @pdf.page_count
-
-      (1..total_paginas).each do |numero_pagina|
-        @pdf.go_to_page(numero_pagina)
-
-        @pdf.fill_color "000000"
-        @pdf.stroke_color COLOR_LINEA
-
-        @pdf.bounding_box([@pdf.bounds.left, 20], width: @pdf.bounds.width, height: 16) do
-          @pdf.stroke_horizontal_rule
-          @pdf.move_down 3
-
-          @pdf.text limpiar("Sistema de Gestión Sindical · Concentrado financiero"),
-                    size: 7,
-                    align: :left
-
-          @pdf.text limpiar("Página #{numero_pagina} de #{total_paginas}"),
-                    size: 7,
-                    align: :right
-        end
-
-        @pdf.stroke_color "000000"
+      if mostrar_ingresos?
+        dibujar_total_columna(
+          x: 0,
+          y: y,
+          width: ancho_columna,
+          etiqueta: "TOTAL DE INGRESOS",
+          valor: moneda(bloque[:total_ingresos])
+        )
       end
 
-      @pdf.go_to_page(total_paginas)
+      if mostrar_egresos?
+        dibujar_total_columna(
+          x: ancho_columna + SEPARACION_COLUMNAS,
+          y: y,
+          width: ancho_columna,
+          etiqueta: "TOTAL DE GASTOS",
+          valor: moneda(bloque[:total_egresos])
+        )
+      end
+
+      @pdf.move_cursor_to(y - 30)
+    end
+
+    def dibujar_total_columna(x:, y:, width:, etiqueta:, valor:)
+      linea_horizontal(x: x, y: y, width: width)
+      linea_horizontal(x: x, y: y - 20, width: width)
+
+      @pdf.text_box limpiar(etiqueta),
+                    at: [x + 6, y - 6],
+                    width: width * 0.55,
+                    height: 18,
+                    size: 9,
+                    style: :bold
+
+      @pdf.text_box limpiar(valor),
+                    at: [x + (width * 0.55), y - 6],
+                    width: width * 0.42,
+                    height: 18,
+                    size: 9,
+                    style: :bold,
+                    align: :right,
+                    overflow: :shrink_to_fit,
+                    min_font_size: 7.5
+    end
+
+    def firma_responsable(bloque)
+      nombre = responsable_documento(bloque[:cuenta])
+      puesto = puesto_documento(bloque[:cuenta])
+
+      y = 112
+
+      @pdf.text_box limpiar("Responsable:"),
+                    at: [0, y],
+                    width: 88,
+                    height: 14,
+                    size: 10,
+                    style: :bold
+
+      @pdf.text_box limpiar(nombre),
+                    at: [92, y],
+                    width: 260,
+                    height: 14,
+                    size: 10,
+                    style: :bold
+
+      @pdf.text_box limpiar(puesto),
+                    at: [92, y - 15],
+                    width: 260,
+                    height: 14,
+                    size: 10,
+                    style: :italic
+    end
+
+    def lugar_y_fecha
+      @pdf.text_box limpiar("Oaxaca de Juárez, Oaxaca, #{fecha_larga(Date.current)}."),
+                    at: [0, 48],
+                    width: @pdf.bounds.width,
+                    height: 14,
+                    size: 9.5,
+                    style: :italic
+    end
+
+    def texto_continuacion
+      @pdf.move_down 10
+
+      @pdf.text limpiar("Continúa en la siguiente página."),
+                size: 10,
+                style: :bold,
+                align: :right
+    end
+
+    def filas_ingresos(bloque)
+      Array(bloque[:ingresos]).map do |cooperacion|
+        {
+          concepto: cooperacion.nombre.to_s,
+          recibo: recibo_cooperacion(cooperacion),
+          cantidad: moneda(cooperacion.total_esperado)
+        }
+      end
+    end
+
+    def filas_egresos(bloque)
+      Array(bloque[:egresos]).map do |egreso|
+        {
+          concepto: egreso.concepto.to_s,
+          recibo: egreso.folio_np.to_s.presence || "-",
+          cantidad: moneda(egreso.monto)
+        }
+      end
+    end
+
+    def recibo_cooperacion(cooperacion)
+      if cooperacion.respond_to?(:folio) && cooperacion.folio.present?
+        cooperacion.folio.to_s
+      else
+        "COOP-#{format('%04d', cooperacion.id.to_i)}"
+      end
+    end
+
+    def mensaje_ingresos_vacio(ingresos_vacios)
+      return "Ingresos no incluidos en este reporte." unless mostrar_ingresos?
+      return "No hay ingresos confirmados en el periodo." if ingresos_vacios
+
+      nil
+    end
+
+    def mensaje_egresos_vacio(egresos_vacios)
+      return "Egresos no incluidos en este reporte." unless mostrar_egresos?
+      return "No hay egresos confirmados en el periodo." if egresos_vacios
+
+      nil
+    end
+
+    def responsable_documento(cuenta)
+      return RESPONSABLE_ADMIN if @generado_por&.admin?
+
+      if cuenta.respond_to?(:responsable_para_documento)
+        cuenta.responsable_para_documento
+      else
+        cuenta&.responsable_nombre.to_s.presence || RESPONSABLE_DEFAULT
+      end
+    end
+
+    def puesto_documento(cuenta)
+      return PUESTO_ADMIN if @generado_por&.admin?
+
+      if cuenta.respond_to?(:puesto_para_documento)
+        cuenta.puesto_para_documento
+      else
+        cuenta&.responsable_puesto.to_s.presence || PUESTO_DEFAULT
+      end
     end
 
     def mostrar_ingresos?
@@ -449,38 +601,72 @@ module Pdf
       @tipo.in?(%w[general egresos])
     end
 
-    def nombre_tipo
-      case @tipo
-      when "ingresos"
-        "Solo ingresos"
-      when "egresos"
-        "Solo egresos"
-      else
-        "General: ingresos y egresos"
-      end
-    end
-
     def periodo_texto
-      inicio = @fecha_inicio&.strftime("%d/%m/%Y") || "inicio"
-      fin = @fecha_fin&.strftime("%d/%m/%Y") || "actualidad"
+      inicio = @fecha_inicio&.strftime("%d/%m/%Y") || "INICIO"
+      fin = @fecha_fin&.strftime("%d/%m/%Y") || "ACTUALIDAD"
 
       "#{inicio} - #{fin}"
+    end
+
+    def periodo_resumen
+      "DEL #{periodo_texto}"
     end
 
     def cuenta_texto
       @cuenta_financiera_actual&.nombre || "Todas las cuentas financieras"
     end
 
+    def nombre_cuenta(bloque)
+      bloque[:nombre_cuenta].presence ||
+        bloque[:cuenta]&.nombre.to_s.presence ||
+        cuenta_texto
+    end
+
     def moneda(valor)
-      format("$%.2f", valor.to_d)
+      numero = valor.to_d
+      signo = numero.negative? ? "-" : ""
+      numero_absoluto = numero.abs
+
+      entero, decimal = format("%.2f", numero_absoluto).split(".")
+      entero_con_comas = entero.reverse.scan(/\d{1,3}/).join(",").reverse
+
+      "$#{signo}#{entero_con_comas}.#{decimal}"
     end
 
-    def fecha(valor)
-      valor.present? ? valor.strftime("%d/%m/%Y") : "-"
+    def fecha_larga(fecha)
+      "#{fecha.day} de #{MESES[fecha.month]} de #{fecha.year}"
     end
 
-    def fecha_hora(valor)
-      valor.present? ? valor.strftime("%d/%m/%Y %H:%M") : "-"
+    def linea_horizontal(x:, y:, width:)
+      @pdf.stroke_line [x, y], [x + width, y]
+    end
+
+    def pie_de_pagina
+      total_paginas = @pdf.page_count
+
+      (1..total_paginas).each do |numero_pagina|
+        @pdf.go_to_page(numero_pagina)
+
+        @pdf.bounding_box([0, 18], width: @pdf.bounds.width, height: 14) do
+          @pdf.stroke_horizontal_rule
+          @pdf.move_down 2
+
+          @pdf.text_box limpiar("Sistema de Gestión Sindical · Reporte financiero"),
+                        at: [0, 10],
+                        width: 260,
+                        height: 10,
+                        size: 8
+
+          @pdf.text_box limpiar("Página #{numero_pagina} de #{total_paginas}"),
+                        at: [@pdf.bounds.width - 120, 10],
+                        width: 120,
+                        height: 10,
+                        size: 8,
+                        align: :right
+        end
+      end
+
+      @pdf.go_to_page(total_paginas)
     end
 
     def limpiar(texto)
